@@ -2,3 +2,18 @@ files:
   reference: "profiles/b/vic/reference_seq.gb"
   alignment_reference: "profiles/b/vic/reference.fasta"
   annotation: "profiles/b/vic/genemap.gff"
+
+mask: "--mask-from-beginning 11 --mask-from-end 74 "
+
+tree:
+  tree-builder-args: "'-ninit 10 -n 4 -czb'"
+
+ancestral:
+  inference: "joint"
+
+refine:
+  root: "CY112230" #EPI_ISL_402125  EPI_ISL_406798
+  coalescent: "skyline"
+  date_inference: "marginal"
+  divergence_unit: "mutations"
+  clock_filter_iqd: 4
