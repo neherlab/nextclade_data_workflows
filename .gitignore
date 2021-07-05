@@ -1,0 +1,8 @@
+.snakemake/*
+benchmarks/*
+data/*
+flu/*
+logs/*
+pre-processed/*
+
+.DS_Store

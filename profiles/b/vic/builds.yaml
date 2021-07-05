@@ -1,0 +1,4 @@
+files:
+  reference: "profiles/b/vic/reference_seq.gb"
+  alignment_reference: "profiles/b/vic/reference.fasta"
+  annotation: "profiles/b/vic/genemap.gff"

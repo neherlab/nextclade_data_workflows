@@ -1,0 +1,3 @@
+configfile: profiles/b/vic/builds.yaml
+
+cores: 4
