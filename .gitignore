@@ -8,3 +8,4 @@ build/*
 auspice/*
 
 .DS_Store
+.vscode/*

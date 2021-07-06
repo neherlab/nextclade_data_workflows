@@ -6,7 +6,7 @@ rule preprocess:
         mutation_summary = "pre-processed/mutation_summary.tsv"
 
 rule download:
-    output: "data/download.fasta"
+    output: temp("data/download_{year}.fasta")
     shell: 
         "curl -kL -o {output} "
         "'https://www.viprbrc.org/brc/api/sequence?"
@@ -14,16 +14,34 @@ rule download:
         "completeseq=Y&"
         "family=influenza&"
         "flutype=B&"
-        "fromyear=2010&"
-        "continent=Asia&"
+        "fromyear={wildcards.year}&"
+        "toyear={wildcards.year}&"
         "segment=4&"
         "host=human&"
         "metadata=ncbiAcc,continent,country,date,fluSeason,fluType,host,length,state,strainName&"
         "output=fasta'"
 
+rule clean_download:
+    input: rules.download.output
+    output: temp("data/cleaned_download_{year}.fasta")
+    shell: 
+        """
+        if [$(wc -l < {input}) -lt 2]
+        then
+            touch {output}
+        else
+            cp {input} {output}
+        fi
+        """
+
+rule join_downloads:
+    input: expand("data/cleaned_download_{year}.fasta",year=range(2000,2022))
+    output: "data/download.fasta"
+    shell: "cat {input} >> {output}"
+
 rule parse:
     input:
-        sequences = rules.download.output
+        sequences = rules.join_downloads.output
     output:
         metadata = "pre-processed/metadata.tsv",
         sequences = "data/sequences.fasta"
@@ -40,20 +58,20 @@ rule parse:
 
 rule prealign:
     input:
-        sequences = "data/sequences.fasta",
-        genemap = config["files"]["annotation"],
-        reference = config["files"]["alignment_reference"]
+        sequences = rules.parse.output.sequences,
+        genemap = lambda w: config["files"]["annotation"][w.reference],
+        reference = lambda w: config["files"]["alignment_reference"][w.reference]
     output:
-        alignment = "pre-processed/seqs.aligned.fasta",
-        insertions = "pre-processed/seqs.insertions.csv",
-        translations = "pre-processed/seqs.gene.HA.fasta"
+        alignment = "pre-processed/{reference}.aligned.fasta",
+        insertions = "pre-processed/{reference}.insertions.csv",
+        translations = "pre-processed/{reference}.gene.HA.fasta"
     params:
         outdir = "pre-processed",
         genes = "HA",
     log:
-        "logs/prealign.txt"
+        "logs/{reference}_prealign.txt"
     benchmark:
-        "benchmarks/align.txt"
+        "benchmarks/{reference}_align.txt"
     shell:
         """
         nextalign \
@@ -62,43 +80,23 @@ rule prealign:
             --genes {params.genes} \
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
-            --output-basename "seqs"
+            --output-basename {wildcards.reference}
         """
-
-rule index_sequences:
-    message:
-        """
-        Index sequence composition for faster filtering.
-        """
-    input:
-        sequences = rules.preprocess.input.sequences
-    output:
-        sequence_index = rules.preprocess.input.sequence_index
-    log:
-        "logs/index_sequences.txt"
-    benchmark:
-        "benchmarks/index_sequences.txt"
-    shell:
-        """
-        augur index \
-            --sequences {input.sequences} \
-            --output {output.sequence_index} 2>&1 | tee {log}
-        """
-
+        
 rule mutation_summary:
     message: "Summarizing {input.alignment}"
     input:
         alignment = rules.prealign.output.alignment,
         insertions = rules.prealign.output.insertions,
         translations = rules.prealign.output.translations,
-        reference = config["files"]["alignment_reference"],
-        genemap = config["files"]["annotation"]
+        reference = lambda w: config["files"]["alignment_reference"][w.reference],
+        genemap = lambda w: config["files"]["annotation"][w.reference]
     output:
-        mutation_summary = rules.preprocess.input.mutation_summary
+        mutation_summary = "pre-processed/{reference}.mutation_summary.tsv"
     log:
-        "logs/mutation_summary.txt"
+        "logs/{reference}_mutation_summary.txt"
     benchmark:
-        "benchmarks/mutation_summary.txt"
+        "benchmarks/{reference}_mutation_summary.txt"
     params:
         outdir = "pre-processed/translations",
         basename = "seqs",
@@ -119,6 +117,7 @@ rule mutation_summary:
 rule mask:
     message:
         """
+        Throw out
         Mask bases in alignment {input.alignment}
           - masking {params.mask_arguments}
         """
@@ -193,7 +192,7 @@ rule refine:
         root = config["refine"]["root"],
         coalescent = config["refine"].get("coalescent", "opt"),
         divergence_unit = config["refine"].get("divergence_unit", 'mutations'),
-        clock_filter_iqd = config["refine"].get("clock_filter_iqd", 4),
+        clock_filter_iqd = config["refine"].get("clock_filter_iqd", 4), #Get rid of outlier
     shell:
         """
         augur refine \

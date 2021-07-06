@@ -1,9 +1,13 @@
 files:
   reference: "profiles/b/vic/reference_seq.gb"
-  alignment_reference: "profiles/b/vic/reference.fasta"
-  annotation: "profiles/b/vic/genemap.gff"
+  alignment_reference: 
+    "vic": "profiles/b/vic/reference.fasta"
+    "yam": "profiles/b/yam/reference.fasta"
+  annotation: 
+    "vic": "profiles/b/vic/genemap.gff"
+    "yam": "profiles/b/yam/genemap.gff"
 
-mask: "--mask-from-beginning 11 --mask-from-end 74 "
+# mask: "--mask-from-beginning 11 --mask-from-end 74 "
 
 tree:
   tree-builder-args: "'-ninit 10 -n 4 -czb'"
