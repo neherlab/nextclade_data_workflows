@@ -6,6 +6,7 @@ files:
   annotation: 
     "vic": "profiles/b/vic/genemap.gff"
     "yam": "profiles/b/yam/genemap.gff"
+  auspice_config: "profiles/b/vic/auspice_config.json"
 
 # mask: "--mask-from-beginning 11 --mask-from-end 74 "
 
@@ -16,8 +17,12 @@ ancestral:
   inference: "joint"
 
 refine:
-  root: "CY112230" #EPI_ISL_402125  EPI_ISL_406798
+  root: "CY018813" #EPI_ISL_402125  EPI_ISL_406798
   coalescent: "skyline"
   date_inference: "marginal"
   divergence_unit: "mutations"
   clock_filter_iqd: 4
+
+filter: " --exclude-where subtype!='vic' --probabilistic-sampling --group-by continent year --subsample-max-sequences 1000" 
+
+subtype: 'vic'

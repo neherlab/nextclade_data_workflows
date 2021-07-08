@@ -7,8 +7,9 @@ rule preprocess:
 
 rule download:
     output: temp("data/download_{year}.fasta")
+    log: 'logs/download_{year}'
     shell: 
-        "curl -kL -o {output} "
+        "curl -ksSL -o {output} "
         "'https://www.viprbrc.org/brc/api/sequence?"
         "datatype=genome&"
         "completeseq=Y&"
@@ -19,14 +20,14 @@ rule download:
         "segment=4&"
         "host=human&"
         "metadata=ncbiAcc,continent,country,date,fluSeason,fluType,host,length,state,strainName&"
-        "output=fasta'"
+        "output=fasta' > {log}"
 
 rule clean_download:
     input: rules.download.output
-    output: temp("data/cleaned_download_{year}.fasta")
+    output: "data/cleaned_download_{year}.fasta"
     shell: 
         """
-        if [$(wc -l < {input}) -lt 2]
+        if [ $(wc -l < {input}) -lt 2 ]
         then
             touch {output}
         else
@@ -35,7 +36,9 @@ rule clean_download:
         """
 
 rule join_downloads:
-    input: expand("data/cleaned_download_{year}.fasta",year=range(2000,2022))
+    input: 
+        expand("data/cleaned_download_{year}.fasta",year=range(1980,2022))
+
     output: "data/download.fasta"
     shell: "cat {input} >> {output}"
 
@@ -82,7 +85,7 @@ rule prealign:
             --output-dir {params.outdir} \
             --output-basename {wildcards.reference}
         """
-        
+
 rule mutation_summary:
     message: "Summarizing {input.alignment}"
     input:
@@ -114,35 +117,53 @@ rule mutation_summary:
             --output {output.mutation_summary} 2>&1 | tee {log}
         """
 
-rule mask:
-    message:
-        """
-        Throw out
-        Mask bases in alignment {input.alignment}
-          - masking {params.mask_arguments}
-        """
+rule enrich_metadata:
     input:
-        alignment = rules.prealign.output.alignment
+        metadata = rules.parse.output.metadata,
+        mutation_summary = expand(rules.mutation_summary.output.mutation_summary,reference=['yam','vic'])
     output:
-        alignment = "build/masked.fasta"
-    log:
-        "logs/mask.txt"
-    benchmark:
-        "benchmarks/mask.txt"
-    params:
-        mask_arguments = config.get("mask","")
+        enriched_metadata = "pre-processed/metadata_enriched.tsv"
+    log: "logs/metadata_enrichment.txt"
     shell:
         """
-        python3 scripts/mask-alignment.py \
-            --alignment {input.alignment} \
-            {params.mask_arguments} \
-            --output {output.alignment} 2>&1 | tee {log}
+        python3 scripts/metadata_enrichment.py \
+            2>&1 | tee {log}
         """
+
+rule subsample:
+    input:
+        sequences = expand("pre-processed/{subtype}.aligned.fasta",subtype=config['subtype']),
+        metadata = "pre-processed/metadata_enriched.tsv",
+    output:
+        sequences = expand("build/{subtype}_subsample.fasta",subtype=config['subtype']),
+        strains = expand("build/{subtype}_subsample.txt",subtype=config['subtype']),
+    log:
+        "logs/subsample.txt"
+    benchmark:
+        "benchmarks/subsample.txt"
+    params:
+        filter_arguments = config["filter"],
+        include = config['refine']['root'],
+    resources:
+        # Memory use scales primarily with the size of the metadata file.
+        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --include-where ncbiAcc={params.include} \
+            {params.filter_arguments} \
+            --output {output.sequences} \
+            --output-strains {output.strains} \
+            --query "year > 2000" 2>&1 | tee {log}
+        """
+
 
 rule tree:
     message: "Building tree"
     input:
-        alignment = rules.mask.output.alignment
+        alignment = rules.subsample.output.sequences
     output:
         tree = "build/tree_raw.nwk"
     params:
@@ -173,8 +194,8 @@ rule refine:
         """
     input:
         tree = rules.tree.output.tree,
-        alignment = rules.mask.output.alignment,
-        metadata = "pre-processed/metadata.tsv"
+        alignment = rules.subsample.output.sequences,
+        metadata = "pre-processed/metadata_enriched.tsv"
     output:
         tree = "build/tree.nwk",
         node_data = "build/branch_lengths.json"
@@ -217,7 +238,7 @@ rule ancestral:
         """
     input:
         tree = rules.refine.output.tree,
-        alignment = rules.mask.output.alignment
+        alignment = rules.subsample.output.sequences,
     output:
         node_data = "build/nt_muts.json"
     log:
@@ -245,14 +266,17 @@ rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
-        metadata = "pre-processed/metadata.tsv",
-        node_data = [rules.ancestral.output.node_data,rules.refine.output.node_data]
+        metadata = "pre-processed/metadata_enriched.tsv",
+        node_data = [rules.ancestral.output.node_data,rules.refine.output.node_data],
+        auspice_config = config['files']['auspice_config']
     output:
         auspice_json = "auspice/auspice.json",
     log:
         "logs/export.txt"
     benchmark:
         "benchmarks/export.txt"
+    params:
+        fields = "ncbiAcc continent country date fluSeason length strainName vic_dist yam_dist vic_yam subtype year"
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -263,5 +287,7 @@ rule export:
             --metadata {input.metadata} \
             --node-data {input.node_data} \
             --include-root-sequence \
+            --auspice-config {input.auspice_config} \
+            --color-by-metadata {params.fields} \
             --output {output.auspice_json} 2>&1 | tee {log};
         """

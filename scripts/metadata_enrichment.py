@@ -1,31 +1,46 @@
 #%%
-import argparse, os, glob
-from augur.io import open_file
-from Bio import SeqIO, SeqFeature, Seq
-from Bio.SeqIO.FastaIO import SimpleFastaParser
-import numpy as np
+# import argparse, os, glob
 import pandas as pd
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-print(glob.glob("*"))
 #%%
-vic = pd.read_csv('pre-processed/vic.mutation_summary.tsv',sep='\t')
-yam = pd.read_csv('pre-processed/yam.mutation_summary.tsv',sep='\t')
+vic = pd.read_csv(
+    "pre-processed/vic.mutation_summary.tsv",
+    header=1,
+    names=["ncbiAcc", "nucleotide"],
+    sep="\t",
+)
+yam = pd.read_csv(
+    "pre-processed/yam.mutation_summary.tsv",
+    header=1,
+    names=["ncbiAcc", "nucleotide"],
+    sep="\t",
+)
 # %%
-vic = vic.assign(vic_dist = vic.nucleotide.apply(lambda x: len(x.split(","))))
-vic = vic.assign(yam_dist = yam.nucleotide.apply(lambda x: len(x.split(","))))
-# yam.nucleotide.apply(lambda x: len(x.split(","))).hist()
+vic = vic.assign(vic_dist=vic.nucleotide.apply(lambda x: len(str(x).split(","))))
+vic = vic.assign(yam_dist=yam.nucleotide.apply(lambda x: len(str(x).split(","))))
+
 # %%
-vic.iloc[:,0] == yam.iloc[:,0]
+meta = pd.read_csv("pre-processed/metadata.tsv", sep="\t")
+meta = meta.merge(vic[["ncbiAcc", "vic_dist", "yam_dist"]], on="ncbiAcc")
+meta = meta.assign(vic_yam=lambda x: x.vic_dist - x.yam_dist)
+meta["subtype"] = meta.apply(
+    lambda row: "yam" if row.yam_dist < row.vic_dist else "vic", axis=1
+)
 # %%
-plt.scatter(x=vic["vic_dist"],y=vic["yam_dist"])
-plt.plot([0,100,200],[0,100,200])
-plt.xlabel('vic distance')
-plt.ylabel('yam distance')
+
 # %%
-plt.hist(vic.vic_dist - vic.yam_dist,bins=100)
-# plt.ylim(0,10)
-plt.yscale('log')
-plt.ylabel('# of occurences')
-plt.xlabel('vic distance - yam distance')
+def parse_isostring(string):
+    split_string = list(map(int,string.split("-")))
+    length = len(split_string)
+    if(length==1):
+        date = (split_string[0],7,1)
+    if(length==2):
+        date = (split_string[0],split_string[1],15)
+    if(length==3):
+        date = (split_string[0],split_string[1],split_string[2])
+    return date
 # %%
+meta["year"] = meta.date.apply(lambda x: parse_isostring(x)[0])
+#%%
+meta.to_csv("pre-processed/metadata_enriched.tsv", sep="\t")
