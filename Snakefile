@@ -172,7 +172,7 @@ rule tree:
         "logs/tree.txt"
     benchmark:
         "benchmarks/tree.txt"
-    threads: 8
+    threads: 16 
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
         # memory, especially for larger alignments.
@@ -211,9 +211,7 @@ rule refine:
         mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     params:
         root = config["refine"]["root"],
-        coalescent = config["refine"].get("coalescent", "opt"),
         divergence_unit = config["refine"].get("divergence_unit", 'mutations'),
-        clock_filter_iqd = config["refine"].get("clock_filter_iqd", 4), #Get rid of outlier
     shell:
         """
         augur refine \
@@ -223,10 +221,7 @@ rule refine:
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
             --root {params.root} \
-            --coalescent {params.coalescent} \
             --divergence-unit {params.divergence_unit} \
-            --date-confidence \
-            --no-covariance \
            2>&1 | tee {log}
         """
 
@@ -262,12 +257,41 @@ rule ancestral:
             --infer-ambiguous 2>&1 | tee {log}
         """
 
+rule aa_muts_explicit:
+    message: "Translating amino acid sequences"
+    input:
+        tree = rules.refine.output.tree,
+        translations = expand(rules.prealign.output.translations,reference="vic")
+    output:
+        node_data = "build/aa_muts_explicit.json",
+    params:
+        genes = config.get('genes', 'HA')
+    log:
+        "logs/aamuts.txt"
+    benchmark:
+        "benchmarks/aamuts.txt"
+    resources:
+        # Multiple sequence alignments can use up to 15 times their disk size in
+        # memory.
+        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
+        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
+    shell:
+        """
+        python3 scripts/explicit_translation.py \
+            --tree {input.tree} \
+            --translations {input.translations:q} \
+            --genes {params.genes} \
+            --output {output.node_data} 2>&1 | tee {log}
+        """
+
 rule export:
     message: "Exporting data files for auspice"
     input:
-        tree = rules.refine.output.tree,
+        # tree = rules.refine.output.tree,
+        tree = "build/pruned_tree.nwk",
         metadata = "pre-processed/metadata_enriched.tsv",
-        node_data = [rules.ancestral.output.node_data,rules.refine.output.node_data],
+        node_data = 
+            [rules.__dict__[rule].output.node_data for rule in ['ancestral','refine','aa_muts_explicit']],
         auspice_config = config['files']['auspice_config']
     output:
         auspice_json = "auspice/auspice.json",
@@ -276,7 +300,7 @@ rule export:
     benchmark:
         "benchmarks/export.txt"
     params:
-        fields = "ncbiAcc continent country date fluSeason length strainName vic_dist yam_dist vic_yam subtype year"
+        fields = "continent country fluSeason strainName"
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -285,7 +309,7 @@ rule export:
         augur export v2 \
             --tree {input.tree} \
             --metadata {input.metadata} \
-            --node-data {input.node_data} \
+            --node-data {input.node_data} "build/clock_deviation.json" "build/terminal_branch_length.json"\
             --include-root-sequence \
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \

@@ -1,5 +1,4 @@
 files:
-  reference: "profiles/b/vic/reference_seq.gb"
   alignment_reference: 
     "vic": "profiles/b/vic/reference.fasta"
     "yam": "profiles/b/yam/reference.fasta"
@@ -23,6 +22,6 @@ refine:
   divergence_unit: "mutations"
   clock_filter_iqd: 4
 
-filter: " --exclude-where subtype!='vic' --probabilistic-sampling --group-by continent year --subsample-max-sequences 1000" 
+filter: " --exclude-where subtype!='vic' --probabilistic-sampling --group-by continent year --subsample-max-sequences 500" 
 
 subtype: 'vic'

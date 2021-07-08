@@ -20,16 +20,11 @@
       "key": "continent",
       "title": "Continent",
       "type": "categorical"
-    },
-    {
-      "key": "length",
-      "title": "Length",
-      "type": "continuous"
     }
   ],
   "filters": [
     "continent",
     "country"
   ],
-  "panels": ["tree"]
+  "panels": ["tree","entropy"]
 }

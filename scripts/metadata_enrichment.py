@@ -2,6 +2,8 @@
 # import argparse, os, glob
 import pandas as pd
 # import matplotlib.pyplot as plt
+from datetime import datetime as dt
+import time
 
 #%%
 vic = pd.read_csv(
@@ -41,6 +43,25 @@ def parse_isostring(string):
         date = (split_string[0],split_string[1],split_string[2])
     return date
 # %%
-meta["year"] = meta.date.apply(lambda x: parse_isostring(x)[0])
+# meta["year"] = meta.date.apply(lambda x: parse_isostring(x)[0])
+#%%
+# From https://stackoverflow.com/a/6451892/7483211
+def toYearFraction(date):
+    def sinceEpoch(date): # returns seconds since epoch
+        return time.mktime(date.timetuple())
+    s = sinceEpoch
+
+    year = date.year
+    startOfThisYear = dt(year=year, month=1, day=1)
+    startOfNextYear = dt(year=year+1, month=1, day=1)
+
+    yearElapsed = s(date) - s(startOfThisYear)
+    yearDuration = s(startOfNextYear) - s(startOfThisYear)
+    fraction = yearElapsed/yearDuration
+
+    return date.year + fraction
+#%%
+meta["num_date"] = meta.date.apply(lambda x: toYearFraction(dt(*parse_isostring(x))))
 #%%
 meta.to_csv("pre-processed/metadata_enriched.tsv", sep="\t")
+# %%
