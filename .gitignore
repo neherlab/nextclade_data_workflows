@@ -5,7 +5,6 @@ flu/*
 logs/*
 pre-processed/*
 build/*
-auspice/*
 
 .DS_Store
 .vscode/*
