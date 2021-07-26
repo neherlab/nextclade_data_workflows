@@ -94,6 +94,6 @@ if __name__ == '__main__':
         print("processing "+fname)
         res = to_mutations(fname, translations[gene], aa=True)
         compressed[gene] = pd.DataFrame(res.values(), index=res.keys(), columns=[gene])
-
+    print(gene_files)
     res = pd.concat(compressed.values(), axis=1)
     res.to_csv(args.output, sep='\t')

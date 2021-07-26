@@ -67,6 +67,8 @@ rule parse:
             --output-sequences {output.sequences}
         """
 
+genes = ["SigPep","HA1","HA2"]
+
 rule prealign:
     input:
         sequences = rules.parse.output.sequences,
@@ -75,10 +77,10 @@ rule prealign:
     output:
         alignment = "pre-processed/{reference}.aligned.fasta",
         insertions = "pre-processed/{reference}.insertions.csv",
-        translations = "pre-processed/{reference}.gene.HA.fasta"
+        translations = expand("pre-processed/{{reference}}.gene.{genes}.fasta",genes=genes)
     params:
         outdir = "pre-processed",
-        genes = "HA",
+        genes = ",".join(genes)
     log:
         "logs/{reference}_prealign.txt"
     benchmark:
@@ -109,9 +111,9 @@ rule mutation_summary:
     benchmark:
         "benchmarks/{reference}_mutation_summary.txt"
     params:
-        outdir = "pre-processed/translations",
-        basename = "seqs",
-        genes= "HA"
+        outdir = "pre-processed",
+        basename = lambda w: w.reference,
+        genes= genes
     shell:
         """
         python3 scripts/mutation_summary.py \
@@ -180,7 +182,7 @@ rule tree:
         "logs/tree.txt"
     benchmark:
         "benchmarks/tree.txt"
-    threads: 16 
+    threads: 8
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
         # memory, especially for larger alignments.
@@ -247,7 +249,7 @@ rule ancestral:
     log:
         "logs/ancestral.txt"
     benchmark:
-        "benchmarks/ancestrald.txt"
+        "benchmarks/ancestral.txt"
     params:
         inference = config["ancestral"]["inference"]
     resources:
@@ -272,8 +274,9 @@ rule aa_muts_explicit:
         translations = expand(rules.prealign.output.translations,reference="vic")
     output:
         node_data = "build/aa_muts_explicit.json",
+        # translations = vic.gene.HA_withInternalNodes.fasta
     params:
-        genes = config.get('genes', 'HA')
+        genes = genes
     log:
         "logs/aamuts.txt"
     benchmark:

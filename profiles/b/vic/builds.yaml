@@ -19,12 +19,12 @@ ancestral:
   inference: "joint"
 
 refine:
-  root: "CY018813" #EPI_ISL_402125  EPI_ISL_406798
+  root: "CY115151" #CY018813 #"CY115151"   #CY18813  
   coalescent: "skyline"
   date_inference: "marginal"
   divergence_unit: "mutations"
   clock_filter_iqd: 4
 
-filter: " --exclude-where subtype!='vic' --probabilistic-sampling --group-by continent year --subsample-max-sequences 500" 
+filter: "--min-date 2016 --exclude-where subtype!='vic' --query 'vic_yam<-50' --probabilistic-sampling --group-by continent year --subsample-max-sequences 2001" 
 
 subtype: 'vic'
