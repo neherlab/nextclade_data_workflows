@@ -1,9 +1,17 @@
-rule preprocess:
-    input:
-        sequences = "pre-processed/seqs.aligned.fasta",
-        metadata = "pre-processed/metadata.tsv",
-        sequence_index = "pre-processed/sequence_index.tsv",
-        mutation_summary = "pre-processed/mutation_summary.tsv"
+# rule preprocess:
+#     input:
+#         sequences = "pre-processed/vic.aligned.fasta",
+#         metadata = "pre-processed/metadata.tsv",
+#         sequence_index = "pre-processed/sequence_index.tsv",
+#         mutation_summary = "pre-processed/mutation_summary.tsv"
+
+rule download_clades:
+    message: "Downloading clade definitions from {params.source} -> {output}"
+    output:
+        "data/clades.tsv"
+    params:
+        source = config["urls"]["clades"]
+    shell: "curl {params.source} -o {output}"
 
 rule download:
     output: temp("data/download_{year}.fasta")
@@ -156,7 +164,7 @@ rule subsample:
             {params.filter_arguments} \
             --output {output.sequences} \
             --output-strains {output.strains} \
-            --query "year > 2000" 2>&1 | tee {log}
+            2>&1 | tee {log}
         """
 
 
@@ -284,14 +292,38 @@ rule aa_muts_explicit:
             --output {output.node_data} 2>&1 | tee {log}
         """
 
+rule clades:
+    message: "Adding internal clade labels"
+    input:
+        tree = rules.refine.output.tree,
+        aa_muts = rules.aa_muts_explicit.output.node_data,
+        nuc_muts = rules.ancestral.output.node_data,
+        clades = rules.download_clades.output
+    output:
+        node_data = "build/clades.json"
+    log:
+        "logs/clades.txt"
+    benchmark:
+        "benchmarks/clades.txt"
+    resources:
+        # Memory use scales primarily with size of the node data.
+        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024)
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {output.node_data} 2>&1 | tee {log}
+        """
+
 rule export:
     message: "Exporting data files for auspice"
     input:
-        # tree = rules.refine.output.tree,
-        tree = "build/pruned_tree.nwk",
-        metadata = "pre-processed/metadata_enriched.tsv",
+        tree = rules.refine.output.tree,
+        # tree = "build/pruned_tree.nwk",
+        metadata = rules.enrich_metadata.output.enriched_metadata,
         node_data = 
-            [rules.__dict__[rule].output.node_data for rule in ['ancestral','refine','aa_muts_explicit']],
+            [rules.__dict__[rule].output.node_data for rule in ['ancestral','refine','aa_muts_explicit','clades']],
         auspice_config = config['files']['auspice_config']
     output:
         auspice_json = "auspice/auspice.json",
@@ -309,7 +341,7 @@ rule export:
         augur export v2 \
             --tree {input.tree} \
             --metadata {input.metadata} \
-            --node-data {input.node_data} "build/clock_deviation.json" "build/terminal_branch_length.json"\
+            --node-data {input.node_data}\
             --include-root-sequence \
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
