@@ -12,7 +12,11 @@ files:
   auspice_config: "profiles/b/vic/auspice_config.json"
 
 urls:
-  clades: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
+  clades: 
+    vic: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
+    yam: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
+    h1: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
+    h3: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
 
 # mask: "--mask-from-beginning 11 --mask-from-end 74 "
 
@@ -23,12 +27,16 @@ ancestral:
   inference: "joint"
 
 refine:
-  root: "CY115151" #CY018813 #"CY115151"   #CY18813  
-  coalescent: "skyline"
-  date_inference: "marginal"
-  divergence_unit: "mutations"
-  clock_filter_iqd: 4
+  root:
+    vic: "CY115151" #CY018813 #"CY115151"   #CY18813  
+    yam: "CY115183" #CY018813 #"CY115151"   #CY18813  
+    h1: "CY121680" #CY018813 #"CY115151"   #CY18813  
+    h3: "CY114381" #CY018813 #"CY115151"   #CY18813  
 
-filter: "--min-date 2016 --exclude-where subtype!='vic' --query 'vic_yam<-50' --probabilistic-sampling --group-by continent year --subsample-max-sequences 2001" 
+filter:
+  vic: "--min-date 2016 --exclude-where subtype!='vic' --query 's1_s2<-50 & s1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
+  yam: "--min-date 2016 --exclude-where subtype!='yam' --query 's1_s2>60 & s2_dist<130' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
+  h1: "--min-date 2016 --exclude-where subtype!='h1' --query 's1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
+  h3: "--min-date 2016 --exclude-where subtype!='h3' --query 's2_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
 
 subtype: 'vic'

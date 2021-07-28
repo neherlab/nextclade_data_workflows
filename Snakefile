@@ -11,11 +11,11 @@ wildcard_constraints:
 
 
 rule download_clades:
-    message: "Downloading clade definitions from {params.source} -> {output}"
+    message: "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
     output:
-        "data/clades.tsv"
+        "data/clades_{strain}.tsv"
     params:
-        source = config["urls"]["clades"]
+        source = lambda w: config["urls"]["clades"][w.strain]
     shell: "curl {params.source} -o {output}"
 
 rule download:
@@ -50,7 +50,7 @@ rule clean_download:
 
 rule join_downloads:
     input: 
-        expand("data/cleaned_download_{{flu_type}}_{{segment}}_{year}.fasta",year=range(2000,2022))
+        expand("data/cleaned_download_{{flu_type}}_{{segment}}_{year}.fasta",year=range(1989,2022))
     output: "data/download_{flu_type}_{segment}.fasta"
     shell: "cat {input} >> {output}"
 
@@ -169,31 +169,30 @@ rule mutation_summary:
 
 rule enrich_metadata:
     input:
-        metadata = expand(rules.parse.output.metadata,flu_type='B',segment=4),
-        mutation_summary = expand(rules.mutation_summary.output.mutation_summary,reference=['yam','vic'],segment="4",flu_type='B')
+        metadata = lambda w:  expand(rules.parse.output.metadata,segment="4",flu_type=w.flu_type),
+        mutation_summary = lambda w: expand(rules.mutation_summary.output.mutation_summary,reference=(['yam','vic'] if w.flu_type == 'B' else ['h1','h3']),segment="4",flu_type=w.flu_type)
     output:
-        enriched_metadata = "pre-processed/metadata_enriched.tsv"
-    log: "logs/metadata_enrichment.txt"
+        enriched_metadata = "pre-processed/metadata_enriched_{flu_type}.tsv"
+    log: "logs/metadata_enrichment_{flu_type}.txt"
     shell:
         """
         python3 scripts/metadata_enrichment.py \
+            --flu-type {wildcards.flu_type} \
             2>&1 | tee {log}
         """
 
 rule subsample:
     input:
-        sequences = expand("pre-processed/{subtype}.aligned.fasta",subtype=config['subtype']),
-        metadata = "pre-processed/metadata_enriched.tsv",
+        sequences = "pre-processed/{strain}_{segment}.aligned.fasta",
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}.tsv",
     output:
-        sequences = expand("build/{subtype}_subsample.fasta",subtype=config['subtype']),
-        strains = expand("build/{subtype}_subsample.txt",subtype=config['subtype']),
+        sequences = "build/{strain}/{segment}/subsample.fasta",
+        strains = "build/{strain}/{segment}/subsample.txt",
     log:
-        "logs/subsample.txt"
-    benchmark:
-        "benchmarks/subsample.txt"
+        "logs/subsample_{strain}_{segment}.txt",
     params:
-        filter_arguments = config["filter"],
-        include = config['refine']['root'],
+        filter_arguments = lambda w: config["filter"][w.strain],
+        include = lambda w: config['refine']['root'][w.strain],
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -215,13 +214,11 @@ rule tree:
     input:
         alignment = rules.subsample.output.sequences
     output:
-        tree = "build/tree_raw.nwk"
+        tree = "build/{strain}/{segment}/tree_raw.nwk"
     params:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
     log:
-        "logs/tree.txt"
-    benchmark:
-        "benchmarks/tree.txt"
+        "logs/tree_{strain}_{segment}.txt"
     threads: 1
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
@@ -245,14 +242,12 @@ rule refine:
     input:
         tree = rules.tree.output.tree,
         alignment = rules.subsample.output.sequences,
-        metadata = "pre-processed/metadata_enriched.tsv"
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}.tsv"
     output:
-        tree = "build/tree.nwk",
-        node_data = "build/branch_lengths.json"
+        tree = "build/{strain}/{segment}/tree.nwk",
+        node_data = "build/{strain}/{segment}/branch_lengths.json"
     log:
-        "logs/refine.txt"
-    benchmark:
-        "benchmarks/refine.txt"
+        "logs/refine_{strain}_{segment}.txt"
     threads: 1
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
@@ -260,8 +255,8 @@ rule refine:
         # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
         mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     params:
-        root = config["refine"]["root"],
-        divergence_unit = config["refine"].get("divergence_unit", 'mutations'),
+        root = lambda w: config["refine"]["root"][w.strain],
+        divergence_unit = "mutations",
     shell:
         """
         augur refine \
@@ -285,11 +280,9 @@ rule ancestral:
         tree = rules.refine.output.tree,
         alignment = rules.subsample.output.sequences,
     output:
-        node_data = "build/nt_muts.json"
+        node_data = "build/{strain}/{segment}/nt_muts.json"
     log:
-        "logs/ancestral.txt"
-    benchmark:
-        "benchmarks/ancestral.txt"
+        "logs/ancestral_{strain}_{segment}.txt"
     params:
         inference = config["ancestral"]["inference"]
     resources:
@@ -311,16 +304,15 @@ rule aa_muts_explicit:
     message: "Translating amino acid sequences"
     input:
         tree = rules.refine.output.tree,
-        translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
+        # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
     output:
-        node_data = "build/aa_muts_explicit.json",
+        node_data = "build/{strain}/{segment}/aa_muts_explicit.json",
         # translations = vic.gene.HA_withInternalNodes.fasta
     params:
-        genes = genes
+        genes = lambda w: genes(w.strain,w.segment)['genes'],
+        translations = lambda w: expand("pre-processed/{strain}_{segment}.gene.{genes}.fasta",strain=w.strain,segment=w.segment,genes=genes(w.strain,w.segment)['genes']),
     log:
-        "logs/aamuts.txt"
-    benchmark:
-        "benchmarks/aamuts.txt"
+        "logs/aamuts_{strain}_{segment}.txt"
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
         # memory.
@@ -330,7 +322,7 @@ rule aa_muts_explicit:
         """
         python3 scripts/explicit_translation.py \
             --tree {input.tree} \
-            --translations {input.translations:q} \
+            --translations {params.translations:q} \
             --genes {params.genes} \
             --output {output.node_data} 2>&1 | tee {log}
         """
@@ -343,11 +335,9 @@ rule clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = rules.download_clades.output
     output:
-        node_data = "build/clades.json"
+        node_data = "build/{strain}/{segment}/clades.json"
     log:
-        "logs/clades.txt"
-    benchmark:
-        "benchmarks/clades.txt"
+        "logs/clades_{strain}_{segment}.txt"
     resources:
         # Memory use scales primarily with size of the node data.
         mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024)
@@ -364,21 +354,19 @@ rule export:
     input:
         tree = rules.refine.output.tree,
         # tree = "build/pruned_tree.nwk",
-        metadata = rules.enrich_metadata.output.enriched_metadata,
+        metadata = lambda w: expand(rules.enrich_metadata.output.enriched_metadata,flu_type=flu_type(w.strain)),
         node_data = 
             [rules.__dict__[rule].output.node_data for rule in ['ancestral','refine','aa_muts_explicit','clades']],
         auspice_config = config['files']['auspice_config']
     output:
-        auspice_json = "auspice/auspice.json",
+        auspice_json = "auspice/{strain}/{segment}/auspice.json",
     log:
-        "logs/export.txt"
-    benchmark:
-        "benchmarks/export.txt"
+        "logs/export_{strain}_{segment}.txt"
     params:
         fields = "continent country fluSeason strainName"
     resources:
         # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
+        mem_mb=100
     shell:
         """
         augur export v2 \
