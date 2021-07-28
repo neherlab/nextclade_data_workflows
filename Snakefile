@@ -4,6 +4,11 @@
 #         metadata = "pre-processed/metadata.tsv",
 #         sequence_index = "pre-processed/sequence_index.tsv",
 #         mutation_summary = "pre-processed/mutation_summary.tsv"
+wildcard_constraints:
+    flu_type="[AB]",
+    segment="\d",
+    year="\d\d\d\d",
+
 
 rule download_clades:
     message: "Downloading clade definitions from {params.source} -> {output}"
@@ -14,25 +19,25 @@ rule download_clades:
     shell: "curl {params.source} -o {output}"
 
 rule download:
-    output: temp("data/download_{year}.fasta")
-    log: 'logs/download_{year}'
-    shell: 
+    output: temp("data/download_{flu_type}_{segment}_{year}.fasta")
+    log: 'logs/download_{flu_type}_{segment}_{year}'
+    shell:
         "curl -ksSL -o {output} "
         "'https://www.viprbrc.org/brc/api/sequence?"
         "datatype=genome&"
         "completeseq=Y&"
         "family=influenza&"
-        "flutype=B&"
+        "flutype={wildcards.flu_type}&"
         "fromyear={wildcards.year}&"
         "toyear={wildcards.year}&"
-        "segment=4&"
+        "segment={wildcards.segment}&"
         "host=human&"
         "metadata=ncbiAcc,continent,country,date,fluSeason,fluType,host,length,state,strainName&"
         "output=fasta' > {log}"
 
 rule clean_download:
     input: rules.download.output
-    output: "data/cleaned_download_{year}.fasta"
+    output: temp("data/cleaned_download_{flu_type}_{segment}_{year}.fasta")
     shell: 
         """
         if [ $(wc -l < {input}) -lt 2 ]
@@ -45,17 +50,16 @@ rule clean_download:
 
 rule join_downloads:
     input: 
-        expand("data/cleaned_download_{year}.fasta",year=range(1980,2022))
-
-    output: "data/download.fasta"
+        expand("data/cleaned_download_{{flu_type}}_{{segment}}_{year}.fasta",year=range(2000,2022))
+    output: "data/download_{flu_type}_{segment}.fasta"
     shell: "cat {input} >> {output}"
 
 rule parse:
     input:
         sequences = rules.join_downloads.output
     output:
-        metadata = "pre-processed/metadata.tsv",
-        sequences = "data/sequences.fasta"
+        metadata = "pre-processed/metadata_{flu_type}_{segment}.tsv",
+        sequences = "data/sequences_{flu_type}_{segment}.fasta"
     params:
         fields = "ncbiAcc continent country date fluSeason fluType host length state strainName"
     shell:
@@ -69,22 +73,57 @@ rule parse:
 
 genes = ["SigPep","HA1","HA2"]
 
+def flu_type(reference):
+    if reference in ["vic","yam"]:
+        return "B"
+    return "A"
+
+def genes(reference,segment):
+    segment = int(segment)
+    if reference in ["vic","yam"] and segment <= 2:
+        if segment == 1:
+            segment == 2
+        else:
+            segment == 1 
+    genes = [
+        ["PB2"],
+        ["PB1"],
+        ["PA"],
+        ["SigPep","HA1","HA2"],
+        ["NP"],
+        ["NA"],
+        ["MA"],
+        ["MS"],
+    ]
+    seg_name = [
+        "PB2",
+        "PB1",
+        "PA",
+        "HA",
+        "NP",
+        "NA",
+        "MA",
+        "MS",
+    ]
+    return {'genes': genes[segment-1], 'seg_name': seg_name[segment-1].lower()}
+
 rule prealign:
     input:
-        sequences = rules.parse.output.sequences,
-        genemap = lambda w: config["files"]["annotation"][w.reference],
-        reference = lambda w: config["files"]["alignment_reference"][w.reference]
+        sequences = lambda w: expand(rules.parse.output.sequences,flu_type=flu_type(w.reference),segment=w.segment),
+        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/genemap.gff",
+        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/reference.fasta"
     output:
-        alignment = "pre-processed/{reference}.aligned.fasta",
-        insertions = "pre-processed/{reference}.insertions.csv",
-        translations = expand("pre-processed/{{reference}}.gene.{genes}.fasta",genes=genes)
+        alignment = "pre-processed/{reference}_{segment}.aligned.fasta",
+        insertions = "pre-processed/{reference}_{segment}.insertions.csv",
+        # translations = "pre-processed/{reference}_{segment}.gene.{params.genes}.fasta"
     params:
         outdir = "pre-processed",
-        genes = ",".join(genes)
+        basename = lambda w: f"{w.reference}_{w.segment}",
+        genes = lambda w: ",".join(genes(w.reference,w.segment)['genes']),
     log:
-        "logs/{reference}_prealign.txt"
+        "logs/{reference}_{segment}_prealign.txt"
     benchmark:
-        "benchmarks/{reference}_align.txt"
+        "benchmarks/{reference}_{segment}_align.txt"
     shell:
         """
         nextalign \
@@ -93,7 +132,8 @@ rule prealign:
             --genes {params.genes} \
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
-            --output-basename {wildcards.reference}
+            --output-basename {params.basename} \
+        > {log} 2>&1
         """
 
 rule mutation_summary:
@@ -101,19 +141,19 @@ rule mutation_summary:
     input:
         alignment = rules.prealign.output.alignment,
         insertions = rules.prealign.output.insertions,
-        translations = rules.prealign.output.translations,
-        reference = lambda w: config["files"]["alignment_reference"][w.reference],
-        genemap = lambda w: config["files"]["annotation"][w.reference]
+        # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
+        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/genemap.gff",
+        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/reference.fasta"
     output:
-        mutation_summary = "pre-processed/{reference}.mutation_summary.tsv"
+        mutation_summary = "pre-processed/{reference}_{segment}.mutation_summary.tsv"
     log:
-        "logs/{reference}_mutation_summary.txt"
+        "logs/{reference}_{segment}_mutation_summary.txt"
     benchmark:
-        "benchmarks/{reference}_mutation_summary.txt"
+        "benchmarks/{reference}_{segment}_mutation_summary.txt"
     params:
         outdir = "pre-processed",
-        basename = lambda w: w.reference,
-        genes= genes
+        basename = lambda w: f"{w.reference}_{w.segment}",
+        genes = lambda w: ",".join(genes(w.reference,w.segment)['genes']),
     shell:
         """
         python3 scripts/mutation_summary.py \
@@ -129,8 +169,8 @@ rule mutation_summary:
 
 rule enrich_metadata:
     input:
-        metadata = rules.parse.output.metadata,
-        mutation_summary = expand(rules.mutation_summary.output.mutation_summary,reference=['yam','vic'])
+        metadata = expand(rules.parse.output.metadata,flu_type='B',segment=4),
+        mutation_summary = expand(rules.mutation_summary.output.mutation_summary,reference=['yam','vic'],segment="4",flu_type='B')
     output:
         enriched_metadata = "pre-processed/metadata_enriched.tsv"
     log: "logs/metadata_enrichment.txt"
@@ -182,7 +222,7 @@ rule tree:
         "logs/tree.txt"
     benchmark:
         "benchmarks/tree.txt"
-    threads: 8
+    threads: 1
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
         # memory, especially for larger alignments.
@@ -271,7 +311,7 @@ rule aa_muts_explicit:
     message: "Translating amino acid sequences"
     input:
         tree = rules.refine.output.tree,
-        translations = expand(rules.prealign.output.translations,reference="vic")
+        translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
     output:
         node_data = "build/aa_muts_explicit.json",
         # translations = vic.gene.HA_withInternalNodes.fasta

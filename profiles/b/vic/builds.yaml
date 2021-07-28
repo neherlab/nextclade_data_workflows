@@ -1,10 +1,14 @@
 files:
   alignment_reference: 
-    "vic": "profiles/b/vic/reference.fasta"
-    "yam": "profiles/b/yam/reference.fasta"
+    "vic": 
+      "4": "profiles/b/vic/reference.fasta"
+    "yam": 
+      "4": "profiles/b/yam/reference.fasta"
   annotation: 
-    "vic": "profiles/b/vic/genemap.gff"
-    "yam": "profiles/b/yam/genemap.gff"
+    "vic": 
+      "4": "profiles/b/vic/genemap.gff"
+    "yam": 
+      "4": "profiles/b/yam/genemap.gff"
   auspice_config: "profiles/b/vic/auspice_config.json"
 
 urls:
