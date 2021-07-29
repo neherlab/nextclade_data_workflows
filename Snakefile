@@ -82,9 +82,9 @@ def genes(reference,segment):
     segment = int(segment)
     if reference in ["vic","yam"] and segment <= 2:
         if segment == 1:
-            segment == 2
+            segment = 2
         else:
-            segment == 1 
+            segment = 1 
     genes = [
         ["PB2"],
         ["PB1"],
