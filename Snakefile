@@ -32,7 +32,7 @@ rule download:
         "toyear={wildcards.year}&"
         "segment={wildcards.segment}&"
         "host=human&"
-        "metadata=ncbiAcc,continent,country,date,fluSeason,fluType,host,length,state,strainName&"
+        "metadata=continent,country,date,fluSeason,fluType,host,length,state,strainName&"
         "output=fasta' > {log}"
 
 rule clean_download:
@@ -192,7 +192,7 @@ rule subsample:
         "logs/subsample_{strain}_{segment}.txt",
     params:
         filter_arguments = lambda w: config["filter"][w.strain],
-        include = lambda w: config['refine']['root'][w.strain],
+        include = lambda w: config['refine']['root'][w.strain][w.segment],
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -255,7 +255,7 @@ rule refine:
         # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
         mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     params:
-        root = lambda w: config["refine"]["root"][w.strain],
+        root = lambda w: config["refine"]["root"][w.strain][w.segment],
         divergence_unit = "mutations",
     shell:
         """
