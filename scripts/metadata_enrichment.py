@@ -134,7 +134,7 @@ def enrich(flu_type):
         try:
             split_string = list(map(str, string.split("-")))
         except:
-            return ("XX", "XX", "XX")
+            return ("XXXX", "XX", "XX")
         length = len(split_string)
         if length == 1:
             date = (split_string[0], "XX", "XX")
@@ -170,7 +170,7 @@ def enrich(flu_type):
     r = profile['refine']['root']
     # roots = ["CY115151", "CY114381", "CY121680", "CY115183"]
     roots = [item for key in r.keys() for item in r[key].values() ]
-    print(roots)
+    # print(roots)
     keep = meta[meta.ncbiAcc.isin(roots)]
     meta = pd.concat(
         [

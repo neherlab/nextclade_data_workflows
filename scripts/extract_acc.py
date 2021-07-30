@@ -1,6 +1,6 @@
 #%%
 import pandas as pd
-import PyYAML as yaml
+import yaml
 
 #%%
 roots = ["CY115151", "CY114381", "CY121680", "CY115183"]
@@ -43,4 +43,6 @@ for strain in strainNames:
         temp[segment] = acc(strain,segment)
     root[strain] = temp
 root
+# %%
+yaml.dump(root, open("acc.yaml", "w"))
 # %%

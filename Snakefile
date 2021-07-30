@@ -93,7 +93,7 @@ def genes(reference,segment):
         ["NP"],
         ["NA"],
         ["MA"],
-        ["MS"],
+        ["NS2"],
     ]
     seg_name = [
         "PB2",
@@ -103,7 +103,7 @@ def genes(reference,segment):
         "NP",
         "NA",
         "MA",
-        "MS",
+        "NS",
     ]
     return {'genes': genes[segment-1], 'seg_name': seg_name[segment-1].lower()}
 
@@ -181,10 +181,25 @@ rule enrich_metadata:
             2>&1 | tee {log}
         """
 
+rule merge_metadata:
+    input:
+        enriched_metadata = lambda w:  expand(rules.enrich_metadata.output.enriched_metadata,flu_type=w.flu_type),
+        metadata = lambda w: expand(rules.parse.output.metadata, segment=w.segment,flu_type=w.flu_type)
+    output:
+        merged_metadata = "pre-processed/metadata_enriched_{flu_type}_{segment}.tsv"
+    log: "logs/metadata_merging_{flu_type}_{segment}.txt"
+    shell:
+        """
+        python3 scripts/merge_metadata.py \
+            --flu-type {wildcards.flu_type} \
+            --segment {wildcards.segment} \
+            2>&1 | tee {log}
+        """
+
 rule subsample:
     input:
         sequences = "pre-processed/{strain}_{segment}.aligned.fasta",
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}.tsv",
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
     output:
         sequences = "build/{strain}/{segment}/subsample.fasta",
         strains = "build/{strain}/{segment}/subsample.txt",
@@ -349,14 +364,20 @@ rule clades:
             --output-node-data {output.node_data} 2>&1 | tee {log}
         """
 
+def node_data(w):
+    nodes = ['ancestral','refine','aa_muts_explicit']
+    if w.segment == 1:
+        nodes.extend('clades')
+    return nodes
+
 rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
         # tree = "build/pruned_tree.nwk",
-        metadata = lambda w: expand(rules.enrich_metadata.output.enriched_metadata,flu_type=flu_type(w.strain)),
-        node_data = 
-            [rules.__dict__[rule].output.node_data for rule in ['ancestral','refine','aa_muts_explicit','clades']],
+        metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment=w.segment),
+        node_data = lambda w:
+            [rules.__dict__[rule].output.node_data for rule in node_data(w)],
         auspice_config = config['files']['auspice_config']
     output:
         auspice_json = "auspice/{strain}/{segment}/auspice.json",
