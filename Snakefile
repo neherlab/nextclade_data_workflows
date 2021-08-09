@@ -366,15 +366,15 @@ rule clades:
 
 def node_data(w):
     nodes = ['ancestral','refine','aa_muts_explicit']
-    if w.segment == 1:
-        nodes.extend('clades')
+    if w.segment == "4":
+        nodes.extend(['clades'])
     return nodes
 
 rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
-        # tree = "build/pruned_tree.nwk",
+        # tree = "build/pruned_tree.nwk,
         metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment=w.segment),
         node_data = lambda w:
             [rules.__dict__[rule].output.node_data for rule in node_data(w)],
@@ -384,7 +384,7 @@ rule export:
     log:
         "logs/export_{strain}_{segment}.txt"
     params:
-        fields = "continent country fluSeason strainName"
+        fields = "continent fluSeason strainName country" #took out country cause it brakes nextclade
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=100
@@ -398,4 +398,43 @@ rule export:
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
             --output {output.auspice_json} 2>&1 | tee {log};
+        """
+
+rule test_sample:
+    input:
+        sequences = "pre-processed/{strain}_{segment}.aligned.fasta",
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
+    output:
+        sequences = "test/{strain}_{segment}_sample.fasta",
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --min-date 2019 --exclude-where subtype!='vic' --group-by continent year --subsample-max-sequences 200  \
+            --output {output.sequences} \
+            2>&1 | tee {log}
+        """
+rule test_nextclade:
+    input:
+        sequences = rules.test_sample.output.sequences,
+    output:
+        sequences = "test/{strain}_{segment}_nextclade.auspice.json",
+    params:
+        root = lambda w: config["refine"]["root"][w.strain][w.segment],
+    shell:
+        """
+        nextclade \
+         --input-fasta={input.sequences}\
+        --input-root-seq=auspice/vic/4/auspice_root-sequence.json\
+         --genes=SigPep,HA1,HA2\
+         --input-qc-config=qc.json\
+         --input-gene-map=references/vic/ha/genemap.gff\
+         --input-tree=auspice/vic/4/auspice.json\
+         --output-json=test/nextclade.json\
+         --output-csv=test/nextclade.csv\
+         --output-tsv=test/nextclade.tsv\
+         --output-tree=test/nextclade.auspice.json\
+         --output-dir=test/{wildcards.strain}_{wildcards.segment}\
+         --output-basename=nextclade 2>&1
         """
