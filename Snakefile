@@ -4,6 +4,8 @@
 #         metadata = "pre-processed/metadata.tsv",
 #         sequence_index = "pre-processed/sequence_index.tsv",
 #         mutation_summary = "pre-processed/mutation_summary.tsv"
+from datetime import datetime
+
 wildcard_constraints:
     flu_type="[AB]",
     segment="\d",
@@ -384,7 +386,7 @@ rule export:
     log:
         "logs/export_{strain}_{segment}.txt"
     params:
-        fields = "continent fluSeason strainName country" #took out country cause it brakes nextclade
+        fields = "continent fluSeason strainName" #deleted country" 
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=100
@@ -399,6 +401,7 @@ rule export:
             --color-by-metadata {params.fields} \
             --output {output.auspice_json} 2>&1 | tee {log};
         """
+
 
 rule test_sample:
     input:
@@ -415,26 +418,80 @@ rule test_sample:
             --output {output.sequences} \
             2>&1 | tee {log}
         """
-rule test_nextclade:
+
+
+
+def segment_no(strain,segment_name) -> str:
+    "Return the segment number for a strain and segment name."
+    names = [
+        "PB2",
+        "PB1",
+        "PA",
+        "HA",
+        "NP",
+        "NA",
+        "MA",
+        "NS",
+    ] 
+    segment_no = names.index(segment_name.upper()) + 1
+    if strain in ["vic","yam"] and segment_no <= 2:
+        if segment_no == 1:
+            segment_no = 2
+        else:
+            segment_no = 1 
+    return str(segment_no)
+
+# make segment_no function
+rule assemble_folder:
     input:
-        sequences = rules.test_sample.output.sequences,
+        genemap = "references/{strain}/{segment_name}/genemap.gff",
+        sequences = lambda w: expand(rules.test_sample.output.sequences,strain=w.strain,segment=segment_no(w.strain,w.segment_name)),
+        reference = lambda w: expand("auspice/{strain}/{segment_no}/auspice_root-sequence.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), 
+        # --genes=SigPep,HA1,HA2\
+        qc = "profiles/qc.json",
+        tree = lambda w: expand("auspice/{strain}/{segment_no}/auspice.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), #output from export
+        metadata = "profiles/metadata.json",
+        primers = "profiles/primers.csv",
     output:
-        sequences = "test/{strain}_{segment}_nextclade.auspice.json",
-    params:
-        root = lambda w: config["refine"]["root"][w.strain][w.segment],
+        genemap = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/genemap.gff",
+        primers = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/primers.csv",
+        qc = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/qc.json",
+        reference = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/reference.fasta",
+        sequences = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/sequences.fasta",
+        tree = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tree.json",
+        metadata = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/metadata.json",
     shell:
         """
-        nextclade \
-         --input-fasta={input.sequences}\
-        --input-root-seq=auspice/vic/4/auspice_root-sequence.json\
+        mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/versions/{wildcards.timestamp}/files/;
+        jq <{input.metadata} '.datetime="{wildcards.timestamp}"' >{output.metadata};
+        cp {input.genemap} {output.genemap};
+        cp {input.primers} {output.primers};
+        cp {input.qc} {output.qc};
+        jq -r '.nuc' <{input.reference} >{output.reference};
+        cp {input.sequences} {output.sequences};
+        cp {input.tree} {output.tree};
+        """
+
+timestamp = datetime.utcnow().isoformat()[:-7]+'Z'
+rule test_nextclade:
+    input: expand("output/flu_vic_ha/versions/{timestamp}/files/tree.json",timestamp=timestamp)
+    params: 
+        dir = expand("output/flu_vic_ha/versions/{timestamp}/files",timestamp=timestamp)
+    shell:
+        """
+        /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
+         --input-fasta={params.dir}/sequences.fasta\
+         --input-root-seq={params.dir}/reference.fasta\
          --genes=SigPep,HA1,HA2\
-         --input-qc-config=qc.json\
-         --input-gene-map=references/vic/ha/genemap.gff\
-         --input-tree=auspice/vic/4/auspice.json\
-         --output-json=test/nextclade.json\
-         --output-csv=test/nextclade.csv\
+         --input-qc-config={params.dir}/qc.json\
+         --input-gene-map={params.dir}/genemap.gff\
+         --input-tree={params.dir}/tree.json\
+         --output-dir=test\
          --output-tsv=test/nextclade.tsv\
          --output-tree=test/nextclade.auspice.json\
-         --output-dir=test/{wildcards.strain}_{wildcards.segment}\
          --output-basename=nextclade 2>&1
         """
+
+rule all:
+    input: expand("output/flu_vic_ha/versions/{timestamp}/files/tree.json",timestamp=timestamp)
+
