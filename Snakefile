@@ -301,7 +301,7 @@ rule ancestral:
     log:
         "logs/ancestral_{strain}_{segment}.txt"
     params:
-        inference = config["ancestral"]["inference"]
+        inference = "joint"
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
         # memory.
@@ -384,7 +384,7 @@ rule export:
         metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment=w.segment),
         node_data = lambda w:
             [rules.__dict__[rule].output.node_data for rule in node_data(w)],
-        auspice_config = config['files']['auspice_config']
+        auspice_config = lambda w: config['files']['auspice_config']
     output:
         auspice_json = "auspice/{strain}/{segment}/auspice.json",
         auspice_root_sequence_json = "auspice/{strain}/{segment}/auspice_root-sequence.json",
@@ -406,26 +406,6 @@ rule export:
             --color-by-metadata {params.fields} \
             --output {output.auspice_json} 2>&1 | tee {log};
         """
-
-
-rule test_sample:
-    input:
-        sequences = "pre-processed/{strain}_{segment}.aligned.fasta",
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
-    output:
-        sequences = "test/{strain}_{segment}_sample.fasta",
-    shell:
-        """
-        augur filter \
-            --sequences {input.sequences} \
-            --metadata {input.metadata} \
-            --min-date 2019 --exclude-where subtype!='{wildcards.strain}' --group-by continent year --subsample-max-sequences 50  \
-            --output {output.sequences} \
-            2>&1 | tee {log}
-        """
-
-
-
 def segment_no(strain,segment_name) -> str:
     "Return the segment number for a strain and segment name."
     names = [
@@ -446,11 +426,29 @@ def segment_no(strain,segment_name) -> str:
             segment_no = 1 
     return str(segment_no)
 
+rule test_sample:
+    input:
+        sequences = "pre-processed/{strain}_{segment_no}.aligned.fasta",
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment_no}.tsv",
+    output:
+        sequences = "build/{strain}/{segment_no}/sample.fasta",
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --min-date 2019 --exclude-where subtype!='{wildcards.strain}' --group-by continent year --subsample-max-sequences 50  \
+            --output {output.sequences} \
+            2>&1 | tee {log}
+        """
+
+
+
 # make segment_no function
 rule assemble_folder:
     input:
         genemap = "references/{strain}/{segment_name}/genemap.gff",
-        sequences = lambda w: expand(rules.test_sample.output.sequences,strain=w.strain,segment=segment_no(w.strain,w.segment_name)),
+        sequences = lambda w: expand(rules.test_sample.output.sequences,strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)),
         reference = lambda w: expand("auspice/{strain}/{segment_no}/auspice_root-sequence.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), 
         # --genes=SigPep,HA1,HA2\
         qc = "profiles/qc.json",
@@ -480,24 +478,30 @@ rule assemble_folder:
 timestamp = datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
     input: expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files/tree.json",timestamp=timestamp),
-    output: touch("test_{strain}_{segment_name}")
+    output: "test/{strain}/{segment_name}/nextclade.aligned.fasta"
     params: 
-        dir = expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files",timestamp=timestamp)
+        indir = expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files",timestamp=timestamp),
+        outdir = "test/{strain}/{segment_name}/"
     shell:
         """
         /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
-         --input-fasta={params.dir}/sequences.fasta\
-         --input-root-seq={params.dir}/reference.fasta\
+         --input-fasta={params.indir}/sequences.fasta\
+         --input-root-seq={params.indir}/reference.fasta\
          --genes=SigPep,HA1,HA2\
-         --input-qc-config={params.dir}/qc.json\
-         --input-gene-map={params.dir}/genemap.gff\
-         --input-tree={params.dir}/tree.json\
-         --output-dir=test\
-         --output-tsv=test/nextclade.tsv\
-         --output-tree=test/nextclade.auspice.json\
+         --input-qc-config={params.indir}/qc.json\
+         --input-gene-map={params.indir}/genemap.gff\
+         --input-tree={params.indir}/tree.json\
+         --output-dir={params.outdir}\
+         --output-tsv={params.outdir}/nextclade.tsv\
+         --output-tree={params.outdir}/nextclade.auspice.json\
          --output-basename=nextclade 2>&1
         """
 
 rule all:
-    input: expand("output/flu_vic_ha/versions/{timestamp}/files/tree.json",timestamp=timestamp)
+    input: expand("test/{strain}/{segment_name}/nextclade.aligned.fasta",strain=["vic","yam","h1n1pdm","h3n2"],segment_name="HA")
 
+rule clean:
+    shell:
+        """
+        rm -rf output test
+        """
