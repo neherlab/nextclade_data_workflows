@@ -172,7 +172,7 @@ rule mutation_summary:
 rule enrich_metadata:
     input:
         metadata = lambda w:  expand(rules.parse.output.metadata,segment="4",flu_type=w.flu_type),
-        mutation_summary = lambda w: expand(rules.mutation_summary.output.mutation_summary,reference=(['yam','vic'] if w.flu_type == 'B' else ['h1','h3']),segment="4",flu_type=w.flu_type)
+        mutation_summary = lambda w: expand(rules.mutation_summary.output.mutation_summary,reference=(['yam','vic'] if w.flu_type == 'B' else ['h1n1pdm','h3n2']),segment="4",flu_type=w.flu_type)
     output:
         enriched_metadata = "pre-processed/metadata_enriched_{flu_type}.tsv"
     log: "logs/metadata_enrichment_{flu_type}.txt"
@@ -236,7 +236,7 @@ rule tree:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
     log:
         "logs/tree_{strain}_{segment}.txt"
-    threads: 1
+    threads: 8
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
         # memory, especially for larger alignments.
@@ -265,7 +265,7 @@ rule refine:
         node_data = "build/{strain}/{segment}/branch_lengths.json"
     log:
         "logs/refine_{strain}_{segment}.txt"
-    threads: 1
+    threads: 8
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
         # memory.
@@ -383,6 +383,7 @@ rule export:
         auspice_config = config['files']['auspice_config']
     output:
         auspice_json = "auspice/{strain}/{segment}/auspice.json",
+        auspice_root_sequence_json = "auspice/{strain}/{segment}/auspice_root-sequence.json",
     log:
         "logs/export_{strain}_{segment}.txt"
     params:
@@ -414,7 +415,7 @@ rule test_sample:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --min-date 2019 --exclude-where subtype!='vic' --group-by continent year --subsample-max-sequences 200  \
+            --min-date 2019 --exclude-where subtype!='{wildcards.strain}' --group-by continent year --subsample-max-sequences 50  \
             --output {output.sequences} \
             2>&1 | tee {log}
         """
@@ -474,9 +475,10 @@ rule assemble_folder:
 
 timestamp = datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
-    input: expand("output/flu_vic_ha/versions/{timestamp}/files/tree.json",timestamp=timestamp)
+    input: expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files/tree.json",timestamp=timestamp),
+    output: touch("test_{strain}_{segment_name}")
     params: 
-        dir = expand("output/flu_vic_ha/versions/{timestamp}/files",timestamp=timestamp)
+        dir = expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files",timestamp=timestamp)
     shell:
         """
         /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \

@@ -1,22 +1,12 @@
 files:
-  alignment_reference: 
-    "vic": 
-      "4": "profiles/b/vic/reference.fasta"
-    "yam": 
-      "4": "profiles/b/yam/reference.fasta"
-  annotation: 
-    "vic": 
-      "4": "profiles/b/vic/genemap.gff"
-    "yam": 
-      "4": "profiles/b/yam/genemap.gff"
   auspice_config: "profiles/b/vic/auspice_config.json"
 
 urls:
   clades: 
     vic: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
     yam: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
-    h1: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
-    h3: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
+    h1n1pdm: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
+    h3n2: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
 
 # mask: "--mask-from-beginning 11 --mask-from-end 74 "
 
@@ -32,7 +22,7 @@ refine:
     # yam: "CY115183" #CY018813 #"CY115151"   #CY18813  
     # h1: "CY121680" #CY018813 #"CY115151"   #CY18813  
     # h3: "CY114381" #CY018813 #"CY115151"   #CY18813  
-    h1:
+    h1n1pdm:
       '1': KC781783
       '2': CY266197
       '3': CY121685
@@ -41,7 +31,7 @@ refine:
       '6': FJ984386
       '7': KC781788
       '8': CY266195
-    h3:
+    h3n2:
       '1': CY034123
       '2': CY034122
       '3': CY034121
@@ -72,7 +62,7 @@ refine:
 filter:
   vic: "--min-date 2016 --exclude-where subtype!='vic' --query 's1_s2<-50 & s1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
   yam: "--min-date 2016 --exclude-where subtype!='yam' --query 's1_s2>60 & s2_dist<130' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
-  h1: "--min-date 2016 --exclude-where subtype!='h1' --query 's1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
-  h3: "--min-date 2016 --exclude-where subtype!='h3' --query 's2_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
+  h1n1pdm: "--min-date 2016 --exclude-where subtype!='h1n1pdm' --query 's1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
+  h3n2: "--min-date 2016 --exclude-where subtype!='h3n2' --query 's2_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
 
 subtype: 'vic'

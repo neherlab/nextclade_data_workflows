@@ -5,6 +5,12 @@ flu/*
 logs/*
 pre-processed/*
 build/*
+auspice/*
+output/*
+test/*
+test*
 
 .DS_Store
 .vscode/*
+
+nextstrain.yml

@@ -89,8 +89,8 @@ def enrich(flu_type):
         strain_1 = "vic"
         strain_2 = "yam"
     else:
-        strain_1 = "h1"
-        strain_2 = "h3"
+        strain_1 = "h1n1pdm"
+        strain_2 = "h3n2"
 
     s1 = pd.read_csv(
         f"pre-processed/{strain_1}_4.mutation_summary.tsv",
