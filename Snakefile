@@ -322,6 +322,8 @@ rule aa_muts_explicit:
     input:
         tree = rules.refine.output.tree,
         # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
+        genemap = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/genemap.gff",
+        reference = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/reference.fasta"
     output:
         node_data = "build/{strain}/{segment}/aa_muts_explicit.json",
         # translations = vic.gene.HA_withInternalNodes.fasta
@@ -339,6 +341,8 @@ rule aa_muts_explicit:
         """
         python3 scripts/explicit_translation.py \
             --tree {input.tree} \
+            --annotation {input.genemap} \
+            --reference {input.reference} \
             --translations {params.translations:q} \
             --genes {params.genes} \
             --output {output.node_data} 2>&1 | tee {log}
