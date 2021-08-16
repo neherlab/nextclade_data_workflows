@@ -65,4 +65,11 @@ filter:
   h1n1pdm: "--min-date 2016 --exclude-where subtype!='h1n1pdm' --query 's1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
   h3n2: "--min-date 2016 --exclude-where subtype!='h3n2' --query 's2_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
 
+clades:
+  offset:
+    h3n2: 14
+    vic: 0
+    yam: 0
+    h1n1pdm: 0
+
 subtype: 'vic'

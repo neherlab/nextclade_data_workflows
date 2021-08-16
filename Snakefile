@@ -15,10 +15,25 @@ wildcard_constraints:
 rule download_clades:
     message: "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
     output:
-        "data/clades_{strain}.tsv"
+        "data/clades_{strain}_raw.tsv"
     params:
         source = lambda w: config["urls"]["clades"][w.strain]
     shell: "curl {params.source} -o {output}"
+
+rule offset_clades:
+    input: rules.download_clades.output
+    output:
+        "data/clades_{strain}.tsv"
+    params:
+        offset = lambda w: config["clades"]["offset"][w.strain]
+    shell:
+        """
+        perl -F'\\t' -ne \
+            '$F[2]+={params.offset} if $F[1] =~ "nuc"; \
+            print join "\\t", @F' \
+            {input} \
+            >{output}
+        """
 
 rule download:
     output: temp("data/download_{flu_type}_{segment}_{year}.fasta")
@@ -354,7 +369,7 @@ rule clades:
         tree = rules.refine.output.tree,
         aa_muts = rules.aa_muts_explicit.output.node_data,
         nuc_muts = rules.ancestral.output.node_data,
-        clades = rules.download_clades.output
+        clades = rules.offset_clades.output
     output:
         node_data = "build/{strain}/{segment}/clades.json"
     log:
