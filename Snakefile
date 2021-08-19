@@ -478,10 +478,12 @@ rule assemble_folder:
         sequences = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/sequences.fasta",
         tree = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tree.json",
         tag = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tag.json",
+    params:
+        refSeq = lambda w: config['tag']['referenceSequence'][w.strain],
     shell:
         """
         mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/versions/{wildcards.timestamp}/files/;
-        jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
+        jq <{input.tag} '.tag="{wildcards.timestamp}" | .referenceSequence = "{params.refSeq}"' >{output.tag};
         cp {input.genemap} {output.genemap};
         cp {input.primers} {output.primers};
         cp {input.qc} {output.qc};
