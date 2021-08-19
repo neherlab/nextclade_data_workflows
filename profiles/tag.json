@@ -1,5 +1,5 @@
 { 
-  "datetime": "2021-08-20T00:00:00Z", 
+  "tag": "2021-08-20T00:00:00Z",
   "comment": "feat: Add genome annotations", 
   "compatibility": { 
     "nextcladeCli": { "min": "1.2.0", "max": null }, 

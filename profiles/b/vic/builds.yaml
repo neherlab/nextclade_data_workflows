@@ -1,3 +1,10 @@
+tag:
+  referenceSequence:
+    h1n1pdm: "A/California/07/2009"
+    h3n2: "A/Wisconsin/67/2005"
+    vic: "B/Brisbane/60/2008"
+    yam: "B/Wisconsin/01/2010"
+
 files:
   auspice_config: "profiles/b/vic/auspice_config.json"
 
@@ -60,7 +67,7 @@ refine:
       '8': CY115187
 
 filter:
-  vic: "--min-date 2016 --exclude-where subtype!='vic' --query 's1_s2<-50 & s1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
+  vic: "--min-date 2016 --exclude-where subtype!='vic' --query 's1_s2<-55 & s1_dist<130' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
   yam: "--min-date 2016 --exclude-where subtype!='yam' --query 's1_s2>60 & s2_dist<130' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
   h1n1pdm: "--min-date 2016 --exclude-where subtype!='h1n1pdm' --query 's1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 
   h3n2: "--min-date 2016 --exclude-where subtype!='h3n2' --query 's2_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 200" 

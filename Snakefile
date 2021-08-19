@@ -468,7 +468,7 @@ rule assemble_folder:
         # --genes=SigPep,HA1,HA2\
         qc = "profiles/qc.json",
         tree = lambda w: expand("auspice/{strain}/{segment_no}/auspice.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), #output from export
-        metadata = "profiles/metadata.json",
+        tag = "profiles/tag.json",
         primers = "profiles/primers.csv",
     output:
         genemap = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/genemap.gff",
@@ -477,11 +477,11 @@ rule assemble_folder:
         reference = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/reference.fasta",
         sequences = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/sequences.fasta",
         tree = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tree.json",
-        metadata = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/metadata.json",
+        tag = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tag.json",
     shell:
         """
         mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/versions/{wildcards.timestamp}/files/;
-        jq <{input.metadata} '.datetime="{wildcards.timestamp}"' >{output.metadata};
+        jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
         cp {input.genemap} {output.genemap};
         cp {input.primers} {output.primers};
         cp {input.qc} {output.qc};
@@ -496,7 +496,7 @@ rule test_nextclade:
     output: "test/{strain}/{segment_name}/nextclade.aligned.fasta"
     params: 
         indir = expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files",timestamp=timestamp),
-        outdir = "test/{strain}/{segment_name}/"
+        outdir = "test/{strain}/{segment_name}"
     shell:
         """
         /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
