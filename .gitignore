@@ -1,14 +1,13 @@
-.snakemake/*
-benchmarks/*
-data/*
-flu/*
-logs/*
-pre-processed/*
-build/*
-auspice/*
-output/*
-test/*
-test*
+*/.snakemake
+*/benchmarks
+*/data
+*/flu
+*/logs
+*/pre-processed
+*/build
+*/auspice
+*/output
+*/test
 
 .DS_Store
 .vscode/*
