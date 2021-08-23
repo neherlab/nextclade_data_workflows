@@ -67,10 +67,10 @@ refine:
       '8': CY115187
 
 filter:
-  vic: "--min-date 2016 --exclude-where subtype!='vic' --query 's1_s2<-55 & s1_dist<130' --probabilistic-sampling --group-by continent year --subsample-max-sequences 1000"
-  yam: "--min-date 2016 --exclude-where subtype!='yam' --query 's1_s2>60 & s2_dist<130' --probabilistic-sampling --group-by continent year --subsample-max-sequences 1000"
-  h1n1pdm: "--min-date 2016 --exclude-where subtype!='h1n1pdm' --query 's1_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 1000"
-  h3n2: "--min-date 2016 --exclude-where subtype!='h3n2' --query 's2_dist<150' --probabilistic-sampling --group-by continent year --subsample-max-sequences 1000"
+  vic: "--min-date 2016 --exclude-where subtype!='vic' --query 's1_s2<-55 & s1_dist<130' --probabilistic-sampling --group-by year --subsample-max-sequences 1000"
+  yam: "--min-date 2016 --exclude-where subtype!='yam' --query 's1_s2>60 & s2_dist<130' --probabilistic-sampling --group-by year --subsample-max-sequences 1000"
+  h1n1pdm: "--min-date 2016 --exclude-where subtype!='h1n1pdm' --query 's1_dist<150' --probabilistic-sampling --group-by year --subsample-max-sequences 1000"
+  h3n2: "--min-date 2016 --exclude-where subtype!='h3n2' --query 's2_dist<150' --probabilistic-sampling --group-by year --subsample-max-sequences 1000"
 
 clades:
   offset:

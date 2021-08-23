@@ -42,7 +42,7 @@ rule download:
         "curl -ksSL -o {output} "
         "'https://www.viprbrc.org/brc/api/sequence?"
         "datatype=genome&"
-        "completeseq=Y&"
+        "completeseq=N&"
         "family=influenza&"
         "flutype={wildcards.flu_type}&"
         "fromyear={wildcards.year}&"
