@@ -480,6 +480,7 @@ rule assemble_folder:
         tag = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tag.json",
     params:
         refSeq = lambda w: config['tag']['referenceSequence'][w.strain],
+        refSeqAcc = lambda w: config['refine']['root'][w.strain]['4'],
     shell:
         """
         mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/versions/{wildcards.timestamp}/files/;
@@ -487,7 +488,8 @@ rule assemble_folder:
         cp {input.genemap} {output.genemap};
         cp {input.primers} {output.primers};
         cp {input.qc} {output.qc};
-        jq -r '.nuc' <{input.reference} >{output.reference};
+        echo ">{params.refSeqAcc}" >{output.reference};
+        jq -r '.nuc' <{input.reference} >>{output.reference};
         cp {input.sequences} {output.sequences};
         cp {input.tree} {output.tree};
         """
