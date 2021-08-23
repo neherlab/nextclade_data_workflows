@@ -10,6 +10,7 @@ wildcard_constraints:
     flu_type="[AB]",
     segment="\d",
     year="\d\d\d\d",
+    strain="[^_]+"
 
 
 rule download_clades:
@@ -18,7 +19,7 @@ rule download_clades:
         "data/clades_{strain}_raw.tsv"
     params:
         source = lambda w: config["urls"]["clades"][w.strain]
-    shell: "curl {params.source} -o {output}"
+    shell: "curl {params.source} | sed '/V1A\\tHA1\\t146\\tI/d' >{output}"
 
 rule offset_clades:
     input: rules.download_clades.output
@@ -278,7 +279,7 @@ rule tree:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
     log:
         "logs/tree_{strain}_{segment}.txt"
-    threads: 8
+    threads: 4
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
         # memory, especially for larger alignments.
@@ -307,7 +308,7 @@ rule refine:
         node_data = "build/{strain}/{segment}/branch_lengths.json"
     log:
         "logs/refine_{strain}_{segment}.txt"
-    threads: 8
+    threads: 4
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
         # memory.
