@@ -288,7 +288,7 @@ rule refine:
         mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     params:
         root = lambda w: config["refine"]["root"][w.strain][w.segment],
-        divergence_unit = "mutations",
+        divergence_unit = "mutations-per-site",
     shell:
         """
         augur refine \

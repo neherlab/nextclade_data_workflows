@@ -12,5 +12,7 @@
     "reference": "reference.fasta", 
     "sequences": "sequences.fasta", 
     "tree": "tree.json" 
-  } 
+  },
+  "metadata": {},
+  "reference": {"db":"genbank", "accession":"" }
 } 
