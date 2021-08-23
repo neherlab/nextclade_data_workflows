@@ -218,10 +218,10 @@ rule subsample:
         sequences = "pre-processed/{strain}_{segment}.aligned.fasta",
         metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
     output:
-        sequences = "build/{strain}/{segment}/subsample.fasta",
-        strains = "build/{strain}/{segment}/subsample.txt",
+        sequences = "build/{strain}/{segment}/subsample_raw.fasta",
+        strains = "build/{strain}/{segment}/subsample_raw.txt",
     log:
-        "logs/subsample_{strain}_{segment}.txt",
+        "logs/subsample_{strain}_{segment}_raw.txt",
     params:
         filter_arguments = lambda w: config["filter"][w.strain],
         include = lambda w: config['refine']['root'][w.strain][w.segment],
@@ -240,11 +240,38 @@ rule subsample:
             2>&1 | tee {log}
         """
 
+rule exclude_outliers:
+   input:
+       sequences = rules.subsample.output.sequences,
+    #    strains = rules.subsample.output.strains,
+       metadata =  lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
+       exclude = "profiles/exclude.txt",
+   output:
+       sequences = "build/{strain}/{segment}/subsample.fasta",
+       strains = "build/{strain}/{segment}/subsample.txt",
+   log:
+       "logs/subsample_{strain}_{segment}.txt",
+   params:
+       filter_arguments = lambda w: config["filter"][w.strain],
+       include = lambda w: config['refine']['root'][w.strain][w.segment],
+   resources:
+       # Memory use scales primarily with the size of the metadata file.
+       mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
+   shell:
+       """
+       augur filter \
+           --sequences {input.sequences} \
+           --metadata {input.metadata} \
+           --exclude {input.exclude} \
+           --output {output.sequences} \
+           --output-strains {output.strains} \
+           2>&1 | tee {log}
+       """
 
 rule tree:
     message: "Building tree"
     input:
-        alignment = rules.subsample.output.sequences
+        alignment = rules.exclude_outliers.output.sequences
     output:
         tree = "build/{strain}/{segment}/tree_raw.nwk"
     params:
@@ -273,7 +300,7 @@ rule refine:
         """
     input:
         tree = rules.tree.output.tree,
-        alignment = rules.subsample.output.sequences,
+        alignment = rules.exclude_outliers.output.sequences,
         metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}.tsv"
     output:
         tree = "build/{strain}/{segment}/tree.nwk",
@@ -310,7 +337,7 @@ rule ancestral:
         """
     input:
         tree = rules.refine.output.tree,
-        alignment = rules.subsample.output.sequences,
+        alignment = rules.exclude_outliers.output.sequences,
     output:
         node_data = "build/{strain}/{segment}/nt_muts.json"
     log:
