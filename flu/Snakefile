@@ -484,7 +484,7 @@ rule assemble_folder:
     shell:
         """
         mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/versions/{wildcards.timestamp}/files/;
-        jq <{input.tag} '.tag="{wildcards.timestamp}" | .referenceSequence = "{params.refSeq}"' >{output.tag};
+        jq <{input.tag} '.tag="{wildcards.timestamp}" | .metadata.referenceStrainName = "{params.refSeq}" | .reference.accession = "{params.refSeqAcc}"' >{output.tag};
         cp {input.genemap} {output.genemap};
         cp {input.primers} {output.primers};
         cp {input.qc} {output.qc};

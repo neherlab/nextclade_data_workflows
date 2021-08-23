@@ -13,6 +13,8 @@
     "sequences": "sequences.fasta", 
     "tree": "tree.json" 
   },
-  "metadata": {},
+  "metadata": {
+    "referenceStrainName":""
+  },
   "reference": {"db":"genbank", "accession":"" }
-} 
+}
