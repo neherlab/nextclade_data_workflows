@@ -12,7 +12,6 @@ wildcard_constraints:
     year="\d\d\d\d",
     strain="[^_]+"
 
-
 rule download_clades:
     message: "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
     output:
@@ -125,11 +124,15 @@ def genes(reference,segment):
     ]
     return {'genes': genes[segment-1], 'seg_name': seg_name[segment-1].lower()}
 
+def reference(strain):
+    type_to_ref = {"h1n1pdm": "KC781785", "h3n2": "CY034116"}
+    return type_to_ref[strain]
+
 rule prealign:
     input:
         sequences = lambda w: expand(rules.parse.output.sequences,flu_type=flu_type(w.reference),segment=w.segment),
-        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/genemap.gff",
-        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/reference.fasta"
+        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/genemap.gff",
+        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/reference.fasta"
     output:
         alignment = "pre-processed/{reference}_{segment}.aligned.fasta",
         insertions = "pre-processed/{reference}_{segment}.insertions.csv",
@@ -160,8 +163,8 @@ rule mutation_summary:
         alignment = rules.prealign.output.alignment,
         insertions = rules.prealign.output.insertions,
         # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
-        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/genemap.gff",
-        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/reference.fasta"
+        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/genemap.gff",
+        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/reference.fasta"
     output:
         mutation_summary = "pre-processed/{reference}_{segment}.mutation_summary.tsv"
     log:
@@ -365,8 +368,8 @@ rule aa_muts_explicit:
     input:
         tree = rules.refine.output.tree,
         # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
-        genemap = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/genemap.gff",
-        reference = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/reference.fasta"
+        genemap = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/{reference(w.strain)}/genemap.gff",
+        reference = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/{reference(w.strain)}/reference.fasta"
     output:
         node_data = "build/{strain}/{segment}/aa_muts_explicit.json",
         # translations = vic.gene.HA_withInternalNodes.fasta
@@ -490,7 +493,7 @@ rule test_sample:
 # make segment_no function
 rule assemble_folder:
     input:
-        genemap = "references/{strain}/{segment_name}/genemap.gff",
+        genemap = lambda w: f"references/{w.strain}/{w.segment_name}/{reference(w.strain)}/genemap.gff",    
         sequences = lambda w: expand(rules.test_sample.output.sequences,strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)),
         reference = lambda w: expand("auspice/{strain}/{segment_no}/auspice_root-sequence.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), 
         # --genes=SigPep,HA1,HA2\
@@ -551,4 +554,10 @@ rule clean:
     shell:
         """
         rm -rf output test
+        """
+
+rule clean_all:
+    shell:
+        """
+        rm -rf output test auspice build pre-processed
         """
