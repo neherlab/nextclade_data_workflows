@@ -124,8 +124,9 @@ def genes(reference,segment):
     ]
     return {'genes': genes[segment-1], 'seg_name': seg_name[segment-1].lower()}
 
+# This should really be read from the builds.yaml/config as the info is present there
 def reference(strain):
-    type_to_ref = {"h1n1pdm": "KC781785", "h3n2": "CY034116"}
+    type_to_ref = {"h1n1pdm": "KC781785", "h3n2": "CY034116", "vic": "KX058884", "yam": "CY115183"}
     return type_to_ref[strain]
 
 rule prealign:
@@ -553,11 +554,11 @@ rule all:
 rule clean:
     shell:
         """
-        rm -rf output test
+        rm -rf output test data/clades*
         """
 
 rule clean_all:
     shell:
         """
-        rm -rf output test auspice build pre-processed
+        rm -rf output test auspice build pre-processed data/clades*
         """

@@ -51,7 +51,7 @@ refine:
       '1': CY115157
       '2': CY115158
       '3': CY115156
-      '4': CY073893
+      '4': KX058884
       '5': CY115154
       '6': CY115153
       '7': CY115152
@@ -75,8 +75,8 @@ filter:
 clades:
   offset:
     h3n2: 0
-    vic: 0
-    yam: 0
+    vic: 22
+    yam: -8
     h1n1pdm: -20
 
 subtype: 'vic'
