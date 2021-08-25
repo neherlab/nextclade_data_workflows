@@ -10,7 +10,8 @@ wildcard_constraints:
     flu_type="[AB]",
     segment="\d",
     year="\d\d\d\d",
-    strain="[^_]+"
+    strain="[^_/]+",
+    segment_name = "[^_/]+"
 
 rule download_clades:
     message: "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
@@ -528,11 +529,11 @@ rule assemble_folder:
 
 timestamp = datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
-    input: expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files/tree.json",timestamp=timestamp),
-    output: "test/{strain}/{segment_name}/nextclade.aligned.fasta"
+    input: expand("output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files/tree.json",timestamp=timestamp),
+    output: "test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta"
     params: 
-        indir = expand("output/flu_{{strain}}_{{segment_name}}/versions/{timestamp}/files",timestamp=timestamp),
-        outdir = "test/{strain}/{segment_name}"
+        indir = expand("output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files",timestamp=timestamp),
+        outdir = "test/{strain}/{segment_name}/{reference}"
     shell:
         """
         /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
@@ -547,9 +548,11 @@ rule test_nextclade:
          --output-tree={params.outdir}/nextclade.auspice.json\
          --output-basename=nextclade 2>&1
         """
-
+# print(config)
+# print(                [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]])
 rule all:
-    input: expand("test/{strain}/{segment_name}/nextclade.aligned.fasta",strain=["vic","yam","h1n1pdm","h3n2"],segment_name="HA")
+    input:
+        [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]]
 
 rule clean:
     shell:
