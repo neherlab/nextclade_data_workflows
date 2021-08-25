@@ -56,7 +56,7 @@ rule download:
 rule clean_download:
     input: rules.download.output
     output: temp("data/cleaned_download_{flu_type}_{segment}_{year}.fasta")
-    shell: 
+    shell:
         """
         if [ $(wc -l < {input}) -lt 2 ]
         then
@@ -67,7 +67,7 @@ rule clean_download:
         """
 
 rule join_downloads:
-    input: 
+    input:
         expand("data/cleaned_download_{{flu_type}}_{{segment}}_{year}.fasta",year=range(1989,2022))
     output: "data/download_{flu_type}_{segment}.fasta"
     shell: "cat {input} >> {output}"
@@ -102,7 +102,7 @@ def genes(reference,segment):
         if segment == 1:
             segment = 2
         else:
-            segment = 1 
+            segment = 1
     genes = [
         ["PB2"],
         ["PB1"],
@@ -369,17 +369,15 @@ rule aa_muts_explicit:
     message: "Translating amino acid sequences"
     input:
         tree = rules.refine.output.tree,
-        # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
-        genemap = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/{reference(w.strain)}/genemap.gff",
-        reference = lambda w: f"references/{w.strain}/{genes(w.strain,w.segment)['seg_name']}/{reference(w.strain)}/reference.fasta"
+        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
+        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
-        node_data = "build/{strain}/{segment}/aa_muts_explicit.json",
+        node_data = "build/{strain}/{segment}/{reference}/aa_muts_explicit.json",
         # translations = vic.gene.HA_withInternalNodes.fasta
     params:
-        genes = lambda w: genes(w.strain,w.segment)['genes'],
-        translations = lambda w: expand("pre-processed/{strain}_{segment}.gene.{genes}.fasta",strain=w.strain,segment=w.segment,genes=genes(w.strain,w.segment)['genes']),
-    log:
-        "logs/aamuts_{strain}_{segment}.txt"
+        # genes = lambda w: genes(w.strain,w.segment)['genes'],
+        genes = ["SigPep","HA1","HA2"],
+        translations = lambda w: expand("pre-processed/{strain}_{segment_name}.gene.{genes}.fasta",strain=w.strain,segment_name=w.segment_name,genes=["SigPep","HA1","HA2"]),
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
         # memory.
@@ -393,7 +391,7 @@ rule aa_muts_explicit:
             --reference {input.reference} \
             --translations {params.translations:q} \
             --genes {params.genes} \
-            --output {output.node_data} 2>&1 | tee {log}
+            --output {output.node_data} 2>&1
         """
 
 rule clades:
@@ -404,9 +402,7 @@ rule clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = rules.offset_clades.output
     output:
-        node_data = "build/{strain}/{segment}/clades.json"
-    log:
-        "logs/clades_{strain}_{segment}.txt"
+        node_data = "build/{strain}/{segment_name}/{reference}/clades.json"
     resources:
         # Memory use scales primarily with size of the node data.
         mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024)
@@ -415,12 +411,12 @@ rule clades:
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data {output.node_data} 2>&1 | tee {log}
+            --output-node-data {output.node_data} 2>&1
         """
 
 def node_data(w):
     nodes = ['ancestral','refine','aa_muts_explicit']
-    if w.segment == "4":
+    if w.segment_name == "ha":
         nodes.extend(['clades'])
     return nodes
 
@@ -429,17 +425,14 @@ rule export:
     input:
         tree = rules.refine.output.tree,
         # tree = "build/pruned_tree.nwk,
-        metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment=w.segment),
+        metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment=w.segment_name),
         node_data = lambda w:
             [rules.__dict__[rule].output.node_data for rule in node_data(w)],
         auspice_config = lambda w: config['files']['auspice_config']
     output:
-        auspice_json = "auspice/{strain}/{segment}/auspice.json",
-        auspice_root_sequence_json = "auspice/{strain}/{segment}/auspice_root-sequence.json",
-    log:
-        "logs/export_{strain}_{segment}.txt"
+        auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
     params:
-        fields = "continent fluSeason strainName" #deleted country" 
+        fields = "continent fluSeason strainName" #deleted country"
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=100
@@ -449,10 +442,9 @@ rule export:
             --tree {input.tree} \
             --metadata {input.metadata} \
             --node-data {input.node_data}\
-            --include-root-sequence \
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
-            --output {output.auspice_json} 2>&1 | tee {log};
+            --output {output.auspice_json} 2>&1;
         """
 def segment_no(strain,segment_name) -> str:
     "Return the segment number for a strain and segment name."
@@ -465,21 +457,22 @@ def segment_no(strain,segment_name) -> str:
         "NA",
         "MA",
         "NS",
-    ] 
+    ]
     segment_no = names.index(segment_name.upper()) + 1
     if strain in ["vic","yam"] and segment_no <= 2:
         if segment_no == 1:
             segment_no = 2
         else:
-            segment_no = 1 
+            segment_no = 1
     return str(segment_no)
 
-rule test_sample:
+#use segment name rather than no all the way through to make things easier
+rule generate_sample_sequences:
     input:
-        sequences = "pre-processed/{strain}_{segment_no}.aligned.fasta",
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment_no}.tsv",
+        sequences = lambda w: f"pre-processed/{w.strain}_{segment_no(w.strain,w.segment_name)}.aligned.fasta",
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{segment_no(w.strain,w.segment_name)}.tsv",
     output:
-        sequences = "build/{strain}/{segment_no}/sample.fasta",
+        sequences = "build/{strain}/{segment_name}/sample_sequences.fasta",
     shell:
         """
         augur filter \
@@ -490,40 +483,33 @@ rule test_sample:
             2>&1 | tee {log}
         """
 
-
-
 # make segment_no function
 rule assemble_folder:
     input:
-        genemap = lambda w: f"references/{w.strain}/{w.segment_name}/{reference(w.strain)}/genemap.gff",    
-        sequences = lambda w: expand(rules.test_sample.output.sequences,strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)),
-        reference = lambda w: expand("auspice/{strain}/{segment_no}/auspice_root-sequence.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), 
-        # --genes=SigPep,HA1,HA2\
+        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
+        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
+        sample_sequences = "build/{strain}/{segment_name}/sample_sequences.fasta",
+        tree = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
         qc = "profiles/qc.json",
-        tree = lambda w: expand("auspice/{strain}/{segment_no}/auspice.json",strain=w.strain,segment_no=segment_no(w.strain,w.segment_name)), #output from export
         tag = "profiles/tag.json",
         primers = "profiles/primers.csv",
     output:
-        genemap = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/genemap.gff",
-        primers = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/primers.csv",
-        qc = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/qc.json",
-        reference = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/reference.fasta",
-        sequences = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/sequences.fasta",
-        tree = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tree.json",
-        tag = "output/flu_{strain}_{segment_name}/versions/{timestamp}/files/tag.json",
-    params:
-        refSeq = lambda w: config['tag']['referenceSequence'][w.strain],
-        refSeqAcc = lambda w: config['refine']['root'][w.strain]['4'],
+        genemap = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/genemap.gff",
+        primers = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/primers.csv",
+        qc = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/qc.json",
+        reference = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/reference.fasta",
+        sample_sequences = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/sequences.fasta",
+        tree = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/tree.json",
+        tag = "output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/tag.json",
     shell:
         """
-        mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/versions/{wildcards.timestamp}/files/;
-        jq <{input.tag} '.tag="{wildcards.timestamp}" | .metadata.referenceStrainName = "{params.refSeq}" | .reference.accession = "{params.refSeqAcc}"' >{output.tag};
+        mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/references/{wildcards.reference}/versions/{wildcards.timestamp}/files/;
+        jq <{input.tag} '.tag="{wildcards.timestamp}";
         cp {input.genemap} {output.genemap};
+        cp {input.reference} {output.reference};
         cp {input.primers} {output.primers};
         cp {input.qc} {output.qc};
-        echo ">{params.refSeqAcc}" >{output.reference};
-        jq -r '.nuc' <{input.reference} >>{output.reference};
-        cp {input.sequences} {output.sequences};
+        cp {input.sample_sequences} {output.sample_sequences};
         cp {input.tree} {output.tree};
         """
 
@@ -531,7 +517,7 @@ timestamp = datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
     input: expand("output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files/tree.json",timestamp=timestamp),
     output: "test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta"
-    params: 
+    params:
         indir = expand("output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files",timestamp=timestamp),
         outdir = "test/{strain}/{segment_name}/{reference}"
     shell:
