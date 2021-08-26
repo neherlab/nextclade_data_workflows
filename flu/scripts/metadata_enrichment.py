@@ -28,7 +28,7 @@ def enrich(metadata_path, mutation_summary_path, output_path, reference_accessio
     mutation_summary = mutation_summary.rename(columns={mutation_summary.columns[0]: "ncbiAcc"})
 
     meta = pd.read_csv(metadata_path, sep="\t")
-    meta = meta.merge(mutation_summary[["ncbiAcc", "s1_dist"]], on="ncbiAcc", how="left")
+    meta = meta.merge(mutation_summary[["ncbiAcc", "s1_dist"]], on="ncbiAcc", how="inner")
 
     def parse_isostring(string):
         try:
@@ -90,6 +90,8 @@ def enrich(metadata_path, mutation_summary_path, output_path, reference_accessio
             ),
         ]
     )
+
+    meta = meta.drop(columns=['date']).rename(columns={'amb_date':'date'})
 
     meta.to_csv(output_path, sep="\t")
 

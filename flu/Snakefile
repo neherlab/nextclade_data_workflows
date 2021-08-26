@@ -11,7 +11,8 @@ wildcard_constraints:
     segment="\d",
     year="\d\d\d\d",
     strain="[^_/]+",
-    segment_name = "[^_/]+"
+    segment_name = "[^_/]+",
+    reference = "[^_/]+"
 
 def segment_number(segment_name):
     return "4"
@@ -19,14 +20,13 @@ def segment_number(segment_name):
 rule download_clades:
     message: "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
     output:
-        "data/clades_{strain}_raw.tsv"
+        "data/clades_{strain}_{segment_name}_{reference}_raw.tsv"
     params:
         source = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["clade_url"]
     shell: "curl {params.source} | sed '/V1A\\tHA1\\t146\\tI/d' >{output}"
 
 rule offset_clades:
-    input: 
-        "data/clades_{strain}_raw.tsv"
+    input: rules.download_clades.output
     output:
         "data/clades_{strain}_{segment_name}_{reference}.tsv"
     params:
@@ -161,95 +161,66 @@ rule enrich_metadata:
             --mutation-summary-path {input.mutation_summary} \
             --output-path {output.enriched_metadata} \
             --reference-accession {wildcards.reference} \
-            2>&1
-        """
-
-rule merge_metadata:
-    input:
-        enriched_metadata = lambda w:  expand(rules.enrich_metadata.output.enriched_metadata,flu_type=w.flu_type),
-        metadata = lambda w: expand(rules.parse.output.metadata, segment_name=w.segment_name,flu_type=w.flu_type)
-    output:
-        merged_metadata = "pre-processed/metadata_enriched_{flu_type}_{segment_name}.tsv"
-    shell:
-        """
-        python3 scripts/merge_metadata.py \
-            --flu-type {wildcards.flu_type} \
-            --segment {wildcards.segment_name} \
-            2>&1
+            > /dev/null
         """
 
 rule subsample:
     input:
-        sequences = "pre-processed/{strain}_{segment_name}.aligned.fasta",
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment_name}.tsv",
+        aligned_sequences = "pre-processed/{strain}/{segment_name}/{reference}/prealign.aligned.fasta",
+        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv"
     output:
-        sequences = "build/{strain}/{segment_name}/subsample_raw.fasta",
-        strains = "build/{strain}/{segment_name}/subsample_raw.txt",
+        sampled_sequences = "build/{strain}/{segment_name}/{reference}/subsample_raw.fasta",
+        sampled_strains = "build/{strain}/{segment_name}/{reference}/subsample_raw.txt",
     params:
-        filter_arguments = lambda w: config["filter"][w.strain],
-        include = lambda w: config['refine']['root'][w.strain][w.segment],
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
+        filter_arguments = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["filter"]
+    shell:
+        """
+        augur filter \
+            --sequences {input.aligned_sequences} \
+            --metadata {input.enriched_metadata} \
+            --include-where ncbiAcc={wildcards.reference} \
+            {params.filter_arguments} \
+            --output {output.sampled_sequences} \
+            --output-strains {output.sampled_strains} \
+            > /dev/null
+        """
+
+rule exclude_outliers:
+    input:
+        sequences = rules.subsample.output.sampled_sequences,
+        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
+        exclude = "profiles/exclude.txt",
+    output:
+        sampled_sequences = "build/{strain}/{segment_name}/{reference}/subsample.fasta",
+        sampled_strains = "build/{strain}/{segment_name}/{reference}/subsample.txt",
     shell:
         """
         augur filter \
             --sequences {input.sequences} \
-            --metadata {input.metadata} \
-            --include-where ncbiAcc={params.include} \
-            {params.filter_arguments} \
-            --output {output.sequences} \
-            --output-strains {output.strains} \
-            2>&1
+            --metadata {input.enriched_metadata} \
+            --exclude {input.exclude} \
+            --output {output.sampled_sequences} \
+            --output-strains {output.sampled_strains} \
+            > /dev/null
         """
-
-rule exclude_outliers:
-   input:
-       sequences = rules.subsample.output.sequences,
-    #    strains = rules.subsample.output.strains,
-       metadata =  lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment_name}.tsv",
-       exclude = "profiles/exclude.txt",
-   output:
-       sequences = "build/{strain}/{segment_name}/subsample.fasta",
-       strains = "build/{strain}/{segment_name}/subsample.txt",
-   params:
-       filter_arguments = lambda w: config["filter"][w.strain],
-       include = lambda w: config['refine']['root'][w.strain][w.segment_name],
-   resources:
-       # Memory use scales primarily with the size of the metadata file.
-       mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
-   shell:
-       """
-       augur filter \
-           --sequences {input.sequences} \
-           --metadata {input.metadata} \
-           --exclude {input.exclude} \
-           --output {output.sequences} \
-           --output-strains {output.strains} \
-           2>&1
-       """
 
 rule tree:
     message: "Building tree"
     input:
-        alignment = rules.exclude_outliers.output.sequences
+        alignment = rules.exclude_outliers.output.sampled_sequences
     output:
-        tree = "build/{strain}/{segment_name}/tree_raw.nwk"
+        tree = "build/{strain}/{segment_name}/{reference}/tree_raw.nwk"
     params:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
     threads: 4
-    resources:
-        # Multiple sequence alignments can use up to 40 times their disk size in
-        # memory, especially for larger alignments.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 40 * int(input.size / 1024 / 1024)
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
             --tree-builder-args {params.args} \
             --output {output.tree} \
-            --nthreads {threads} 2>&1
+            --nthreads {threads} \
+            > /dev/null
         """
 
 rule refine:
@@ -259,31 +230,23 @@ rule refine:
         """
     input:
         tree = rules.tree.output.tree,
-        alignment = rules.exclude_outliers.output.sequences,
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}.tsv"
+        alignment = rules.exclude_outliers.output.sampled_sequences,
+        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
     output:
         tree = "build/{strain}/{segment_name}/{reference}/tree.nwk",
         node_data = "build/{strain}/{segment_name}/{reference}/branch_lengths.json"
     threads: 4
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
-    params:
-        root = lambda w: config["refine"]["root"][w.strain][w.segment_name],
-        divergence_unit = "mutations-per-site",
     shell:
         """
         augur refine \
             --tree {input.tree} \
             --alignment {input.alignment} \
-            --metadata {input.metadata} \
+            --metadata {input.enriched_metadata} \
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
-            --root {params.root} \
-            --divergence-unit {params.divergence_unit} \
-           2>&1
+            --root {wildcards.reference} \
+            --divergence-unit mutations-per-site \
+            > /dev/null
         """
 
 rule ancestral:
@@ -294,16 +257,11 @@ rule ancestral:
         """
     input:
         tree = rules.refine.output.tree,
-        alignment = rules.exclude_outliers.output.sequences,
+        alignment = rules.exclude_outliers.output.sampled_sequences,
     output:
         node_data = "build/{strain}/{segment_name}/{reference}/nt_muts.json"
     params:
         inference = "joint"
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     shell:
         """
         augur ancestral \
@@ -311,7 +269,8 @@ rule ancestral:
             --alignment {input.alignment} \
             --output-node-data {output.node_data} \
             --inference {params.inference} \
-            --infer-ambiguous 2>&1
+            --infer-ambiguous \
+            > /dev/null
         """
 
 rule aa_muts_explicit:
@@ -322,16 +281,9 @@ rule aa_muts_explicit:
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
         node_data = "build/{strain}/{segment_name}/{reference}/aa_muts_explicit.json",
-        # translations = vic.gene.HA_withInternalNodes.fasta
     params:
-        # genes = lambda w: genes(w.strain,w.segment)['genes'],
         genes = ["SigPep","HA1","HA2"],
-        translations = lambda w: expand("pre-processed/{strain}_{segment_name}.gene.{genes}.fasta",strain=w.strain,segment_name=w.segment_name,genes=["SigPep","HA1","HA2"]),
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
+        translations = lambda w: expand("pre-processed/{strain}/{segment_name}/{reference}/prealign.gene.{genes}.fasta",strain=w.strain,segment_name=w.segment_name,genes=["SigPep","HA1","HA2"],reference=w.reference),
     shell:
         """
         python3 scripts/explicit_translation.py \
@@ -340,7 +292,8 @@ rule aa_muts_explicit:
             --reference {input.reference} \
             --translations {params.translations:q} \
             --genes {params.genes} \
-            --output {output.node_data} 2>&1
+            --output {output.node_data} \
+            > /dev/null
         """
 
 rule clades:
@@ -360,7 +313,8 @@ rule clades:
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data {output.node_data} 2>&1
+            --output-node-data {output.node_data} \
+            > /dev/null
         """
 
 def node_data(w):
@@ -382,9 +336,6 @@ rule export:
         auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
     params:
         fields = "continent fluSeason strainName" #deleted country"
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=100
     shell:
         """
         augur export v2 \
