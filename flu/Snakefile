@@ -13,6 +13,9 @@ wildcard_constraints:
     strain="[^_/]+",
     segment_name = "[^_/]+"
 
+def segment_number(segment_name):
+    return "4"
+
 rule download_clades:
     message: "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
     output:
@@ -97,32 +100,25 @@ def flu_type(strain):
         return "B"
     return "A"
 
-# This should really be read from the builds.yaml/config as the info is present there
-def reference(strain):
-    type_to_ref = {"h1n1pdm": "KC781785", "h3n2": "CY034116", "vic": "KX058884", "yam": "CY115183"}
-    return type_to_ref[strain]
-
 rule prealign:
     input:
-        sequences = lambda w: expand(rules.parse.output.sequences,flu_type=flu_type(w.reference),segment_name=w.segment_name),
+        sequences = lambda w: f"data/download_{flu_type(w.strain)}_{w.segment_name}.fasta",
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
-        alignment = "pre-processed/{strain}/{segment_name}/{reference}/aligned.fasta",
-        insertions = "pre-processed/{strain}/{segment_name}/{reference}/insertions.csv",
+        alignment = "pre-processed/{strain}/{segment_name}/{reference}/prealign.aligned.fasta",
+        insertions = "pre-processed/{strain}/{segment_name}/{reference}/prealign.insertions.csv",
     params:
-        outdir = "pre-processed",
-        basename = lambda w: f"{w.reference}_{w.segment_name}",
-        genes = lambda w: ",".join(genes(w.reference,w.segment_name)['genes']),
+        outdir = "pre-processed/{strain}/{segment_name}/{reference}",
     shell:
         """
         nextalign \
             --reference {input.reference} \
             --genemap {input.genemap} \
-            --genes {params.genes} \
+            --genes=SigPep,HA1,HA2 \
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
-            --output-basename {params.basename} \
+            --output-basename prealign > /dev/null
         """
 
 rule mutation_summary:
@@ -130,26 +126,23 @@ rule mutation_summary:
     input:
         alignment = rules.prealign.output.alignment,
         insertions = rules.prealign.output.insertions,
-        # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
         mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv"
     params:
-        outdir = "pre-processed",
-        basename = lambda w: f"{w.reference}_{w.segment_name}",
-        genes = lambda w: ",".join(genes(w.reference,w.segment_name)['genes']),
+        outdir = "pre-processed/{strain}/{segment_name}/{reference}",
     shell:
         """
         python3 scripts/mutation_summary.py \
             --alignment {input.alignment} \
             --insertions {input.insertions} \
             --directory {params.outdir} \
-            --basename {params.basename} \
+            --basename mutation_summary \
             --reference {input.reference} \
-            --genes {params.genes} \
+            --genes=SigPep,HA1,HA2 \
             --genemap {input.genemap} \
-            --output {output.mutation_summary} 2>&1
+            --output {output.mutation_summary} > /dev/null
         """
 
 rule enrich_metadata:
