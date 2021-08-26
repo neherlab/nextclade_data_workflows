@@ -327,10 +327,8 @@ rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
-        # tree = "build/pruned_tree.nwk,
-        metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment_name=w.segment_name),
-        node_data = lambda w:
-            [rules.__dict__[rule].output.node_data for rule in node_data(w)],
+        metadata = rules.enrich_metadata.output.enriched_metadata,
+        node_data = lambda w: [rules.__dict__[rule].output.node_data for rule in node_data(w)],
         auspice_config = lambda w: config['files']['auspice_config']
     output:
         auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
@@ -346,6 +344,7 @@ rule export:
             --color-by-metadata {params.fields} \
             --output {output.auspice_json} 2>&1;
         """
+
 def segment_no(strain,segment_name) -> str:
     "Return the segment number for a strain and segment name."
     names = [

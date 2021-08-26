@@ -17,7 +17,7 @@ builds:
   vic:
     ha:
       KX058884:
-          filter: "--min-date 2016 --query 's1_dist<100.0' --probabilistic-sampling --group-by year s1_dist --subsample-max-sequences 1000"
+          filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: 22
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
   yam:
