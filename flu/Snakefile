@@ -80,8 +80,8 @@ rule parse:
     input:
         sequences = "data/download_{flu_type}_{segment_name}.fasta"
     output:
-        metadata = "pre-processed/metadata_{flu_type}_{segment_name}.tsv",
-        sequences = "data/sequences_{flu_type}_{segment_name}.fasta"
+        metadata = "data/{flu_type}_{segment_name}_metadata.tsv",
+        sequences = "data/{flu_type}_{segment_name}_sequences.fasta"
     params:
         fields = "ncbiAcc continent country date fluSeason fluType host length state strainName"
     shell:
@@ -102,7 +102,7 @@ def flu_type(strain):
 
 rule prealign:
     input:
-        sequences = lambda w: f"data/download_{flu_type(w.strain)}_{w.segment_name}.fasta",
+        sequences = lambda w: f"data/{flu_type(w.strain)}_{w.segment_name}_sequences.fasta",
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
@@ -145,16 +145,22 @@ rule mutation_summary:
             --output {output.mutation_summary} > /dev/null
         """
 
+# TODO: Add nextclade QC/clade output to enriched metadata script
+# - Count mutations with respect to reference
+# - Deduplicate strains (sort of randomly, could be improved by filtering out egg etc.)
 rule enrich_metadata:
     input:
-        metadata = lambda w:  expand(rules.parse.output.metadata,segment_name="ha",flu_type=w.flu_type),
-        mutation_summary = lambda w: expand(rules.mutation_summary.output.mutation_summary,strain=(['yam','vic'] if w.flu_type == 'B' else ['h1n1pdm','h3n2']),segment_name="ha",flu_type=w.flu_type)
+        metadata = lambda w: f"data/{flu_type(w.strain)}_{w.segment_name}_metadata.tsv",
+        mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv",
     output:
-        enriched_metadata = "pre-processed/metadata_enriched_{flu_type}.tsv"
+        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv"
     shell:
         """
         python3 scripts/metadata_enrichment.py \
-            --flu-type {wildcards.flu_type} \
+            --metadata-path {input.metadata} \
+            --mutation-summary-path {input.mutation_summary} \
+            --output-path {output.enriched_metadata} \
+            --reference-accession {wildcards.reference} \
             2>&1
         """
 
