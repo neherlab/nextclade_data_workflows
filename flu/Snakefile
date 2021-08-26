@@ -18,15 +18,16 @@ rule download_clades:
     output:
         "data/clades_{strain}_raw.tsv"
     params:
-        source = lambda w: config["urls"]["clades"][w.strain]
+        source = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["clade_url"]
     shell: "curl {params.source} | sed '/V1A\\tHA1\\t146\\tI/d' >{output}"
 
 rule offset_clades:
-    input: rules.download_clades.output
+    input: 
+        "data/clades_{strain}_raw.tsv"
     output:
-        "data/clades_{strain}.tsv"
+        "data/clades_{strain}_{segment_name}_{reference}.tsv"
     params:
-        offset = lambda w: config["clades"]["offset"][w.strain]
+        offset = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["clade_offset"]
     shell:
         """
         perl -F'\\t' -ne \
@@ -37,8 +38,8 @@ rule offset_clades:
         """
 
 rule download:
-    output: temp("data/download_{flu_type}_{segment}_{year}.fasta")
-    log: 'logs/download_{flu_type}_{segment}_{year}'
+    output: temp("data/download_{flu_type}_{segment_name}_{year}.fasta")
+    params: segment_number = lambda w: segment_number(w.segment_name)
     shell:
         "curl -ksSL -o {output} "
         "'https://www.viprbrc.org/brc/api/sequence?"
@@ -48,14 +49,14 @@ rule download:
         "flutype={wildcards.flu_type}&"
         "fromyear={wildcards.year}&"
         "toyear={wildcards.year}&"
-        "segment={wildcards.segment}&"
+        "segment={params.segment_number}&"
         "host=human&"
         "metadata=continent,country,date,fluSeason,fluType,host,length,state,strainName&"
-        "output=fasta' > {log}"
+        "output=fasta'"
 
 rule clean_download:
-    input: rules.download.output
-    output: temp("data/cleaned_download_{flu_type}_{segment}_{year}.fasta")
+    input: "data/download_{flu_type}_{segment_name}_{year}.fasta"
+    output: temp("data/cleaned_download_{flu_type}_{segment_name}_{year}.fasta")
     shell:
         """
         if [ $(wc -l < {input}) -lt 2 ]
@@ -68,16 +69,16 @@ rule clean_download:
 
 rule join_downloads:
     input:
-        expand("data/cleaned_download_{{flu_type}}_{{segment}}_{year}.fasta",year=range(1989,2022))
-    output: "data/download_{flu_type}_{segment}.fasta"
+        expand("data/cleaned_download_{{flu_type}}_{{segment_name}}_{year}.fasta",year=range(1989,2022))
+    output: "data/download_{flu_type}_{segment_name}.fasta"
     shell: "cat {input} >> {output}"
 
 rule parse:
     input:
-        sequences = rules.join_downloads.output
+        sequences = "data/download_{flu_type}_{segment_name}.fasta"
     output:
-        metadata = "pre-processed/metadata_{flu_type}_{segment}.tsv",
-        sequences = "data/sequences_{flu_type}_{segment}.fasta"
+        metadata = "pre-processed/metadata_{flu_type}_{segment_name}.tsv",
+        sequences = "data/sequences_{flu_type}_{segment_name}.fasta"
     params:
         fields = "ncbiAcc continent country date fluSeason fluType host length state strainName"
     shell:
@@ -91,39 +92,10 @@ rule parse:
 
 genes = ["SigPep","HA1","HA2"]
 
-def flu_type(reference):
-    if reference in ["vic","yam"]:
+def flu_type(strain):
+    if strain in ["vic","yam"]:
         return "B"
     return "A"
-
-def genes(reference,segment):
-    segment = int(segment)
-    if reference in ["vic","yam"] and segment <= 2:
-        if segment == 1:
-            segment = 2
-        else:
-            segment = 1
-    genes = [
-        ["PB2"],
-        ["PB1"],
-        ["PA"],
-        ["SigPep","HA1","HA2"],
-        ["NP"],
-        ["NA"],
-        ["MA"],
-        ["NS2"],
-    ]
-    seg_name = [
-        "PB2",
-        "PB1",
-        "PA",
-        "HA",
-        "NP",
-        "NA",
-        "MA",
-        "NS",
-    ]
-    return {'genes': genes[segment-1], 'seg_name': seg_name[segment-1].lower()}
 
 # This should really be read from the builds.yaml/config as the info is present there
 def reference(strain):
@@ -132,21 +104,16 @@ def reference(strain):
 
 rule prealign:
     input:
-        sequences = lambda w: expand(rules.parse.output.sequences,flu_type=flu_type(w.reference),segment=w.segment),
-        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/genemap.gff",
-        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/reference.fasta"
+        sequences = lambda w: expand(rules.parse.output.sequences,flu_type=flu_type(w.reference),segment_name=w.segment_name),
+        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
+        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
-        alignment = "pre-processed/{reference}_{segment}.aligned.fasta",
-        insertions = "pre-processed/{reference}_{segment}.insertions.csv",
-        # translations = "pre-processed/{reference}_{segment}.gene.{params.genes}.fasta"
+        alignment = "pre-processed/{strain}/{segment_name}/{reference}/aligned.fasta",
+        insertions = "pre-processed/{strain}/{segment_name}/{reference}/insertions.csv",
     params:
         outdir = "pre-processed",
-        basename = lambda w: f"{w.reference}_{w.segment}",
-        genes = lambda w: ",".join(genes(w.reference,w.segment)['genes']),
-    log:
-        "logs/{reference}_{segment}_prealign.txt"
-    benchmark:
-        "benchmarks/{reference}_{segment}_align.txt"
+        basename = lambda w: f"{w.reference}_{w.segment_name}",
+        genes = lambda w: ",".join(genes(w.reference,w.segment_name)['genes']),
     shell:
         """
         nextalign \
@@ -156,7 +123,6 @@ rule prealign:
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
             --output-basename {params.basename} \
-        > {log} 2>&1
         """
 
 rule mutation_summary:
@@ -165,18 +131,14 @@ rule mutation_summary:
         alignment = rules.prealign.output.alignment,
         insertions = rules.prealign.output.insertions,
         # translations = lambda w: expand("pre-processed/{{reference}}_{{segment}}.gene.{genes}.fasta",genes=genes(w.segment)),
-        genemap = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/genemap.gff",
-        reference = lambda w: f"references/{w.reference}/{genes(w.reference,w.segment)['seg_name']}/{reference(w.reference)}/reference.fasta"
+        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
+        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
-        mutation_summary = "pre-processed/{reference}_{segment}.mutation_summary.tsv"
-    log:
-        "logs/{reference}_{segment}_mutation_summary.txt"
-    benchmark:
-        "benchmarks/{reference}_{segment}_mutation_summary.txt"
+        mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv"
     params:
         outdir = "pre-processed",
-        basename = lambda w: f"{w.reference}_{w.segment}",
-        genes = lambda w: ",".join(genes(w.reference,w.segment)['genes']),
+        basename = lambda w: f"{w.reference}_{w.segment_name}",
+        genes = lambda w: ",".join(genes(w.reference,w.segment_name)['genes']),
     shell:
         """
         python3 scripts/mutation_summary.py \
@@ -187,47 +149,43 @@ rule mutation_summary:
             --reference {input.reference} \
             --genes {params.genes} \
             --genemap {input.genemap} \
-            --output {output.mutation_summary} 2>&1 | tee {log}
+            --output {output.mutation_summary} 2>&1
         """
 
 rule enrich_metadata:
     input:
-        metadata = lambda w:  expand(rules.parse.output.metadata,segment="4",flu_type=w.flu_type),
-        mutation_summary = lambda w: expand(rules.mutation_summary.output.mutation_summary,reference=(['yam','vic'] if w.flu_type == 'B' else ['h1n1pdm','h3n2']),segment="4",flu_type=w.flu_type)
+        metadata = lambda w:  expand(rules.parse.output.metadata,segment_name="ha",flu_type=w.flu_type),
+        mutation_summary = lambda w: expand(rules.mutation_summary.output.mutation_summary,strain=(['yam','vic'] if w.flu_type == 'B' else ['h1n1pdm','h3n2']),segment_name="ha",flu_type=w.flu_type)
     output:
         enriched_metadata = "pre-processed/metadata_enriched_{flu_type}.tsv"
-    log: "logs/metadata_enrichment_{flu_type}.txt"
     shell:
         """
         python3 scripts/metadata_enrichment.py \
             --flu-type {wildcards.flu_type} \
-            2>&1 | tee {log}
+            2>&1
         """
 
 rule merge_metadata:
     input:
         enriched_metadata = lambda w:  expand(rules.enrich_metadata.output.enriched_metadata,flu_type=w.flu_type),
-        metadata = lambda w: expand(rules.parse.output.metadata, segment=w.segment,flu_type=w.flu_type)
+        metadata = lambda w: expand(rules.parse.output.metadata, segment_name=w.segment_name,flu_type=w.flu_type)
     output:
-        merged_metadata = "pre-processed/metadata_enriched_{flu_type}_{segment}.tsv"
-    log: "logs/metadata_merging_{flu_type}_{segment}.txt"
+        merged_metadata = "pre-processed/metadata_enriched_{flu_type}_{segment_name}.tsv"
     shell:
         """
         python3 scripts/merge_metadata.py \
             --flu-type {wildcards.flu_type} \
-            --segment {wildcards.segment} \
-            2>&1 | tee {log}
+            --segment {wildcards.segment_name} \
+            2>&1
         """
 
 rule subsample:
     input:
-        sequences = "pre-processed/{strain}_{segment}.aligned.fasta",
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
+        sequences = "pre-processed/{strain}_{segment_name}.aligned.fasta",
+        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment_name}.tsv",
     output:
-        sequences = "build/{strain}/{segment}/subsample_raw.fasta",
-        strains = "build/{strain}/{segment}/subsample_raw.txt",
-    log:
-        "logs/subsample_{strain}_{segment}_raw.txt",
+        sequences = "build/{strain}/{segment_name}/subsample_raw.fasta",
+        strains = "build/{strain}/{segment_name}/subsample_raw.txt",
     params:
         filter_arguments = lambda w: config["filter"][w.strain],
         include = lambda w: config['refine']['root'][w.strain][w.segment],
@@ -243,23 +201,21 @@ rule subsample:
             {params.filter_arguments} \
             --output {output.sequences} \
             --output-strains {output.strains} \
-            2>&1 | tee {log}
+            2>&1
         """
 
 rule exclude_outliers:
    input:
        sequences = rules.subsample.output.sequences,
     #    strains = rules.subsample.output.strains,
-       metadata =  lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment}.tsv",
+       metadata =  lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{w.segment_name}.tsv",
        exclude = "profiles/exclude.txt",
    output:
-       sequences = "build/{strain}/{segment}/subsample.fasta",
-       strains = "build/{strain}/{segment}/subsample.txt",
-   log:
-       "logs/subsample_{strain}_{segment}.txt",
+       sequences = "build/{strain}/{segment_name}/subsample.fasta",
+       strains = "build/{strain}/{segment_name}/subsample.txt",
    params:
        filter_arguments = lambda w: config["filter"][w.strain],
-       include = lambda w: config['refine']['root'][w.strain][w.segment],
+       include = lambda w: config['refine']['root'][w.strain][w.segment_name],
    resources:
        # Memory use scales primarily with the size of the metadata file.
        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -271,7 +227,7 @@ rule exclude_outliers:
            --exclude {input.exclude} \
            --output {output.sequences} \
            --output-strains {output.strains} \
-           2>&1 | tee {log}
+           2>&1
        """
 
 rule tree:
@@ -279,11 +235,9 @@ rule tree:
     input:
         alignment = rules.exclude_outliers.output.sequences
     output:
-        tree = "build/{strain}/{segment}/tree_raw.nwk"
+        tree = "build/{strain}/{segment_name}/tree_raw.nwk"
     params:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
-    log:
-        "logs/tree_{strain}_{segment}.txt"
     threads: 4
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
@@ -296,7 +250,7 @@ rule tree:
             --alignment {input.alignment} \
             --tree-builder-args {params.args} \
             --output {output.tree} \
-            --nthreads {threads} 2>&1 | tee {log}
+            --nthreads {threads} 2>&1
         """
 
 rule refine:
@@ -309,10 +263,8 @@ rule refine:
         alignment = rules.exclude_outliers.output.sequences,
         metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}.tsv"
     output:
-        tree = "build/{strain}/{segment}/tree.nwk",
-        node_data = "build/{strain}/{segment}/branch_lengths.json"
-    log:
-        "logs/refine_{strain}_{segment}.txt"
+        tree = "build/{strain}/{segment_name}/{reference}/tree.nwk",
+        node_data = "build/{strain}/{segment_name}/{reference}/branch_lengths.json"
     threads: 4
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
@@ -320,7 +272,7 @@ rule refine:
         # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
         mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     params:
-        root = lambda w: config["refine"]["root"][w.strain][w.segment],
+        root = lambda w: config["refine"]["root"][w.strain][w.segment_name],
         divergence_unit = "mutations-per-site",
     shell:
         """
@@ -332,7 +284,7 @@ rule refine:
             --output-node-data {output.node_data} \
             --root {params.root} \
             --divergence-unit {params.divergence_unit} \
-           2>&1 | tee {log}
+           2>&1
         """
 
 rule ancestral:
@@ -345,9 +297,7 @@ rule ancestral:
         tree = rules.refine.output.tree,
         alignment = rules.exclude_outliers.output.sequences,
     output:
-        node_data = "build/{strain}/{segment}/nt_muts.json"
-    log:
-        "logs/ancestral_{strain}_{segment}.txt"
+        node_data = "build/{strain}/{segment_name}/{reference}/nt_muts.json"
     params:
         inference = "joint"
     resources:
@@ -362,7 +312,7 @@ rule ancestral:
             --alignment {input.alignment} \
             --output-node-data {output.node_data} \
             --inference {params.inference} \
-            --infer-ambiguous 2>&1 | tee {log}
+            --infer-ambiguous 2>&1
         """
 
 rule aa_muts_explicit:
@@ -372,7 +322,7 @@ rule aa_muts_explicit:
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
-        node_data = "build/{strain}/{segment}/{reference}/aa_muts_explicit.json",
+        node_data = "build/{strain}/{segment_name}/{reference}/aa_muts_explicit.json",
         # translations = vic.gene.HA_withInternalNodes.fasta
     params:
         # genes = lambda w: genes(w.strain,w.segment)['genes'],
@@ -425,7 +375,7 @@ rule export:
     input:
         tree = rules.refine.output.tree,
         # tree = "build/pruned_tree.nwk,
-        metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment=w.segment_name),
+        metadata = lambda w: expand(rules.merge_metadata.output.merged_metadata,flu_type=flu_type(w.strain),segment_name=w.segment_name),
         node_data = lambda w:
             [rules.__dict__[rule].output.node_data for rule in node_data(w)],
         auspice_config = lambda w: config['files']['auspice_config']
