@@ -10,9 +10,9 @@ builds:
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
   h3n2:
     ha:
-      CY034116:
+      CY163680:
           filter: "--min-date 2016 --query 's1_dist<150.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
-          clade_offset: 0
+          clade_offset: 17
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
   vic:
     ha:
