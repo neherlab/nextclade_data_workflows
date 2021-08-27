@@ -396,9 +396,10 @@ rule generate_sample_sequences:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --min-date 2020 --query 's1_dist<120.0' --group-by continent year --subsample-max-sequences 50  \
-            --output {output.sequences} \
-            > /dev/null
+            --min-date 2020 --query 's1_dist<120.0' --group-by s1_dist year --subsample-max-sequences 50  \
+            --exclude-ambiguous-dates-by year \
+            --probabilistic-sampling \
+            --output {output.sequences}
         """
 
 # make segment_no function
