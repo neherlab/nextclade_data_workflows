@@ -8,24 +8,28 @@ builds:
           filter: "--min-date 2017 --query 's1_dist<150.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: 0
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
+          include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h1n1pdm.txt"
   h3n2:
     ha:
       CY163680:
           filter: "--min-date 2016 --query 's1_dist<150.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: 17
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
+          include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h3n2.txt"
   vic:
     ha:
       KX058884:
           filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: 22
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
+          include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_vic.txt"
   yam:
     ha:
       JN993010:
           filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: -11
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
+          include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_yam.txt"
 
 tree:
   tree-builder-args: "'-ninit 10 -n 4 -czb'"
