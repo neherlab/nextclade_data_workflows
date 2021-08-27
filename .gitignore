@@ -8,6 +8,8 @@
 */auspice
 */output
 */test
+*/references-old
+*/nextalign
 
 .DS_Store
 .vscode/*
