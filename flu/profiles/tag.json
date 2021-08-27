@@ -5,6 +5,7 @@
     "nextcladeCli": { "min": "1.2.0", "max": null }, 
     "nextcladeWeb": { "min": "1.4.0", "max": null } 
   }, 
+  "enabled": true,
   "files": { 
     "geneMap": "genemap.gff", 
     "primers": "primers.csv", 
