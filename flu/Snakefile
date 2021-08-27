@@ -345,41 +345,21 @@ rule export:
             --output {output.auspice_json} 2>&1;
         """
 
-def segment_no(strain,segment_name) -> str:
-    "Return the segment number for a strain and segment name."
-    names = [
-        "PB2",
-        "PB1",
-        "PA",
-        "HA",
-        "NP",
-        "NA",
-        "MA",
-        "NS",
-    ]
-    segment_no = names.index(segment_name.upper()) + 1
-    if strain in ["vic","yam"] and segment_no <= 2:
-        if segment_no == 1:
-            segment_no = 2
-        else:
-            segment_no = 1
-    return str(segment_no)
-
 #use segment name rather than no all the way through to make things easier
 rule generate_sample_sequences:
     input:
-        sequences = lambda w: f"pre-processed/{w.strain}_{segment_no(w.strain,w.segment_name)}.aligned.fasta",
-        metadata = lambda w: f"pre-processed/metadata_enriched_{flu_type(w.strain)}_{segment_no(w.strain,w.segment_name)}.tsv",
+        sequences = lambda w: f"data/{flu_type(w.strain)}_{w.segment_name}_sequences.fasta",
+        metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
     output:
-        sequences = "build/{strain}/{segment_name}/sample_sequences.fasta",
+        sequences = "build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
     shell:
         """
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --min-date 2019 --exclude-where subtype!='{wildcards.strain}' --group-by continent year --subsample-max-sequences 50  \
+            --min-date 2020 --query 's1_dist<120.0' --group-by continent year --subsample-max-sequences 50  \
             --output {output.sequences} \
-            2>&1 | tee {log}
+            > /dev/null
         """
 
 # make segment_no function
@@ -387,7 +367,7 @@ rule assemble_folder:
     input:
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
-        sample_sequences = "build/{strain}/{segment_name}/sample_sequences.fasta",
+        sample_sequences = "build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
         tree = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
         qc = "profiles/qc.json",
         tag = "profiles/tag.json",
@@ -403,7 +383,7 @@ rule assemble_folder:
     shell:
         """
         mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/references/{wildcards.reference}/versions/{wildcards.timestamp}/files/;
-        jq <{input.tag} '.tag="{wildcards.timestamp}";
+        jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
         cp {input.genemap} {output.genemap};
         cp {input.reference} {output.reference};
         cp {input.primers} {output.primers};

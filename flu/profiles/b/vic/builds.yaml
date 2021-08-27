@@ -5,13 +5,13 @@ builds:
   h1n1pdm:
     ha:
       KC781785:
-          filter: "--min-date 2016 --exclude-where subtype!='h1n1pdm' --query 's1_dist<120' --probabilistic-sampling --group-by year --subsample-max-sequences 1000"
+          filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: -20
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
   h3n2:
     ha:
       CY034116:
-          filter: "--min-date 2016 --exclude-where subtype!='h3n2' --query 's2_dist<120' --probabilistic-sampling --group-by year --subsample-max-sequences 1000" 
+          filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: 0
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
   vic:
@@ -23,7 +23,7 @@ builds:
   yam:
     ha:
       CY115183:
-          filter: "--min-date 2016 --exclude-where subtype!='yam' --query 's1_s2>60 & s2_dist<130' --probabilistic-sampling --group-by year --subsample-max-sequences 1000"
+          filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
           clade_offset: -8
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
 
