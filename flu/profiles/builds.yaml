@@ -22,9 +22,9 @@ builds:
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
   yam:
     ha:
-      CY115183:
+      JN993010:
           filter: "--min-date 2016 --query 's1_dist<50.0' --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
-          clade_offset: -8
+          clade_offset: -11
           clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
 
 tree:
