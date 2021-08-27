@@ -358,7 +358,7 @@ rule export:
         node_data = lambda w: [rules.__dict__[rule].output.node_data for rule in node_data(w)],
         auspice_config = lambda w: config['files']['auspice_config']
     output:
-        auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
+        auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
     params:
         fields = "continent fluSeason strainName" #deleted country"
     shell:
@@ -370,6 +370,18 @@ rule export:
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
             --output {output.auspice_json} 2>&1;
+        """
+
+rule swap_strain_accession:
+    input:
+        auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
+    output:
+        auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice.json",
+    shell:
+        """
+        python3 scripts/swap_strain_accession.py \
+            --tree-input-path {input.auspice_json} \
+            --tree-output-path {output.auspice_json}
         """
 
 #use segment name rather than no all the way through to make things easier

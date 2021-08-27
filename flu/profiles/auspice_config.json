@@ -20,11 +20,18 @@
       "key": "continent",
       "title": "Continent",
       "type": "categorical"
+    },
+    {
+      "key": "accessionID",
+      "title": "Accession",
+      "type": "categorical"
     }
   ],
   "filters": [
     "continent",
-    "country"
+    "country",
+    "accessionID",
+    "clade_membership"
   ],
   "panels": ["tree","entropy"]
 }
