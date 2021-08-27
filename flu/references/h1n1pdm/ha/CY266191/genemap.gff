@@ -1,5 +1,0 @@
-##gff-version 3
-##sequence-region CY266191.1 14 1714
-CY266191.1	feature	gene	14	64	.	+	.	gene_name "SigPep"
-CY266191.1	feature	gene	65	1045	.	+	.	gene_name "HA1"
-CY266191.1	feature	gene	1046	1711	.	+	.	gene_name "HA2"
