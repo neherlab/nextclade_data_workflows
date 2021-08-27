@@ -224,6 +224,8 @@ rule exclude_outliers:
             --sequences {input.sequences} \
             --metadata {input.enriched_metadata} \
             --exclude {input.exclude} \
+            --include-where ncbiAcc={wildcards.reference} \
+            --min-date 2016 \
             --output {output.sampled_sequences} \
             --output-strains {output.sampled_strains} \
             > /dev/null
