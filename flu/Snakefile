@@ -212,7 +212,7 @@ rule tree:
         tree = "build/{strain}/{segment_name}/{reference}/tree_raw.nwk"
     params:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
-    threads: 4
+    threads: 6
     shell:
         """
         augur tree \
@@ -235,7 +235,7 @@ rule refine:
     output:
         tree = "build/{strain}/{segment_name}/{reference}/tree.nwk",
         node_data = "build/{strain}/{segment_name}/{reference}/branch_lengths.json"
-    threads: 4
+    threads: 1
     shell:
         """
         augur refine \
