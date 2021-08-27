@@ -146,7 +146,7 @@ rule mutation_summary:
         """
 
 # TODO: Add nextclade QC/clade output to enriched metadata script
-# - Count mutations with respect to reference
+# TODO: Need to filter out sequences that fail to translate using nextclade, easy by running nextclade on it
 # - Deduplicate strains (sort of randomly, could be improved by filtering out egg etc.)
 rule enrich_metadata:
     input:

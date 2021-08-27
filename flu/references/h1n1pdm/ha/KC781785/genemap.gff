@@ -1,5 +1,0 @@
-##gff-version 3
-##sequence-region KC781785.1 1 1701
-KC781785.1	feature	gene	1	51	.	+	.	gene_name "SigPep"
-KC781785.1	feature	gene	52	1032	.	+	.	gene_name "HA1"
-KC781785.1	feature	gene	1033	1698	.	+	.	gene_name "HA2"

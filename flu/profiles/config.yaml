@@ -1,0 +1,3 @@
+configfile: profiles/builds.yaml
+
+cores: 12
