@@ -110,6 +110,7 @@ rule prealign:
         insertions = "pre-processed/{strain}/{segment_name}/{reference}/prealign.insertions.csv",
     params:
         outdir = "pre-processed/{strain}/{segment_name}/{reference}",
+    threads: 6
     shell:
         """
         nextalign \
@@ -118,6 +119,7 @@ rule prealign:
             --genes=SigPep,HA1,HA2 \
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
+            --jobs {threads} \
             --output-basename prealign > /dev/null
         """
 
