@@ -1,0 +1,41 @@
+title: 'Your samples placed on a SARS-CoV-2 phylogeny'
+
+files:
+  reference: "defaults/reference_seq.gb"
+  alignment_reference: "defaults/reference_seq.fasta"
+  annotation: "defaults/annotation.gff"
+  include: "defaults/include.txt"
+  color_schemes: "defaults/color_schemes.tsv"
+  clades: "defaults/clades.tsv"
+  ordering: "defaults/color_ordering.tsv"
+  lat_longs: "defaults/lat_longs.tsv"
+  auspice_config: "profiles/clades/auspice_config.json"
+  description: "profiles/clades/description.md"
+
+data_source:
+  clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
+
+origins:
+  gisaid:
+    metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
+    sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.gz"
+    exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
+    filters: "--min-length 27000"
+
+refine:
+  root: 'Wuhan/Hu-1/2019'
+  divergence_unit: 'mutations'
+  clock_filter_iqd: 4
+  no_timetree: True
+  clock_rate: 0.0007
+  clock_std_dev: 0.0003
+  coalescent: "skyline"
+  date_inference: "marginal"
+
+builds:
+  nextclade:
+    subsamples:
+      early:
+        filters: "--min-length 28500 --group-by year month division pango_lineage --subsample-max-sequences 100 --max-date 2021-03-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good"
+      late:
+        filters: "--min-length 28500 --group-by year month division pango_lineage --subsample-max-sequences 400 --min-date 2021-03-01 --exclude-where 'rare_mutations>15'  QC_snp_clusters!=good"

@@ -1,0 +1,61 @@
+# conda environment file to use by default
+# This must be a relative path to the top-level Snakefile directory (e.g., `ncov/`).
+conda_environment: "nextstrain.yaml"
+
+# Define files used for external configuration. Common examples consist of a reference sequence to
+# align sequences to, colors for strain attributes in auspice, and auspice
+# configuration files.
+files:
+  reference: "defaults/reference_seq.gb"
+  alignment_reference: "defaults/reference_seq.fasta"
+  annotation: "defaults/annotation.gff"
+  include: "defaults/include.txt"
+  color_schemes: "defaults/color_schemes.tsv"
+  clades: "defaults/clades.tsv"
+  ordering: "defaults/color_ordering.tsv"
+  lat_longs: "defaults/lat_longs.tsv"
+  auspice_config: "defaults/auspice_config.json"
+  description: "defaults/description.md"
+
+tree:
+  tree-builder-args: "'-ninit 10 -n 4 -czb'"
+
+mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987"
+
+# Define genes to translate during alignment by nextalign.
+genes: ["ORF1a", "ORF1b", "S", "ORF3a", "M", "N"]
+
+# TreeTime settings
+refine:
+  root: "Wuhan/Hu-1/2019" #EPI_ISL_402125  EPI_ISL_406798
+  clock_rate: 0.0007
+  clock_std_dev: 0.0003
+  coalescent: "skyline"
+  date_inference: "marginal"
+  divergence_unit: "mutations"
+  clock_filter_iqd: 4
+
+ancestral:
+  inference: "joint"
+
+# Frequencies settings
+frequencies:
+  min_date: 2020.0
+
+  # Number of months between pivots
+  pivot_interval: 1
+
+  # Measure pivots in weeks rather than months
+  pivot_interval_units: "weeks"
+
+  # KDE bandwidths in proportion of a year to use per strain.
+  narrow_bandwidth: 0.05
+  proportion_wide: 0.0
+
+#
+# Region-specific settings
+#
+traits:
+  sampling_bias_correction: 2.5
+  columns: ["country"]
+

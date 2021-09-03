@@ -11,6 +11,8 @@
 */references-old
 */nextalign
 
+secrets.yaml
+
 .DS_Store
 .vscode/*
 
