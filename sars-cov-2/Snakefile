@@ -1,6 +1,6 @@
 import datetime
 
-localrules: all, clean, clean_all, deploy, deploy_all, deploy_force, deploy_all_force, dump_config
+localrules: all, clean, clean_all, dump_config
 
 if "builds" not in config:
     config["builds"] = {}
@@ -28,46 +28,17 @@ auspice_dir = config.get("auspice_dir", "auspice")
 build_dir = config.get("build_dir", "builds")
 
 date = datetime.date.today()
-suffixes = ["","_root-sequence","_tip-frequencies"]
 
 rule all:
-    input: [f"{auspice_dir}/{auspice_prefix}_{build}{suffix}.json" for build in config["builds"] for suffix in suffixes],
+    input: [f"{auspice_dir}/{build}.json" for build in config["builds"]],
     params:
         slack_hook = config.get('slackHook',"google.com")
-    shell:
-        """
-        curl -X POST -H 'Content-type: application/json' \
-        --data '{{"text":"Builds done, ready for deployment"}}' \
-        {params.slack_hook}
-        """
-def deploy_files(w):
-    return " ".join([f"{auspice_dir}/{auspice_prefix}_{w.build}{w.date}{suffix}.json" for suffix in suffixes])
-
-rule deploy_force:
-    # input: ancient([f"{auspice_dir}/{auspice_prefix}_{{build}}{{date}}{suffix}.json" for suffix in suffixes])
-    output: 'deployed/{build,[^_]+}{date,.{0}|_.+}_force.upload',
-    # nexde url1 input; nexde url2 input
-    params: lambda w, input, output: " ; ".join([f'nextstrain deploy {url} {deploy_files(w)} 2>&1 | tee -a {output}' for url in config["builds"][w.build]["deploy_urls"]])
-    shell: '{params}'
-
-rule deploy:
-    input: [f"{auspice_dir}/{auspice_prefix}_{{build}}{{date}}{suffix}.json" for suffix in suffixes]
-    output: 'deployed/{build,[^_]+}{date,.{0}|_.+}.upload',
-    # nexde url1 input; nexde url2 input
-    params: lambda w, input, output: " ; ".join([f'nextstrain deploy {url} {input} 2>&1 | tee -a {output}' for url in config["builds"][w.build]["deploy_urls"]])
-    shell: '{params}'
-
-rule deploy_all:
-    input: 
-        expand("deployed/{build}.upload", build=config["builds"])
-
-rule deploy_all_force:
-    input: 
-        expand("deployed/{build}_force.upload", build=config["builds"])
-
-rule deploy_test:
-    input:
-        [f"deployed/europe_{date}.upload"] + [f"deployed/switzerland_{date}.upload"]
+    # shell:
+    #     """
+    #     curl -X POST -H 'Content-type: application/json' \
+    #     --data '{{"text":"Builds done, ready for deployment"}}' \
+    #     {params.slack_hook}
+    #     """
 
 rule clean_all:
     message: "Removing directories: {params}"

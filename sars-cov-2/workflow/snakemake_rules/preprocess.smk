@@ -48,7 +48,7 @@ rule download_sequences:
         address = lambda w: config['origins'][w.origin]['sequences']
     output:
         "data/{origin}/sequences.fasta.xz"
-    shell: "conda activate nextstrain; aws s3 cp {params.address} {output}"
+    shell: "aws s3 cp {params.address} {output}"
 
 rule download_metadata:
     message: "Downloading metadata from {params.address} -> {output}"
@@ -57,7 +57,7 @@ rule download_metadata:
         address = lambda w: config['origins'][w.origin]['metadata']
     output:
         metadata = "data/{origin}/metadata.tsv"
-    shell: "conda activate nextstrain; aws s3 cp {params.address} - | {params.deflate} {input} > {output:q}"
+    shell: "aws s3 cp {params.address} - | {params.deflate} {input} > {output:q}"
 
 rule download_exclude:
     message: "Downloading exclude from {params.source} -> {output}"
@@ -105,7 +105,6 @@ rule prealign:
         mem_mb = 3000,
     shell:
         """
-	conda activate nextstrain;
         {params.deflate} {input.sequences} | nextalign \
             --jobs={threads} \
             --reference {input.reference} \
@@ -140,7 +139,6 @@ rule diagnostic:
         mem_mb=12000
     shell:
         """
-	conda activate nextstrain;
         python3 scripts/diagnostic.py \
             --metadata {input.metadata} \
             --clock-filter {params.clock_filter} \
@@ -178,7 +176,6 @@ rule filter:
     conda: config["conda_environment"]
     shell:
         """
-	conda activate nextstrain;
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
@@ -225,7 +222,6 @@ rule index_sequences:
     conda: config["conda_environment"]
     shell:
         """
-	conda activate nextstrain;
         augur index \
             --sequences {input.sequences} \
             --output {output.sequence_index} 2>&1 | tee {log}
@@ -253,7 +249,6 @@ rule mutation_summary:
     conda: config["conda_environment"]
     shell:
         """
-	conda activate nextstrain;
         python3 scripts/mutation_summary.py \
             --alignment {input.alignment} \
             --insertions {input.insertions} \

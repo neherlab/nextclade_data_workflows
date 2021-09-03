@@ -12,8 +12,6 @@ and produces files
 
 '''
 
-localrules: timestamped_build, include_hcov19_prefix
-
 build_dir = config.get("build_dir", "builds")
 auspice_dir = config.get("auspice_dir", "auspice")
 auspice_prefix = config.get("auspice_prefix", "ncov")
@@ -439,14 +437,10 @@ rule export:
         colors = lambda w: config["builds"][w.build_name]["colors"] if "colors" in config["builds"][w.build_name]\
                            else ( config["files"]["colors"] if "colors" in config["files"]\
                            else rules.colors.output.colors.format(**w) ),
-        lat_longs = config["files"]["lat_longs"],
         description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name]
                                 else config["files"]["description"],
-        tip_freq_json = rules.tip_frequencies.output.tip_frequencies_json
     output:
-        auspice_json = auspice_dir + f"/{auspice_prefix}_{{build_name,[^_]+}}_nohcov.json",
-        root_sequence_json = auspice_dir + f"/{auspice_prefix}_{{build_name,[^_]+}}_nohcov_root-sequence.json",
-        tip_freq_json = auspice_dir + f"/{auspice_prefix}_{{build_name,[^_]+}}_nohcov_tip-frequencies.json"
+        auspice_json = auspice_dir + f"/{{build_name,[^_]+}}.json",
     log:
         "logs/export_{build_name}.txt"
     benchmark:
@@ -464,45 +458,8 @@ rule export:
             --metadata {input.metadata} \
             --node-data {input.node_data} \
             --auspice-config {input.auspice_config} \
-            --include-root-sequence \
             --colors {input.colors} \
-            --lat-longs {input.lat_longs} \
             --title {params.title:q} \
             --description {input.description} \
             --output {output.auspice_json} 2>&1 | tee {log};
-            cp {input.tip_freq_json} {output.tip_freq_json}
         """
-
-rule include_hcov19_prefix:
-    message: "Rename strains to include hCoV-19/ prefix"
-    input:
-        auspice_json = rules.export.output.auspice_json,
-        tip_freq_json = rules.export.output.tip_freq_json,
-        root_sequence_json = rules.export.output.root_sequence_json
-    output:
-        auspice_json = auspice_dir + f"/{auspice_prefix}_{{build_name,[^_]+}}.json",
-        tip_freq_json = auspice_dir + f"/{auspice_prefix}_{{build_name,[^_]+}}_tip-frequencies.json",
-        root_sequence_json = auspice_dir + f"/{auspice_prefix}_{{build_name,[^_]+}}_root-sequence.json",
-    log:
-        "logs/include_hcov19_prefix_{build_name}.txt"
-    shell:
-        """
-        python3 ./scripts/include_prefix.py \
-            --input-auspice {input.auspice_json} \
-            --input-tip-frequencies {input.tip_freq_json} \
-            --prefix "hCoV-19/" \
-            --output-auspice {output.auspice_json} \
-            --output-tip-frequencies {output.tip_freq_json}; \
-            cp {input.root_sequence_json} {output.root_sequence_json}
-        """
-
-rule timestamped_build:
-    message: "Creating timestamped copy"
-    input:
-        auspice_json_in = auspice_dir + f"/{auspice_prefix}_{{build_name}}{{postfix}}",
-    
-    output:
-        auspice_json_out = auspice_dir + f"/{auspice_prefix}_{{build_name}}_{{date,[-\d]+}}{{postfix}}",
-    
-    shell:
-        "cp {input.auspice_json_in} {output.auspice_json_out}"
