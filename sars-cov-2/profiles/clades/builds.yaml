@@ -16,9 +16,8 @@ data_source:
   clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
 
 origins:
-  gisaid:
     metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
-    sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.gz"
+    sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
     exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
     filters: "--min-length 27000"
 

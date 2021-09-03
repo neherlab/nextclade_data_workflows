@@ -11,7 +11,10 @@
 */references-old
 */nextalign
 
+builds
+
 secrets.yaml
+stats.json
 
 .DS_Store
 .vscode/*
