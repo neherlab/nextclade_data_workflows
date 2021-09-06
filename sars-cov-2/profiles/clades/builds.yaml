@@ -40,3 +40,19 @@ builds:
         filters: "--min-length 28500 --group-by year month region pango_lineage --subsample-max-sequences 600 --min-date 2021-04-01 --exclude-where  QC_rare_mutations!=good QC_snp_clusters!=good"
       clades:
         filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 200 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good QC_snp_clusters!=good"
+  nextclade-new:
+    subsamples:
+      early:
+        filters: "--min-length 28500 --group-by year month region Nextstrain_clade --subsample-max-sequences 200 --max-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+      pango:
+        filters: "--min-length 28500 --group-by year month region pango_lineage --subsample-max-sequences 1000 --min-date 2021-04-01 --exclude-where  QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+      clades:
+        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 800 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+  nextclade-richard:
+    subsamples:
+      early:
+        filters: "--min-length 28500 --group-by year month division pango_lineage --subsample-max-sequences 500 --max-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good"
+      late:
+        filters: "--min-length 28500 --group-by year month division pango_lineage --subsample-max-sequences 1000 --min-date 2021-04-01 --exclude-where 'rare_mutations>15'  QC_snp_clusters!=good"
+      clades:
+        filters: "--min-length 28500 --group-by region Nextstrain_clade --sequences-per-group 5 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good --no-probabilistic-sampling"
