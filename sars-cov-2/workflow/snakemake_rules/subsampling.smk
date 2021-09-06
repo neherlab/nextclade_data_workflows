@@ -12,6 +12,7 @@ and produces files
 '''
 
 build_dir = config.get("build_dir", "builds")
+build_dir = "builds"
 
 rule prepare_build:
     input:
@@ -27,7 +28,7 @@ rule subsample:
         sequences = "data/sequences.fasta.xz",
         metadata = "data/metadata.tsv",
         sequence_index = "pre-processed/sequence_index.tsv",
-        problematic_exclude = "pre-processed/problematic_exclude.txt"
+        problematic_exclude = "pre-processed/problematic_exclude.txt",
         include = config["files"]["include"],
     output:
         sequences = build_dir + "/{build_name}/sample-{subsample}.fasta",

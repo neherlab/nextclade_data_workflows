@@ -37,6 +37,6 @@ builds:
       early:
         filters: "--min-length 28500 --group-by year month region Nextstrain_clade --subsample-max-sequences 200 --max-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good"
       pango:
-        filters: "--min-length 28500 --group-by year month region pango_lineage --subsample-max-sequences 600 --min-date 2021-04-01 --exclude-where 'rare_mutations>15'  QC_snp_clusters!=good"
+        filters: "--min-length 28500 --group-by year month region pango_lineage --subsample-max-sequences 600 --min-date 2021-04-01 --exclude-where  QC_rare_mutations!=good QC_snp_clusters!=good"
       clades:
-        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 200 --min-date 2021-04-01 --exclude-where 'rare_mutations>15'  QC_snp_clusters!=good"
+        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 200 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good QC_snp_clusters!=good"
