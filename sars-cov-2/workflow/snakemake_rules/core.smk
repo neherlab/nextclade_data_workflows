@@ -114,9 +114,6 @@ rule refine:
     message:
         """
         Refining tree
-          - estimate timetree
-          - use {params.coalescent} coalescent timescale
-          - estimate {params.date_inference} node dates
         """
     input:
         tree = rules.tree.output.tree,
@@ -137,14 +134,7 @@ rule refine:
         mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024)
     params:
         root = config["refine"]["root"],
-        clock_rate = config["refine"].get("clock_rate", 0.0007),
-        clock_std_dev = config["refine"].get("clock_std_dev", 0.003),
-        coalescent = config["refine"].get("coalescent", "opt"),
-        date_inference = config["refine"].get("date_inference", 'marginal'),
         divergence_unit = config["refine"].get("divergence_unit", 'mutations'),
-        clock_filter_iqd = config["refine"].get("clock_filter_iqd", 4),
-        keep_polytomies = "--keep-polytomies" if config["refine"].get("keep_polytomies", False) else "",
-        timetree = "" if config["refine"].get("no_timetree", False) else "--timetree"
     conda: config["conda_environment"]
     shell:
         """
@@ -155,16 +145,7 @@ rule refine:
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
             --root {params.root} \
-            {params.timetree} \
-            {params.keep_polytomies} \
-            --clock-rate {params.clock_rate} \
-            --clock-std-dev {params.clock_std_dev} \
-            --coalescent {params.coalescent} \
-            --date-inference {params.date_inference} \
-            --divergence-unit {params.divergence_unit} \
-            --date-confidence \
-            --no-covariance \
-            --clock-filter-iqd {params.clock_filter_iqd} 2>&1 | tee {log}
+            --divergence-unit {params.divergence_unit} | tee {log}
         """
 
 rule ancestral:
@@ -312,97 +293,6 @@ rule clades:
             --output-node-data {output.node_data} 2>&1 | tee {log}
         """
 
-rule tip_frequencies:
-    message: "Estimating censored KDE frequencies for tips"
-    input:
-        tree = rules.refine.output.tree,
-        metadata = build_dir + "/{build_name}/metadata.tsv"
-    output:
-        tip_frequencies_json = build_dir + "/{build_name}/tip-frequencies.json"
-    log:
-        "logs/tip_frequencies_{build_name}.txt"
-    benchmark:
-        "benchmarks/tip_frequencies_{build_name}.txt"
-    params:
-        min_date = config["frequencies"]["min_date"],
-        max_date = lambda w: datetime.datetime.today().strftime("%Y-%m-%d"),
-        pivot_interval = config["frequencies"]["pivot_interval"],
-        pivot_interval_units = config["frequencies"]["pivot_interval_units"],
-        narrow_bandwidth = config["frequencies"]["narrow_bandwidth"],
-        proportion_wide = config["frequencies"]["proportion_wide"]
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
-    conda: config["conda_environment"]
-    shell:
-        """
-        augur frequencies \
-            --method kde \
-            --metadata {input.metadata} \
-            --tree {input.tree} \
-            --min-date {params.min_date} \
-            --max-date {params.max_date} \
-            --pivot-interval {params.pivot_interval} \
-            --pivot-interval-units {params.pivot_interval_units} \
-            --narrow-bandwidth {params.narrow_bandwidth} \
-            --proportion-wide {params.proportion_wide} \
-            --output {output.tip_frequencies_json} 2>&1 | tee {log}
-        """
-
-if 'distances' in config:
-    rule distances:
-        input:
-            tree = rules.refine.output.tree,
-            alignments = build_dir + "/{build_name}/translations/aligned.gene.S_withInternalNodes.fasta",
-            distance_maps = config['distances']['maps']
-        params:
-            genes = 'S',
-            comparisons = config['distances']['comparisons'],
-            attribute_names = config['distances']['attributes']
-        output:
-            node_data = build_dir + "/{build_name}/distances.json"
-        conda:
-            config["conda_environment"]
-        shell:
-            """
-            augur distance \
-                --tree {input.tree} \
-                --alignment {input.alignments} \
-                --gene-names {params.genes} \
-                --compare-to {params.comparisons} \
-                --attribute-name {params.attribute_names} \
-                --map {input.distance_maps} \
-                --output {output}
-            """
-
-rule colors:
-    message: "Constructing colors file"
-    input:
-        ordering = config["files"]["ordering"],
-        color_schemes = config["files"]["color_schemes"],
-        metadata = build_dir + "/{build_name}/metadata.tsv"
-    output:
-        colors = build_dir + "/{build_name}/colors.tsv"
-    log:
-        "logs/colors_{build_name}.txt"
-    benchmark:
-        "benchmarks/colors_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        # Compared to other rules, this rule loads metadata as a pandas
-        # DataFrame instead of a dictionary, so it uses much less memory.
-        mem_mb=lambda wildcards, input: 5 * int(input.metadata.size / 1024 / 1024)
-    conda: config["conda_environment"]
-    shell:
-        """
-        python3 scripts/assign-colors.py \
-            --ordering {input.ordering} \
-            --color-schemes {input.color_schemes} \
-            --output {output.colors} \
-            --metadata {input.metadata} 2>&1 | tee {log}
-        """
-
-
 def _get_node_data_by_wildcards(wildcards):
     """Return a list of node data files to include for a given build's wildcards.
     """
@@ -413,7 +303,6 @@ def _get_node_data_by_wildcards(wildcards):
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
         rules.clades.output.node_data,
-        rules.traits.output.node_data,
         rules.aa_muts_explicit.output.node_data
     ]
     if "distances" in config: inputs.append(rules.distances.output.node_data)
@@ -421,10 +310,6 @@ def _get_node_data_by_wildcards(wildcards):
     # Convert input files from wildcard strings to real file names.
     inputs = [input_file.format(**wildcards_dict) for input_file in inputs]
     return inputs
-
-# Make switzerland build have swiss acknowledgments
-if "CH-geneva" in config["builds"]:
-    config["builds"]["switzerland"]["description"] = config["builds"]["CH-geneva"]["description"]
 
 rule export:
     message: "Exporting data files for auspice"
@@ -434,9 +319,6 @@ rule export:
         node_data = _get_node_data_by_wildcards,
         auspice_config = lambda w: config["builds"][w.build_name]["auspice_config"] if "auspice_config" in config["builds"][w.build_name] \
                                    else config["files"]["auspice_config"],
-        colors = lambda w: config["builds"][w.build_name]["colors"] if "colors" in config["builds"][w.build_name]\
-                           else ( config["files"]["colors"] if "colors" in config["files"]\
-                           else rules.colors.output.colors.format(**w) ),
         description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name]
                                 else config["files"]["description"],
     output:
@@ -458,7 +340,6 @@ rule export:
             --metadata {input.metadata} \
             --node-data {input.node_data} \
             --auspice-config {input.auspice_config} \
-            --colors {input.colors} \
             --title {params.title:q} \
             --description {input.description} \
             --output {output.auspice_json} 2>&1 | tee {log};
