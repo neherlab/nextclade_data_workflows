@@ -18,8 +18,8 @@ rule preprocess:
     input:
         sequences = "data/sequences.fasta.xz",
         metadata = "data/metadata.tsv",
-        sequence_index = "pre-processed/sequence_index.tsv"
-        problematic_exclude = "pre-processed/problematic_exclude.tsv"
+        sequence_index = "pre-processed/sequence_index.tsv",
+        problematic_exclude = "pre-processed/problematic_exclude.txt",
     params:
         slack_hook = config.get('slackHook',"google.com")
     shell:
