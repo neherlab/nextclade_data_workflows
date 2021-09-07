@@ -4,24 +4,12 @@ localrules: all, clean, clean_all, dump_config
 
 if "builds" not in config:
     config["builds"] = {}
-if "files" not in config:
-    configfile: "defaults/parameters.yaml"
 
-if "origins" in config:
-    include: "workflow/snakemake_rules/preprocess.smk"
-
-if "reference-builds" in config:
-    config["builds"].update(config["reference-builds"])
-    # Include rules to handle primary build logic from multiple sequence alignment
-    # to output of auspice JSONs for a default build.
-    include: "workflow/snakemake_rules/reference_build.smk"
-
-if "templated-builds" in config:
-    include: "workflow/snakemake_rules/templated_build.smk"
-
-if len(config["builds"]):
-    include: "workflow/snakemake_rules/subsampling.smk"
-    include: "workflow/snakemake_rules/core.smk"
+configfile: "defaults/parameters.yaml"
+include: "workflow/snakemake_rules/preprocess.smk"
+# include: "workflow/snakemake_rules/templated_build.smk"
+include: "workflow/snakemake_rules/subsampling.smk"
+include: "workflow/snakemake_rules/core.smk"
 
 auspice_prefix = config.get("auspice_prefix", "ncov")
 auspice_dir = config.get("auspice_dir", "auspice")
@@ -124,6 +112,8 @@ rule clean:
         "benchmarks",
         auspice_dir,
         build_dir,
+        "test",
+        "output"
     shell:
         "rm -rfv {params}"
 

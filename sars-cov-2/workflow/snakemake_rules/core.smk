@@ -118,7 +118,7 @@ rule refine:
     input:
         tree = rules.tree.output.tree,
         alignment = rules.mask.output.alignment,
-        metadata = build_dir + "/{build_name}/metadata.tsv"
+        metadata = "data/metadata.tsv"
     output:
         tree = build_dir + "/{build_name}/tree.nwk",
         node_data = build_dir + "/{build_name}/branch_lengths.json"
@@ -315,7 +315,7 @@ rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
-        metadata = build_dir + "/{build_name}/metadata.tsv",
+        metadata = "data/metadata.tsv",
         node_data = _get_node_data_by_wildcards,
         auspice_config = lambda w: config["builds"][w.build_name]["auspice_config"] if "auspice_config" in config["builds"][w.build_name] \
                                    else config["files"]["auspice_config"],
