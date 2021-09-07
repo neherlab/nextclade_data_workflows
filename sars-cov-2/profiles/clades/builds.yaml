@@ -47,9 +47,9 @@ builds:
       early:
         filters: "--min-length 28500 --group-by year month region Nextstrain_clade --subsample-max-sequences 200 --max-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
       pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-02-01 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 1000 --min-date 2021-06-01 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good"
       clades:
-        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 500 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 800 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
   nextclade-richard:
     subsamples:
       early:

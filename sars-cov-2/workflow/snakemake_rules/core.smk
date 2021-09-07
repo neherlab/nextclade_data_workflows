@@ -292,6 +292,33 @@ rule clades:
             --clades {input.clades} \
             --output-node-data {output.node_data} 2>&1 | tee {log}
         """
+        
+rule colors:
+    message: "Constructing colors file"
+    input:
+        ordering = config["files"]["ordering"],
+        color_schemes = config["files"]["color_schemes"],
+        metadata = "data/metadata.tsv"
+    output:
+        colors = build_dir + "/{build_name}/colors.tsv"
+    log:
+        "logs/colors_{build_name}.txt"
+    benchmark:
+        "benchmarks/colors_{build_name}.txt"
+    resources:
+        # Memory use scales primarily with the size of the metadata file.
+        # Compared to other rules, this rule loads metadata as a pandas
+        # DataFrame instead of a dictionary, so it uses much less memory.
+        mem_mb=lambda wildcards, input: 5 * int(input.metadata.size / 1024 / 1024)
+    conda: config["conda_environment"]
+    shell:
+        """
+        python3 scripts/assign-colors.py \
+            --ordering {input.ordering} \
+            --color-schemes {input.color_schemes} \
+            --output {output.colors} \
+            --metadata {input.metadata} 2>&1 | tee {log}
+        """
 
 def _get_node_data_by_wildcards(wildcards):
     """Return a list of node data files to include for a given build's wildcards.
@@ -303,7 +330,8 @@ def _get_node_data_by_wildcards(wildcards):
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
         rules.clades.output.node_data,
-        rules.aa_muts_explicit.output.node_data
+        rules.aa_muts_explicit.output.node_data,
+        rules.colors.output.node_data
     ]
     if "distances" in config: inputs.append(rules.distances.output.node_data)
 
