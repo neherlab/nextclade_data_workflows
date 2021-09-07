@@ -71,9 +71,25 @@ rule download_exclude:
 rule download_clades:
     message: "Downloading clade definitions from {params.source} -> {output}"
     output:
-        "data/clades.tsv"
+        "builds/clades.tsv"
     params:
         source = config["data_source"]["clades"]
+    shell: "curl {params.source} -o {output}"
+
+rule download_color_ordering:
+    message: "Downloading clade definitions from {params.source} -> {output}"
+    output:
+        "builds/color_ordering.tsv"
+    params:
+        source = config["data_source"]["color_ordering"]
+    shell: "curl {params.source} -o {output}"
+
+rule download_lat_longs:
+    message: "Downloading clade definitions from {params.source} -> {output}"
+    output:
+        "builds/lat_longs.tsv"
+    params:
+        source = config["data_source"]["lat_longs"]
     shell: "curl {params.source} -o {output}"
 
 rule diagnostic:
