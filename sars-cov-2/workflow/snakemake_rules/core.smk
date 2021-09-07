@@ -117,8 +117,8 @@ rule refine:
         """
     input:
         tree = rules.tree.output.tree,
-        alignment = rules.mask.output.alignment,
-        metadata = "data/metadata.tsv"
+        alignment = rules.align.output.alignment,
+        metadata =  "builds/{build_name}/metadata.tsv"
     output:
         tree = build_dir + "/{build_name}/tree.nwk",
         node_data = build_dir + "/{build_name}/branch_lengths.json"
@@ -156,7 +156,7 @@ rule ancestral:
         """
     input:
         tree = rules.refine.output.tree,
-        alignment = rules.mask.output.alignment
+        alignment = rules.align.output.alignment
     output:
         node_data = build_dir + "/{build_name}/nt_muts.json"
     log:
@@ -243,7 +243,7 @@ rule traits:
         """
     input:
         tree = rules.refine.output.tree,
-        metadata = build_dir + "/{build_name}/metadata.tsv"
+        metadata = "builds/{build_name}/metadata.tsv"
     output:
         node_data = build_dir + "/{build_name}/traits.json"
     log:
@@ -298,7 +298,7 @@ rule colors:
     input:
         ordering = config["files"]["ordering"],
         color_schemes = config["files"]["color_schemes"],
-        metadata = "data/metadata.tsv"
+        metadata = "builds/{build_name}/metadata.tsv"
     output:
         colors = build_dir + "/{build_name}/colors.tsv"
     log:
@@ -330,8 +330,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
         rules.clades.output.node_data,
-        rules.aa_muts_explicit.output.node_data,
-        rules.colors.output.node_data
+        rules.aa_muts_explicit.output.node_data
     ]
     if "distances" in config: inputs.append(rules.distances.output.node_data)
 
@@ -343,12 +342,13 @@ rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
-        metadata = "data/metadata.tsv",
+        metadata = "builds/{build_name}/metadata.tsv",
         node_data = _get_node_data_by_wildcards,
         auspice_config = lambda w: config["builds"][w.build_name]["auspice_config"] if "auspice_config" in config["builds"][w.build_name] \
                                    else config["files"]["auspice_config"],
         description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name]
                                 else config["files"]["description"],
+        colors = lambda w: rules.colors.output.colors.format(**w)
     output:
         auspice_json = "auspice/{build_name}/auspice.json",
     log:
@@ -367,6 +367,7 @@ rule export:
             --tree {input.tree} \
             --metadata {input.metadata} \
             --node-data {input.node_data} \
+            --colors {input.colors} \
             --auspice-config {input.auspice_config} \
             --title {params.title:q} \
             --description {input.description} \

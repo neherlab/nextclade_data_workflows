@@ -33,6 +33,8 @@ refine:
   coalescent: "skyline"
   date_inference: "marginal"
 
+mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 23403 21621 21846 22917 23012 23063 23604 23664 24642 2491"
+
 builds:
   nextclade:
     subsamples:
@@ -45,11 +47,11 @@ builds:
   nextclade-new:
     subsamples:
       early:
-        filters: "--min-length 28500 --group-by year month region Nextstrain_clade --subsample-max-sequences 200 --max-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by year month region Nextstrain_clade --subsample-max-sequences 200 --max-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8'"
       pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 1000 --min-date 2021-06-01 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 1000 --min-date 2021-06-01 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8'"
       clades:
-        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 800 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by year month country Nextstrain_clade  --subsample-max-sequences 800 --min-date 2021-04-01 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8'"
   nextclade-richard:
     subsamples:
       early:
