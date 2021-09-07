@@ -322,7 +322,7 @@ rule export:
         description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name]
                                 else config["files"]["description"],
     output:
-        auspice_json = auspice_dir + f"/{{build_name,[^_]+}}.json",
+        auspice_json = "auspice/{build_name}/auspice.json",
     log:
         "logs/export_{build_name}.txt"
     benchmark:

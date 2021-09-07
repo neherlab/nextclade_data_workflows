@@ -11,7 +11,6 @@ and produces files
 
 '''
 
-build_dir = config.get("build_dir", "builds")
 build_dir = "builds"
 
 rule prepare_build:
@@ -68,7 +67,7 @@ rule combine_subsamples:
         lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.fasta"
                    for subsample in config["builds"][w.build_name]["subsamples"]]
     output:
-        rules.prepare_build.input.sequences
+        build_dir + "/{build_name}/sequences_raw.fasta"
     benchmark:
         "benchmarks/combine_subsamples_{build_name}.txt"
     conda: config["conda_environment"]
@@ -77,28 +76,22 @@ rule combine_subsamples:
         python3 scripts/combine-and-dedup-fastas.py --input {input} --output {output}
         """
 
-rule extract_metadata:
+rule exclude_outliers:
     input:
-        strains = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.txt"
-                   for subsample in config["builds"][w.build_name]["subsamples"]],
-        metadata = "pre-processed/metadata.tsv"
+        sequences = "builds/{build_name}/sequences_raw.fasta",
+        metadata = "data/metadata.tsv",
+        exclude = "profiles/exclude.txt",
+                sequence_index = "pre-processed/sequence_index.tsv",
     output:
-        metadata = rules.prepare_build.input.metadata
-    params:
-        adjust = lambda w: config["builds"][w.build_name].get("metadata_adjustments",{}),
-    benchmark:
-        "benchmarks/extract_metadata_{build_name}.txt"
-    run:
-        import pandas as pd
-        strains = set()
-        for f in input.strains:
-            with open(f) as fh:
-                strains.update([x.strip() for x in fh if x[0]!='#'])
-
-        d = pd.read_csv(input.metadata, index_col='strain', sep='\t').loc[list(strains)]
-        if len(params.adjust):
-            for adjustment  in params.adjust:
-                ind = d.eval(adjustment["query"])
-                d.loc[ind, adjustment['dst']] = d.loc[ind, adjustment['src']]
-
-        d.to_csv(output.metadata, sep='\t')
+        sampled_sequences = "builds/{build_name}/sequences.fasta",
+        sampled_strains = "builds/{build_name}/subsample.txt",
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --sequence-index {input.sequence_index} \
+            --exclude {input.exclude} \
+            --output {output.sampled_sequences} \
+            --output-strains {output.sampled_strains}
+        """

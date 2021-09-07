@@ -29,16 +29,78 @@ build_dir = config.get("build_dir", "builds")
 
 date = datetime.date.today()
 
-rule all:
-    input: [f"{auspice_dir}/{build}.json" for build in config["builds"]],
+rule generate_sample_sequences:
+    input:
+        sequences = "data/sequences.fasta.xz",
+        metadata = "data/metadata.tsv",
+        sequence_index = "pre-processed/sequence_index.tsv",
+    output:
+        sequences = "builds/{build_name}/example_sequences.fasta",
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --sequence-index {input.sequence_index} 
+            --group-by clock_deviation Nextstrain_clade year month --subsample-max-sequences 80  \
+            --probabilistic-sampling \
+            --output {output.sequences}
+        """
+
+# make segment_no function
+rule assemble_folder:
+    input:
+        genemap = "references/{reference}/genemap.gff",
+        reference = "references/{reference}/reference.fasta",
+        sample_sequences = "profiles/sequences.fasta",
+        tree = "auspice/nextclade-new/auspice.json",
+        qc = "profiles/qc.json",
+        tag = "profiles/tag.json",
+        primers = "profiles/primers.csv",
+    output:
+        genemap = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/genemap.gff",
+        primers = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/primers.csv",
+        qc = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/qc.json",
+        reference = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/reference.fasta",
+        sample_sequences = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/sequences.fasta",
+        tree = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/tree.json",
+        tag = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/tag.json",
+    shell:
+        """
+        mkdir -p output/sars-cov-2/references/{wildcards.reference}/versions/{wildcards.timestamp}/files/;
+        jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
+        cp {input.genemap} {output.genemap};
+        cp {input.reference} {output.reference};
+        cp {input.primers} {output.primers};
+        cp {input.qc} {output.qc};
+        cp {input.sample_sequences} {output.sample_sequences};
+        cp {input.tree} {output.tree};
+        """
+
+timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
+rule test_nextclade:
+    input: expand("output/sars-cov-2/references/{{reference}}/versions/{timestamp}/files/tree.json", timestamp=timestamp),
+    output: "test/{reference}/nextclade.aligned.fasta"
     params:
-        slack_hook = config.get('slackHook',"google.com")
-    # shell:
-    #     """
-    #     curl -X POST -H 'Content-type: application/json' \
-    #     --data '{{"text":"Builds done, ready for deployment"}}' \
-    #     {params.slack_hook}
-    #     """
+        indir = expand("output/sars-cov-2/references/{{reference}}/versions/{timestamp}/files" , timestamp=timestamp),
+        outdir = "test/{reference}"
+    shell:
+        """
+        /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
+         --input-fasta={params.indir}/sequences.fasta\
+         --input-root-seq={params.indir}/reference.fasta\
+         --input-qc-config={params.indir}/qc.json\
+         --input-gene-map={params.indir}/genemap.gff\
+         --input-tree={params.indir}/tree.json\
+         --output-dir={params.outdir}\
+         --output-tsv={params.outdir}/nextclade.tsv\
+         --output-tree={params.outdir}/nextclade.auspice.json\
+         --output-basename=nextclade 2>&1
+        """
+# print(config)
+# print(                [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]])
+rule all:
+    input: "test/MN908947/nextclade.aligned.fasta"
 
 rule clean_all:
     message: "Removing directories: {params}"
@@ -50,7 +112,6 @@ rule clean_all:
         "benchmarks",
         auspice_dir,
         build_dir,
-        "deployed/*"
     shell:
         "rm -rfv {params}"
 
@@ -63,7 +124,6 @@ rule clean:
         "benchmarks",
         auspice_dir,
         build_dir,
-        "deployed/*"
     shell:
         "rm -rfv {params}"
 
