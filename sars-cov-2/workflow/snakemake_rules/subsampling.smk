@@ -100,7 +100,7 @@ rule extract_metadata:
     input:
         strains = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.txt"
                 for subsample in config["builds"][w.build_name]["subsamples"]],
-        metadata = "pre-processed/metadata.tsv"
+        metadata = "data/metadata.tsv"
     output:
         metadata = rules.prepare_build.input.metadata
     params:
