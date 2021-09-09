@@ -30,8 +30,8 @@ rule subsample:
         problematic_exclude = "pre-processed/problematic_exclude.txt",
         include = config["files"]["include"],
     output:
-        sequences = build_dir + "/{build_name}/sample-{subsample}.fasta",
-        strains=build_dir + "/{build_name}/sample-{subsample}.txt",
+        sequences = build_dir + "/{build_name}/sample-{subsample,[^p].*}.fasta",
+        strains=build_dir + "/{build_name}/sample-{subsample,[^p].*}.txt",
     log:
         "logs/subsample_{build_name}_{subsample}.txt"
     benchmark:
@@ -56,6 +56,35 @@ rule subsample:
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}
         """
+
+rule pango_sampling:
+    input:
+        sequences = "pre-processed/open_pango.fasta.xz",
+        metadata = "pre-processed/open_pango_metadata.tsv",
+    output:
+        sequences = build_dir + "/{build_name}/sample-{subsample,pango.*}.fasta",
+        strains=build_dir + "/{build_name}/sample-{subsample,pango.*}.txt",
+    log:
+        "logs/subsample_{build_name}_{subsample}.txt"
+    benchmark:
+        "benchmarks/subsample_{build_name}_{subsample}.txt"
+    params:
+        filter_arguments = lambda w: config["builds"][w.build_name]["subsamples"][w.subsample]['filters'],
+        date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+    resources:
+        # Memory use scales primarily with the size of the metadata file.
+        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
+    conda: config["conda_environment"]
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            {params.filter_arguments} \
+            --max-date {params.date} \
+            --output {output.sequences} \
+            --output-strains {output.strains} 2>&1 | tee {log}
+        """ 
 
 rule combine_subsamples:
     # Similar to rule combine_input_metadata, this rule should only be run if multiple inputs are being used (i.e. multiple origins)

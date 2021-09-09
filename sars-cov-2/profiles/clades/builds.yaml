@@ -16,6 +16,7 @@ data_source:
   clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
   lat_longs: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv"
   color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
+  pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
 
 origins:
     metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"

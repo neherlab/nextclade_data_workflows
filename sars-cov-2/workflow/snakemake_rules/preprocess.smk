@@ -92,6 +92,20 @@ rule download_lat_longs:
         source = config["data_source"]["lat_longs"]
     shell: "curl {params.source} -o {output}"
 
+rule download_curated_pango:
+    output:
+        "pre-processed/pango_raw.csv"
+    params:
+        source = config["data_source"]["pango"]
+    shell: "curl {params.source} -o {output}"
+
+rule strip_pango_strain_names:
+    input:
+        "pre-processed/pango_raw.csv"
+    output:
+        "pre-processed/pango.csv"
+    shell: "awk -F',' '{{print $1}}' {input} | tail -n+2 >{output}"
+
 rule diagnostic:
     message: "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
     input:
@@ -140,4 +154,34 @@ rule index_sequences:
         augur index \
             --sequences {input.sequences} \
             --output {output.sequence_index} 2>&1 | tee {log}
+        """
+
+rule open_pango:
+    # include only sequences that are in pango.csv using augur filter
+    input:
+        sequences = "data/sequences.fasta.xz",
+        pango = "pre-processed/pango.csv",
+        sequence_index = "pre-processed/sequence_index.tsv",
+        metadata = "data/metadata.tsv",
+    output: 
+        sequences = "pre-processed/open_pango.fasta.xz",
+        metadata = "pre-processed/open_pango_metadata.tsv",
+        strains = "pre-processed/open_pango_strains.txt",
+    log:
+        "logs/open_pango.txt"
+    benchmark:
+        "benchmarks/open_pango.txt"
+    conda: config["conda_environment"]
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --sequence-index {input.sequence_index} \
+            --metadata {input.metadata} \
+            --exclude-all \
+            --include {input.pango} \
+            --output-metadata {output.metadata} \
+            --output-strains {output.strains} \
+            --output-sequences {params.sequences} \
+            2>&1 | tee {log} && \
         """
