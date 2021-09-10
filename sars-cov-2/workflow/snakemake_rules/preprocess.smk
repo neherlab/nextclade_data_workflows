@@ -191,5 +191,5 @@ rule open_pango:
             --output-metadata {output.metadata} \
             --output-strains {output.strains} \
             --output-sequences {output.sequences} \
-            2>&1 | tee {log} && \
+            2>&1 | tee {log} 
         """
