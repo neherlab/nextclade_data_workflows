@@ -57,8 +57,16 @@ rule download_metadata:
         deflate = lambda w: _infer_decompression(config['origins']['metadata']),
         address = lambda w: config['origins']['metadata']
     output:
-        metadata = "data/metadata.tsv"
+        metadata = "data/metadata_raw.tsv"
     shell: "curl {params.address} | {params.deflate} > {output:q}"
+
+rule fix_metadata:
+    input: "data/metadata_raw.tsv"
+    output: "data/metadata.tsv"
+    shell: 
+        """
+        awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' {input} >{output}
+        """
 
 rule download_exclude:
     message: "Downloading exclude from {params.source} -> {output}"
