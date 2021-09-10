@@ -30,8 +30,8 @@ rule subsample:
         problematic_exclude = "pre-processed/problematic_exclude.txt",
         include = config["files"]["include"],
     output:
-        sequences = build_dir + "/{build_name}/sample-{subsample,[^p].*}.fasta",
-        strains=build_dir + "/{build_name}/sample-{subsample,[^p].*}.txt",
+        sequences = build_dir + "/{build_name}/sample-{subsample,[^-]*}.fasta",
+        strains=build_dir + "/{build_name}/sample-{subsample,[^-]*}.txt",
     log:
         "logs/subsample_{build_name}_{subsample}.txt"
     benchmark:
@@ -62,14 +62,14 @@ rule pango_sampling:
         sequences = "pre-processed/open_pango.fasta.xz",
         metadata = "pre-processed/open_pango_metadata.tsv",
     output:
-        sequences = build_dir + "/{build_name}/sample-{subsample,pango.*}.fasta",
-        strains=build_dir + "/{build_name}/sample-{subsample,pango.*}.txt",
+        sequences = build_dir + "/{build_name}/sample-{subsample}-pango.fasta",
+        strains=build_dir + "/{build_name}/sample-{subsample}-pango.txt",
     log:
-        "logs/subsample_{build_name}_{subsample}.txt"
+        "logs/subsample_{build_name}_{subsample}-pango.txt"
     benchmark:
-        "benchmarks/subsample_{build_name}_{subsample}.txt"
+        "benchmarks/subsample_{build_name}_{subsample}-pango.txt"
     params:
-        filter_arguments = lambda w: config["builds"][w.build_name]["subsamples"][w.subsample]['filters'],
+        filter_arguments = lambda w: config["builds"][w.build_name]["subsamples"][w.subsample+'-pango']['filters'],
         date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
     resources:
         # Memory use scales primarily with the size of the metadata file.

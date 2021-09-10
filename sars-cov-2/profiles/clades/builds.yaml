@@ -41,9 +41,9 @@ builds:
     subsamples:
       clades:
         filters: "--min-length 28500 --group-by Nextstrain_clade  --subsample-max-sequences 500 --exclude-where QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8 & clock_deviation < 15'"
-      pango-early:
+      early-pango:
         filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200  --max-date 2020-12-31 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8 & clock_deviation < 15'"
-      pango-late:
+      late-pango:
         filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 600 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8 & clock_deviation < 15'"
-      pango-latest:
+      latest-pango:
         filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 700 --min-date 2021-06-01 --exclude-where  QC_missing_data!=good QC_mixed_sites!=good --query 'clock_deviation > -8 & clock_deviation < 15'"
