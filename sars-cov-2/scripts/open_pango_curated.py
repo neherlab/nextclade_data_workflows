@@ -1,5 +1,4 @@
 #%%
-from numpy import float64, int64
 import pandas as pd
 import datetime as dt
 #%%
@@ -107,4 +106,5 @@ df_new.sort_values(("Recent","Yes"), ascending=False, inplace=True)
 df_new.to_csv('other_data/recent_curated_pango.tsv', sep='\t')
 df_new
 # %%
-df
+df.pivot_table(index='lineage', columns=["recency"], values='taxon', aggfunc='count').fillna(0).astype(int)
+# %%
