@@ -26,7 +26,8 @@ if __name__ == '__main__':
     )
     parser.add_argument("--metadata", type = str, required=True, help="metadata")
     parser.add_argument("--clock-filter-recent", type=float, default=20, help="maximal allowed deviation from the molecular clock")
-    parser.add_argument("--clock-filter", type=float, default=15, help="maximal allowed deviation from the molecular clock")
+    parser.add_argument("--clock-filter-ceil", type=float, default=15, help="maximal allowed deviation from the molecular clock")
+    parser.add_argument("--clock-filter-floor", type=float, default=8, help="maximal allowed deviation from the molecular clock")
     parser.add_argument("--snp-clusters", type=int, default=1, help="maximal allowed SNP clusters (as defined by nextclade)")
     parser.add_argument("--rare-mutations", type=int, default=15, help="maximal allowed rare mutations as defined by nextclade")
     parser.add_argument("--clock-plus-rare", type=int, default=25, help="maximal allowed rare mutations as defined by nextclade")
@@ -53,8 +54,10 @@ if __name__ == '__main__':
         snp_clusters = np.zeros(len(metadata), dtype=bool)
 
     to_exclude = np.zeros_like(clock_deviation, dtype=bool)
-    to_exclude |= np.abs(clock_deviation)>args.clock_filter_recent
-    to_exclude |= (np.abs(clock_deviation)>args.clock_filter)&(~recent_sequences)
+    # to_exclude |= np.abs(clock_deviation)>args.clock_filter_recent
+    # to_exclude |= (np.abs(clock_deviation)>args.clock_filter)&(~recent_sequences)
+    to_exclude |= clock_deviation>args.clock_filter_ceil
+    to_exclude |= clock_deviation<args.clock_filter_floor
     to_exclude |= snp_clusters>args.snp_clusters
     to_exclude |= rare_mutations>args.rare_mutations
     to_exclude |= np.abs(clock_deviation+rare_mutations)>args.clock_plus_rare

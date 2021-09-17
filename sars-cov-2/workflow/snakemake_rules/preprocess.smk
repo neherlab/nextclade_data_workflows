@@ -121,9 +121,10 @@ rule diagnostic:
     output:
         to_exclude = "pre-processed/problematic_exclude.txt"
     params:
-        clock_filter = 20,
+        clock_filter_floor = -8,
+        clock_filter_ceil = 20,
         snp_clusters = 1,
-        rare_mutations = 100,
+        rare_mutations = 30,
         clock_plus_rare = 100,
     log:
         "logs/diagnostics.txt"
@@ -136,7 +137,8 @@ rule diagnostic:
         """
         python3 scripts/diagnostic.py \
             --metadata {input.metadata} \
-            --clock-filter {params.clock_filter} \
+            --clock-filter-floor {params.clock_filter_floor} \
+            --clock-filter-ceil {params.clock_filter_ceil} \
             --rare-mutations {params.rare_mutations} \
             --clock-plus-rare {params.clock_plus_rare} \
             --snp-clusters {params.snp_clusters} \
