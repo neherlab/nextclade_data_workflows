@@ -199,7 +199,7 @@ rule open_pango:
 rule strains:
     input: "data/metadata.tsv"
     output: "pre-processed/strains.txt"
-    shell: "awk -F'\t' '{{print $1}}' {input} > {output} 2> {log}"
+    shell: "awk -F'\t' '{{print $1}}' {input} > {output}"
 
 rule priorities:
     input:
