@@ -195,3 +195,24 @@ rule open_pango:
             --output-sequences {output.sequences} \
             2>&1 | tee {log} 
         """
+
+rule priorities:
+    input:
+        metadata = "pre-processed/open_pango_strains.txt"
+    output:
+        priorities = "pre-processed/open_pango_priorities.tsv"
+    log:
+        "logs/priorities.txt"
+    benchmark:
+        "benchmarks/priorities.txt"
+    conda: config["conda_environment"]
+    shell:
+        """
+        python3 scripts/diagnostic.py
+            --input {input.strains} \
+            --output {output.priorities} \
+            --seed 0 \
+            2>&1 | tee {log} 
+        """
+    
+    
