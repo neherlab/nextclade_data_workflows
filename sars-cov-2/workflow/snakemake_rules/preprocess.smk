@@ -115,7 +115,7 @@ rule strip_pango_strain_names:
     shell: "awk -F',' '{{print $1}}' {input} | tail -n+2 >{output}"
 
 rule diagnostic:
-    message: "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
+    message: "Scanning metadata {input.metadata} for problematic sequences."
     input:
         metadata = "data/metadata.tsv"
     output:
