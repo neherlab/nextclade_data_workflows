@@ -114,7 +114,7 @@ rule exclude_outliers:
         sequences = "builds/{build_name}/sequences_raw.fasta",
         metadata = "data/metadata.tsv",
         exclude = "profiles/exclude.txt",
-                sequence_index = "pre-processed/sequence_index.tsv",
+        sequence_index = "pre-processed/sequence_index.tsv",
     output:
         sampled_sequences = "builds/{build_name}/sequences.fasta",
         sampled_strains = "builds/{build_name}/subsample.txt",
