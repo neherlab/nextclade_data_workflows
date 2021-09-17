@@ -213,7 +213,7 @@ rule priorities:
     conda: config["conda_environment"]
     shell:
         """
-        python3 scripts/diagnostic.py \
+        python3 scripts/priority_hash.py \
             --input {input.strains} \
             --output {output.priorities} \
             --seed 0 \
