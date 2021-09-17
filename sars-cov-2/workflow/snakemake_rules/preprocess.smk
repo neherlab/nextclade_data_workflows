@@ -196,11 +196,16 @@ rule open_pango:
             2>&1 | tee {log} 
         """
 
+rule strains:
+    input: "data/metadata.tsv"
+    output: "pre-processed/strains.txt"
+    shell: "awk -F'\t' '{{print $1}}' {input} > {output} 2> {log}"
+
 rule priorities:
     input:
-        metadata = "pre-processed/open_pango_strains.txt"
+        strains = "pre-processed/strains.txt",
     output:
-        priorities = "pre-processed/open_pango_priorities.tsv"
+        priorities = "pre-processed/priority.tsv"
     log:
         "logs/priorities.txt"
     benchmark:

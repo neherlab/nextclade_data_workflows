@@ -29,6 +29,7 @@ rule subsample:
         sequence_index = "pre-processed/sequence_index.tsv",
         problematic_exclude = "pre-processed/problematic_exclude.txt",
         include = config["files"]["include"],
+        priority = "pre-processed/priority.tsv",
     output:
         sequences = build_dir + "/{build_name}/sample-{subsample,[^-]*}.fasta",
         strains=build_dir + "/{build_name}/sample-{subsample,[^-]*}.txt",
@@ -53,6 +54,7 @@ rule subsample:
             --exclude {input.problematic_exclude} \
             {params.filter_arguments} \
             --max-date {params.date} \
+            --priority {input.priority} \
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}
         """
@@ -61,6 +63,7 @@ rule pango_sampling:
     input:
         sequences = "pre-processed/open_pango.fasta.xz",
         metadata = "pre-processed/open_pango_metadata.tsv",
+        priority = "pre-processed/priority.tsv",
     output:
         sequences = build_dir + "/{build_name}/sample-{subsample}-pango.fasta",
         strains=build_dir + "/{build_name}/sample-{subsample}-pango.txt",
@@ -82,6 +85,7 @@ rule pango_sampling:
             --metadata {input.metadata} \
             {params.filter_arguments} \
             --max-date {params.date} \
+            --priority {input.priority} \
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}
         """ 
