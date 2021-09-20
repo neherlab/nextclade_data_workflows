@@ -74,7 +74,7 @@ rule test_nextclade:
         outdir = "test/{reference}"
     shell:
         """
-        /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
+        nextclade \
          --input-fasta={params.indir}/sequences.fasta\
          --input-root-seq={params.indir}/reference.fasta\
          --input-qc-config={params.indir}/qc.json\

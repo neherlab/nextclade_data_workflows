@@ -62,7 +62,7 @@ rule download_metadata:
 
 rule fix_metadata:
     input: "data/metadata_raw.tsv"
-    output: "data/metadata.tsv"
+    output: "data/metadata_raw2.tsv"
     shell: 
         """
         awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' {input} >{output}
@@ -166,6 +166,22 @@ rule index_sequences:
             --output {output.sequence_index} 2>&1 | tee {log}
         """
 
+rule fix_pango_lineages:
+    message: "Add new column to open_pango_metadata_raw.tsv by joining pango_raw.csv on field strain name"
+    input:
+        metadata = "data/metadata_raw2.tsv",
+        pango_designations = "pre-processed/pango_raw.csv",
+    output:
+        metadata = "data/metadata.tsv",
+    shell:
+        """
+        python3 scripts/fix_open_pango_lineages.py \
+        --metadata {input.metadata} \
+        --designations {input.pango_designations} \
+        --output {output.metadata} \
+        2>&1
+        """
+
 rule open_pango:
     # include only sequences that are in pango.csv using augur filter
     input:
@@ -175,7 +191,7 @@ rule open_pango:
         metadata = "data/metadata.tsv",
     output: 
         sequences = "pre-processed/open_pango.fasta.xz",
-        metadata = "pre-processed/open_pango_metadata.tsv",
+        metadata = "pre-processed/open_pango_metadata_raw.tsv",
         strains = "pre-processed/open_pango_strains.txt",
     log:
         "logs/open_pango.txt"
@@ -219,5 +235,3 @@ rule priorities:
             --seed 0 \
             2>&1 | tee {log} 
         """
-    
-    
