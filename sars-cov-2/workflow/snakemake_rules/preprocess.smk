@@ -191,7 +191,7 @@ rule open_pango:
         metadata = "data/metadata.tsv",
     output: 
         sequences = "pre-processed/open_pango.fasta.xz",
-        metadata = "pre-processed/open_pango_metadata_raw.tsv",
+        metadata = "pre-processed/open_pango_metadata.tsv",
         strains = "pre-processed/open_pango_strains.txt",
     log:
         "logs/open_pango.txt"
