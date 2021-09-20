@@ -20,7 +20,8 @@ files:
 tree:
   tree-builder-args: "'-ninit 10 -n 8 -czb'"
 
-mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987"
+# mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987"
+mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987 24410 28461 23403 21621 21846 22917 23012 23063 23604 23664 24642 2491" 
 
 # Define genes to translate during alignment by nextalign.
 genes: ["ORF1a", "ORF1b", "S", "ORF3a", "M", "N"]
