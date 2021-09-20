@@ -48,4 +48,4 @@ builds:
       latest-pango:
         filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 700 --min-date 2021-06-01 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
       delta:
-        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --exclude-where pango_lineage!=B.1.617.2 country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where pango_lineage!=B.1.617.2 country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
