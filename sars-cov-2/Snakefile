@@ -41,7 +41,7 @@ rule assemble_folder:
         genemap = "references/{reference}/genemap.gff",
         reference = "references/{reference}/reference.fasta",
         sample_sequences = "profiles/sequences.fasta",
-        tree = "auspice/nextclade-new/auspice.json",
+        tree = "auspice/nextclade/auspice.json",
         qc = "profiles/qc.json",
         tag = "profiles/tag.json",
         primers = "profiles/primers.csv",
