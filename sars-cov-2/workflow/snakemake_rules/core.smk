@@ -350,7 +350,7 @@ rule export:
                                 else config["files"]["description"],
         colors = lambda w: rules.colors.output.colors.format(**w)
     output:
-        auspice_json = "auspice/{build_name}/auspice.json",
+        auspice_json = "auspice/{build_name}/auspice_raw.json",
     log:
         "logs/export_{build_name}.txt"
     benchmark:
@@ -372,4 +372,22 @@ rule export:
             --title {params.title:q} \
             --description {input.description} \
             --output {output.auspice_json} 2>&1 | tee {log};
+        """
+
+rule add_branch_labels:
+    message: "Adding custom branch labels to the Auspice JSON"
+    input:
+        auspice_json = rules.export.output.auspice_json,
+        mutations = rules.aa_muts_explicit.output.node_data
+    output:
+        auspice_json = "auspice/{build_name}/auspice.json",
+    log:
+        "logs/add_branch_labels_{build_name}.txt"
+    conda: config["conda_environment"]
+    shell:
+        """
+        python3 scripts/add_branch_labels.py \
+            --input {input.auspice_json} \
+            --mutations {input.mutations} \
+            --output {output.auspice_json} 
         """
