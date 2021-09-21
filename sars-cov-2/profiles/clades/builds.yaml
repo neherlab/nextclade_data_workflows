@@ -53,20 +53,23 @@ refine:
 #24410 - S:950
 #24642 - S:1027
 #26681 - M:53
+#26767 - M:82 Added because it pulls Eta into Delta causing E484K reversions
 #28461 - N:63
 #28887 - N:205
 #28975 - N:234
-mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 28461 28887 28975"
+mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 26767 28461 28887 28975"
 builds:
    nextclade:
     subsamples:
       clades:
-        filters: "--min-length 28500 --group-by Nextstrain_clade  --subsample-max-sequences 500 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by Nextstrain_clade  --subsample-max-sequences 500 --exclude-where  country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+      recent:
+        filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
       early-pango:
         filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200  --max-date 2020-12-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
       late-pango:
-        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 600 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
       latest-pango:
-        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 700 --min-date 2021-06-01 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
-      delta:
-        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where pango_lineage!=B.1.617.2 country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+      very-recent:
+        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
