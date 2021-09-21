@@ -34,10 +34,31 @@ refine:
   coalescent: "skyline"
   date_inference: "marginal"
 
-mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 23403 21621 21846 22917 23012 23063 23604 23664 24642 2491"
-
+# Mask annotation
+#1820  - Orf1a:519
+#9430  - Orf1a:3055
+#10323 - Orf1a:3353
+#11083 - Orf1a:3606
+#13019 - Orf1a:4252
+#21575 - S:5
+#21614 - S:18
+#21846 - S:95
+#21987 - S:142
+#22917 - S:452
+#22992 - S:477
+#23012 - S:484
+#23063 - S:501
+#23593 - S:677
+#23604 - S:681
+#24410 - S:950
+#24642 - S:1027
+#26681 - M:53
+#28461 - N:63
+#28887 - N:205
+#28975 - N:234
+mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 28461 28887 28975"
 builds:
-   nextclade-new:
+   nextclade:
     subsamples:
       clades:
         filters: "--min-length 28500 --group-by Nextstrain_clade  --subsample-max-sequences 500 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
