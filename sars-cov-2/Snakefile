@@ -19,20 +19,52 @@ date = datetime.date.today()
 
 rule generate_sample_sequences:
     input:
-        sequences = "data/sequences.fasta.xz",
+        # sequences = "data/sequences.fasta.xz",
         metadata = "data/metadata.tsv",
-        sequence_index = "pre-processed/sequence_index.tsv",
+        # sequence_index = "pre-processed/sequence_index.tsv",
     output:
-        sequences = "builds/{build_name}/example_sequences.fasta",
+        sequences = "examples/{build_name}_example_sequences.txt",
+    params:
+        filters = lambda w: config["samples"][w.build_name],
     shell:
         """
         augur filter \
-            --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --sequence-index {input.sequence_index} 
-            --group-by clock_deviation Nextstrain_clade year month --subsample-max-sequences 80  \
+            {params.filters} \
             --probabilistic-sampling \
-            --output {output.sequences}
+            --output-strains {output.sequences}
+        """
+
+rule join_sample_sequences:
+    input: expand("examples/{build_name}_example_sequences.txt", build_name = config["samples"].keys()),
+    output: "examples/example_sequences.txt",
+    shell: "cat {input} > {output}"
+
+rule generate_bgzip:
+    message: "Convert sequences from xz to bgzip"
+    input: "data/sequences.fasta.xz"
+    output: "data/sequences.fasta.gz"
+    threads: 8
+    shell: "xz -c -d {input} | bgzip -c -l 4 --threads 8 >{output}"
+
+rule generate_bgzip_index:
+    message: "Generate index for bgzip file"
+    input: "data/sequences.fasta.gz"
+    output: "data/sequences.fasta.gz.fai"
+    shell: "samtools faidx {input}"
+
+rule extract_sample_sequences:
+    input: 
+        strains = rules.join_sample_sequences.output,
+        sequences = "data/sequences.fasta.gz",
+        index = "data/sequences.fasta.gz.fai",
+    output: "examples/example_sequences.fasta",
+    shell: 
+        """
+        samtools faidx -c -r \
+            {input.strains} \
+            {input.sequences} \
+            > {output}
         """
 
 # make segment_no function

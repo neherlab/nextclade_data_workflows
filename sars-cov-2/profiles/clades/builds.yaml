@@ -58,6 +58,13 @@ refine:
 #28887 - N:205
 #28975 - N:234
 mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 26767 28461 28887 28975"
+
+samples:
+  clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
+  rare-bad: "--subsample-max-sequences 5 --exclude-where QC_rare_mutations!=bad" 
+  cluster-mediocre: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=mediocre" 
+  cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad" 
+
 builds:
    nextclade:
     subsamples:
