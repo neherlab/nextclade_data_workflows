@@ -53,7 +53,7 @@ rule subsample:
             --include {input.include} \
             --exclude {input.problematic_exclude} \
             {params.filter_arguments} \
-            --max-date {params.date} \
+            --query "pango_lineage != ''" \
             --priority {input.priority} \
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}
@@ -84,7 +84,7 @@ rule pango_sampling:
             --sequences {input.sequences} \
             --metadata {input.metadata} \
             {params.filter_arguments} \
-            --max-date {params.date} \
+            --query "pango_lineage != ''" \
             --priority {input.priority} \
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}

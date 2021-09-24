@@ -193,6 +193,8 @@ rule open_pango:
         sequences = "pre-processed/open_pango.fasta.xz",
         metadata = "pre-processed/open_pango_metadata.tsv",
         strains = "pre-processed/open_pango_strains.txt",
+    params:
+        date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
     log:
         "logs/open_pango.txt"
     benchmark:
@@ -205,6 +207,7 @@ rule open_pango:
             --sequence-index {input.sequence_index} \
             --metadata {input.metadata} \
             --exclude-all \
+            --max-date {params.date} \
             --include {input.pango} \
             --output-metadata {output.metadata} \
             --output-strains {output.strains} \
