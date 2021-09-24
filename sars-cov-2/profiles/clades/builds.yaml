@@ -1,0 +1,82 @@
+title: 'Your samples placed on a SARS-CoV-2 phylogeny'
+
+files:
+  reference: "defaults/reference_seq.gb"
+  alignment_reference: "defaults/reference_seq.fasta"
+  annotation: "defaults/annotation.gff"
+  include: "defaults/include.txt"
+  color_schemes: "defaults/color_schemes.tsv"
+  auspice_config: "profiles/clades/auspice_config.json"
+  description: "profiles/clades/description.md"
+  clades: "builds/clades.tsv"
+  ordering: "builds/color_ordering.tsv"
+  lat_longs: "builds/lat_longs.tsv"
+
+data_source:
+  clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
+  lat_longs: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv"
+  color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
+  pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
+
+origins:
+    metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
+    sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
+    exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
+    filters: "--min-length 27000"
+
+refine:
+  root: 'Wuhan-Hu-1/2019'
+  divergence_unit: 'mutations'
+  clock_filter_iqd: 4
+  no_timetree: True
+  clock_rate: 0.0007
+  clock_std_dev: 0.0003
+  coalescent: "skyline"
+  date_inference: "marginal"
+
+# Mask annotation
+#1820  - Orf1a:519
+#9430  - Orf1a:3055
+#10323 - Orf1a:3353
+#11083 - Orf1a:3606
+#13019 - Orf1a:4252
+#21575 - S:5
+#21614 - S:18
+#21846 - S:95
+#21987 - S:142
+#22917 - S:452
+#22992 - S:477
+#23012 - S:484
+#23063 - S:501
+#23593 - S:677
+#23604 - S:681
+#24410 - S:950
+#24642 - S:1027
+#26681 - M:53
+#26767 - M:82 Added because it pulls Eta into Delta causing E484K reversions
+#28461 - N:63
+#28887 - N:205
+#28975 - N:234
+mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 26767 28461 28887 28975"
+
+samples:
+  clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
+  rare-bad: "--subsample-max-sequences 5 --exclude-where QC_rare_mutations!=bad" 
+  cluster-mediocre: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=mediocre" 
+  cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad" 
+
+builds:
+   nextclade:
+    subsamples:
+      clades:
+        filters: "--min-length 28500 --group-by Nextstrain_clade  --subsample-max-sequences 500 --exclude-where  country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+      recent:
+        filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+      early-pango:
+        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200  --max-date 2020-12-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+      late-pango:
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+      latest-pango:
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+      very_recent:
+        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"

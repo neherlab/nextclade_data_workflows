@@ -1,0 +1,87 @@
+{
+  "__default__": {
+    "time": "05:59:00",
+    "qos": "6hours",
+    "n": 1,
+    "mem": "16G"
+  },
+  "refine": {
+    "time": "05:59:00",
+    "qos": "6hours",
+    "n": 1,
+    "mem": "32G"
+  },
+  "tree": {
+    "n": 8,
+    "qos": "6hours",
+    "time": "05:59:00"
+  },
+  "prealign": {
+    "n": 8,
+    "mem": "16G",
+    "qos": "6hours",
+    "time": "05:59:00"
+  },
+  "filter":{
+    "qos": "6hours",
+    "time": "05:59:00"
+  },
+  "aamuts": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "align": {
+    "n": 4,
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "ancestral": {
+    "time": "00:29:00",
+    "qos": "30min",
+    "mem": "32G"
+  },
+  "colors": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+    "combine_sumbsamples": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "export": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "mask": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "proximity_score": {
+    "time": "00:29:00",
+    "qos": "30min"
+  }, 
+  "tip_frequencies": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "traits": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "translate": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "priority_score": {
+    "time": "00:29:00",
+    "qos": "30min"
+  },
+  "extract_metadata": {
+    "time": "00:29:00",
+    "qos": "30min"
+  }, 
+  "clades": {
+    "time": "00:29:00",
+    "qos": "30min"
+  }
+}
