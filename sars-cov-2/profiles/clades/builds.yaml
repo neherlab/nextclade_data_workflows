@@ -64,6 +64,7 @@ samples:
   rare-bad: "--subsample-max-sequences 5 --exclude-where QC_rare_mutations!=bad" 
   cluster-mediocre: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=mediocre" 
   cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad" 
+  recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
 
 builds:
    nextclade:

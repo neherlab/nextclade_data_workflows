@@ -31,7 +31,7 @@ rule generate_sample_sequences:
         augur filter \
             --metadata {input.metadata} \
             {params.filters} \
-            --probabilistic-sampling \
+            --no-probabilistic-sampling \
             --output-strains {output.sequences}
         """
 
