@@ -72,7 +72,7 @@ rule assemble_folder:
     input:
         genemap = "references/{reference}/genemap.gff",
         reference = "references/{reference}/reference.fasta",
-        sample_sequences = "profiles/sequences.fasta",
+        sample_sequences = "examples/example_sequences.fasta",
         tree = "auspice/nextclade/auspice.json",
         qc = "profiles/qc.json",
         tag = "profiles/tag.json",
@@ -120,7 +120,8 @@ rule test_nextclade:
 # print(config)
 # print(                [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]])
 rule all:
-    input: "test/MN908947/nextclade.aligned.fasta"
+    input:
+        "test/MN908947/nextclade.aligned.fasta"
 
 rule clean_all:
     message: "Removing directories: {params}"
