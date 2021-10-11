@@ -5,6 +5,12 @@
     "n": 1,
     "mem": "16G"
   },
+  "generate_bgzip": {
+    "time": "05:59:00",
+    "qos": "6hours",
+    "n": 16,
+    "mem": "32G"
+  },
   "refine": {
     "time": "05:59:00",
     "qos": "6hours",

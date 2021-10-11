@@ -44,8 +44,8 @@ rule generate_bgzip:
     message: "Convert sequences from xz to bgzip"
     input: "data/sequences.fasta.xz"
     output: "data/sequences.fasta.gz"
-    threads: 8
-    shell: "xz -c -d {input} | bgzip -c -l 4 --threads 8 >{output}"
+    threads: 16
+    shell: "xz -c -d {input} | bgzip -c -l 4 --threads {threads} >{output}"
 
 rule generate_bgzip_index:
     message: "Generate index for bgzip file"
