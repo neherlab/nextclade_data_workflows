@@ -4,14 +4,13 @@
 */flu
 */logs
 */pre-processed
-*/build
 */auspice
 */output
 */test
 */references-old
 */nextalign
-
-builds
+build/
+builds/
 
 secrets.yaml
 stats.json

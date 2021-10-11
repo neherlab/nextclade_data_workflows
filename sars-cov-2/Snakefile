@@ -133,6 +133,9 @@ rule clean_all:
         "benchmarks",
         auspice_dir,
         build_dir,
+        "output",
+        "examples",
+        "test",
     shell:
         "rm -rfv {params}"
 
@@ -146,7 +149,8 @@ rule clean:
         auspice_dir,
         build_dir,
         "test",
-        "output"
+        "output",
+        "examples",
     shell:
         "rm -rfv {params}"
 
