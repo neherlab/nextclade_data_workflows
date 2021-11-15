@@ -11,6 +11,7 @@
 */nextalign
 build/
 builds/
+examples/
 
 secrets.yaml
 stats.json
