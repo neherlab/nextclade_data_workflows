@@ -9,12 +9,10 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
 
-    metadata = pd.read_csv(args.metadata, sep="\t")
-    designations = pd.read_csv(args.designations, sep=",", names=["strain", "designation"])
+    metadata = pd.read_csv(args.metadata, sep="\t",low_memory=False)
+    designations = pd.read_csv(args.designations, sep=",", index_col=0, names=["strain", "designation"],header=0)
 
-    metadata["pango_designated"] = metadata.join(designations.set_index("strain"), on="strain")[
-        "designation"
-    ]
+    metadata["pango_designated"] = metadata.join(designations, on="strain")["designation"]
     metadata["pango_lineage"] = metadata["pango_designated"].fillna(metadata["pango_lineage"])
     metadata["recombinant"] = metadata["pango_lineage"].str.startswith("X")
     metadata.to_csv(args.output, sep="\t", index=False)
