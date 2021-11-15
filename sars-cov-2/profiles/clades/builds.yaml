@@ -1,4 +1,4 @@
-title: 'Your samples placed on a SARS-CoV-2 phylogeny'
+title: "Your samples placed on a SARS-CoV-2 phylogeny"
 
 files:
   reference: "defaults/reference_seq.gb"
@@ -19,14 +19,14 @@ data_source:
   pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
 
 origins:
-    metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
-    sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
-    exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
-    filters: "--min-length 27000"
+  metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
+  sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
+  exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
+  filters: "--min-length 27000"
 
 refine:
-  root: 'Wuhan-Hu-1/2019'
-  divergence_unit: 'mutations'
+  root: "Wuhan-Hu-1/2019"
+  divergence_unit: "mutations"
   clock_filter_iqd: 4
   no_timetree: True
   clock_rate: 0.0007
@@ -61,23 +61,23 @@ mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-
 
 samples:
   clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
-  rare-bad: "--subsample-max-sequences 5 --exclude-where QC_rare_mutations!=bad" 
-  cluster-mediocre: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=mediocre" 
-  cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad" 
+  rare-bad: "--subsample-max-sequences 5 --exclude-where QC_rare_mutations!=bad"
+  cluster-mediocre: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=mediocre"
+  cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad"
   recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
 
 builds:
-   nextclade:
+  nextclade:
     subsamples:
       clades:
-        filters: "--min-length 28500 --group-by Nextstrain_clade  --subsample-max-sequences 500 --exclude-where  country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 500 --exclude-where recombinant=True country=Turkey QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
       recent:
-        filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where recombinant=True country=Turkey QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
       early-pango:
-        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200  --max-date 2020-12-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200 --max-date 2020-12-31 --exclude-where recombinant=True country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
       late-pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where recombinant=True country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
       latest-pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
+        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where recombinant=True country=Turkey QC_missing_data!=good QC_mixed_sites!=good "
       very_recent:
-        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where country=Turkey QC_rare_mutations!=good  QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where recombinant=True country=Turkey QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
