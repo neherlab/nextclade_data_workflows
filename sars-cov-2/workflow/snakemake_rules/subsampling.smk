@@ -40,6 +40,7 @@ rule subsample:
     params:
         filter_arguments = lambda w: config["builds"][w.build_name]["subsamples"][w.subsample]['filters'],
         date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+        exclude_where_args = config["exclude-where-args"],
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -52,7 +53,7 @@ rule subsample:
             --sequence-index {input.sequence_index} \
             --include {input.include} \
             --exclude {input.problematic_exclude} \
-            {params.filter_arguments} \
+            {params.filter_arguments} {params.exclude_where_args} \
             --query "pango_lineage != ''" \
             --priority {input.priority} \
             --output {output.sequences} \
@@ -74,6 +75,7 @@ rule pango_sampling:
     params:
         filter_arguments = lambda w: config["builds"][w.build_name]["subsamples"][w.subsample+'-pango']['filters'],
         date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+        exclude_where_args = config["exclude-where-args"],
     resources:
         # Memory use scales primarily with the size of the metadata file.
         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024)
@@ -83,7 +85,7 @@ rule pango_sampling:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            {params.filter_arguments} \
+            {params.filter_arguments} {params.exclude_where_args} \
             --query "pango_lineage != ''" \
             --priority {input.priority} \
             --output {output.sequences} \
