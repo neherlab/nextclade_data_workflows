@@ -17,6 +17,10 @@ build_dir = config.get("build_dir", "builds")
 
 date = datetime.date.today()
 
+rule all:
+    input:
+        "test/MN908947/nextclade.aligned.fasta"
+
 rule generate_sample_sequences:
     input:
         # sequences = "data/sequences.fasta.xz",
@@ -119,9 +123,6 @@ rule test_nextclade:
         """
 # print(config)
 # print(                [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]])
-rule all:
-    input:
-        "test/MN908947/nextclade.aligned.fasta"
 
 rule clean_all:
     message: "Removing directories: {params}"
