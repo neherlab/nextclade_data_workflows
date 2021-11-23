@@ -14,6 +14,26 @@
 1. Check `qc.json` does not regress (ideally update in `profiles/qc.json` for posterity) [beware, codons are 0 indexed]
 1. Potentially run `scripts/common_stops.py` and `scripts/common_frameshifts.py` to add new stops/frameshifts that have become more common to `qc.json`
 
+## Identifying most common frame shifts and stop conds
+
+1. Download metadata to `data/metadata_raw.tsv`
+1. Run snakemake workflow with following commands/targets:
+
+    ```bash
+    snakemake --profile=profiles/clades pre-processed/frameshifts.tsv -R select_frameshifts
+    snakemake --profile=profiles/clades pre-processed/stops.tsv -R select_stops
+    ```
+
+1. Format most commons stops/fs into qc.json JSON format using
+
+    ```bash
+    python3 scripts/common_stops.py
+    python3 scripts/common_frameshifts.py
+    ```
+
+1. Manually check resul for plausibility and add to qc.json
+
+
 ## Committing to data repo
 
 1. Go to nextclade_data_workflow repo
