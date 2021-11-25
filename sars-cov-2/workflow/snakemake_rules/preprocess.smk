@@ -172,17 +172,19 @@ rule strip_pango_strain_names:
     shell: "awk -F',' '{{print $1}}' {input} | tail -n+2 >{output}"
 
 rule diagnostic:
-    message: "Scanning metadata {input.metadata} for problematic sequences."
+    message: "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
     input:
-        metadata = "data/metadata.tsv"
+        metadata = "data/metadata.tsv",
     output:
-        to_exclude = "pre-processed/problematic_exclude.txt"
+        to_exclude = "pre-processed/problematic_exclude.txt",
+        exclude_reasons = "pre-processed/exclude_reasons.txt",
     params:
-        clock_filter_floor = -8,
-        clock_filter_ceil = 20,
+        clock_filter = 12,
+        clock_filter_recent = 17,
+        clock_filter_lower_limit = -10,
         snp_clusters = 1,
-        rare_mutations = 30,
-        clock_plus_rare = 100,
+        rare_mutations = 45,
+        clock_plus_rare = 50,
     log:
         "logs/diagnostics.txt"
     benchmark:
@@ -194,12 +196,13 @@ rule diagnostic:
         """
         python3 scripts/diagnostic.py \
             --metadata {input.metadata} \
-            --clock-filter-floor {params.clock_filter_floor} \
-            --clock-filter-ceil {params.clock_filter_ceil} \
+            --clock-filter {params.clock_filter} \
             --rare-mutations {params.rare_mutations} \
             --clock-plus-rare {params.clock_plus_rare} \
             --snp-clusters {params.snp_clusters} \
-            --output-exclusion-list {output.to_exclude} 2>&1 | tee {log}
+            --output-exclusion-list {output.to_exclude} \
+            --output-exclusion-reasons {output.exclude_reasons} \
+            2>&1 | tee {log}
         """
 
 rule index_sequences:
