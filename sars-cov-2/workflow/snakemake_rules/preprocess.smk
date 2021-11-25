@@ -248,7 +248,7 @@ rule pango_strain_rename:
     message: "Convert pango strain names to nextclade strain names"
     input:
         metadata_strainnames = "pre-processed/metadata_strainnames.tsv",
-        pango = "pre-processed/pango.csv",
+        pango = "pre-processed/pango_raw.csv",
     output:
         pango_designations = "pre-processed/pango_designations_nextstrain_names.csv",
         pango_designated_strains = "pre-processed/pango_designated_strains_nextstrain_names.txt",
