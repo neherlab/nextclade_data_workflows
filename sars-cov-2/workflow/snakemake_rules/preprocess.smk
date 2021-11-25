@@ -49,7 +49,7 @@ rule download_sequences:
         address = lambda w: config['origins']['sequences']
     output:
         "data/sequences.fasta.xz"
-    shell: "curl {params.address} -o {output}"
+    shell: "aws s3 cp {params.address} {output}"
 
 rule download_metadata:
     message: "Downloading metadata from {params.address} -> {output}"
@@ -58,7 +58,24 @@ rule download_metadata:
         address = lambda w: config['origins']['metadata']
     output:
         metadata = "data/metadata_raw.tsv"
-    shell: "curl {params.address} | {params.deflate} > {output:q}"
+    shell: "aws s3 cp {params.address} - | {params.deflate} {input} > {output:q}"
+
+# rule download_sequences:
+#     message: "Downloading sequences from {params.address} -> {output[0]}"
+#     params:
+#         address = lambda w: config['origins']['sequences']
+#     output:
+#         "data/sequences.fasta.xz"
+#     shell: "curl {params.address} -o {output}"
+
+# rule download_metadata:
+#     message: "Downloading metadata from {params.address} -> {output}"
+#     params:
+#         deflate = lambda w: _infer_decompression(config['origins']['metadata']),
+#         address = lambda w: config['origins']['metadata']
+#     output:
+#         metadata = "data/metadata_raw.tsv"
+#     shell: "curl {params.address} | {params.deflate} > {output:q}"
 
 rule select_frameshifts:
     input:
