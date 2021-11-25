@@ -256,7 +256,7 @@ rule pango_strain_rename:
         """
         python3 scripts/pango_strain_rename.py \
         --metadata-strainnames {input.metadata_strainnames} \
-        --pango {input.pango} \
+        --pango-in {input.pango} \
         --pango-designations {output.pango_designations} \
         --pango-designated-strains {output.pango_designated_strains} \
         2>&1
