@@ -19,8 +19,10 @@ data_source:
   pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
 
 origins:
-  metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
-  sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
+  metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"
+  sequences: "s3://nextstrain-ncov-private/sequences.fasta.xz"
+  # metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
+  # sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
   exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
   filters: "--min-length 27000"
 
@@ -66,7 +68,8 @@ samples:
   cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad"
   recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
 
-exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+# exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
 
 builds:
   nextclade:
@@ -81,5 +84,7 @@ builds:
         filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
       latest-pango:
         filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
+      21K:
+        filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_lineage!='B.1.1.529'"
       very_recent:
         filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
