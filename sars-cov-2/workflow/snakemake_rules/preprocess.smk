@@ -164,13 +164,6 @@ rule download_curated_pango:
         source = config["data_source"]["pango"]
     shell: "curl {params.source} -o {output}"
 
-rule strip_pango_strain_names:
-    input:
-        "pre-processed/pango_raw.csv"
-    output:
-        "pre-processed/pango.csv"
-    shell: "awk -F',' '{{print $1}}' {input} | tail -n+2 >{output}"
-
 rule diagnostic:
     message: "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
     input:
@@ -242,11 +235,38 @@ rule fix_pango_lineages:
         2>&1
         """
 
+rule nextclade_strainnames:
+    message: "Extract strain names using tsv-select"
+    input: "data/metadata.tsv"
+    output: "pre-processed/metadata_strainnames.tsv"
+    shell:
+        """
+        tsv-select -H -f strain {input} >{output}
+        """
+
+rule pango_strain_rename:
+    message: "Convert pango strain names to nextclade strain names"
+    input:
+        metadata_strainnames = "pre-processed/metadata_strainnames.tsv",
+        pango = "pre-processed/pango.csv",
+    output:
+        pango_designations = "pre-processed/pango_designations_nextstrain_names.csv",
+        pango_designated_strains = "pre-processed/pango_designated_strains_nextstrain_names.txt",
+    shell:
+        """
+        python3 scripts/pango_strain_rename.py \
+        --metadata-strainnames {input.metadata_strainnames} \
+        --pango {input.pango} \
+        --pango-designations {output.pango_designations} \
+        --pango-designated-strains {output.pango_designated_strains} \
+        2>&1
+        """
+
 rule open_pango:
     # include only sequences that are in pango.csv using augur filter
     input:
         sequences = "data/sequences.fasta.xz",
-        pango = "pre-processed/pango.csv",
+        pango = "pre-processed/pango_designated_strains_nextstrain_names.txt",
         sequence_index = "pre-processed/sequence_index.tsv",
         metadata = "data/metadata.tsv",
     output: 
