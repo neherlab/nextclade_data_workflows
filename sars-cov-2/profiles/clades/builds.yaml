@@ -16,7 +16,9 @@ data_source:
   clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
   lat_longs: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv"
   color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
-  pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
+  # pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
+  # Contains SA B.1.1.529, switch back to master later
+  pango: https://raw.githubusercontent.com/cov-lineages/pango-designation/c4895ef2aa690f744fe6f4bd3b6ff06416e44604/lineages.csv
 
 origins:
   metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"
@@ -84,7 +86,7 @@ builds:
         filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
       latest-pango:
         filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
-      21K:
-        filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_lineage!='B.1.1.529'"
+      21K-pango:
+        filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_designated!='B.1.1.529'"
       very_recent:
         filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
