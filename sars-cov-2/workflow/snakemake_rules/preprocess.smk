@@ -219,25 +219,9 @@ rule index_sequences:
             --output {output.sequence_index} 2>&1 | tee {log}
         """
 
-rule fix_pango_lineages:
-    message: "Add new column to open_pango_metadata_raw.tsv by joining pango_raw.csv on field strain name"
-    input:
-        metadata = "data/metadata_raw2.tsv",
-        pango_designations = "pre-processed/pango_raw.csv",
-    output:
-        metadata = "data/metadata.tsv",
-    shell:
-        """
-        python3 scripts/fix_open_pango_lineages.py \
-        --metadata {input.metadata} \
-        --designations {input.pango_designations} \
-        --output {output.metadata} \
-        2>&1
-        """
-
 rule nextclade_strainnames:
     message: "Extract strain names using tsv-select"
-    input: "data/metadata.tsv"
+    input: "data/metadata_raw2.tsv"
     output: "pre-processed/metadata_strainnames.tsv"
     shell:
         """
@@ -259,6 +243,22 @@ rule pango_strain_rename:
         --pango-in {input.pango} \
         --pango-designations {output.pango_designations} \
         --pango-designated-strains {output.pango_designated_strains} \
+        2>&1
+        """
+
+rule fix_pango_lineages:
+    message: "Add new column to open_pango_metadata_raw.tsv by joining pango_raw.csv on field strain name"
+    input:
+        metadata = "data/metadata_raw2.tsv",
+        pango_designations = "pre-processed/pango_designations_nextstrain_names.csv",
+    output:
+        metadata = "data/metadata.tsv",
+    shell:
+        """
+        python3 scripts/fix_open_pango_lineages.py \
+        --metadata {input.metadata} \
+        --designations {input.pango_designations} \
+        --output {output.metadata} \
         2>&1
         """
 

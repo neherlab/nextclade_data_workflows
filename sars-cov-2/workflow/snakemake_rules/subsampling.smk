@@ -86,7 +86,7 @@ rule pango_sampling:
             --sequences {input.sequences} \
             --metadata {input.metadata} \
             {params.filter_arguments} {params.exclude_where_args} \
-            --query "pango_lineage != ''" \
+            --query "pango_designated != ''" \
             --priority {input.priority} \
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}

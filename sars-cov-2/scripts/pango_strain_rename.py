@@ -13,7 +13,7 @@ def format(metadata_strainnames, pango_in, pango_designations, pango_designated_
     meta_strains = pd.read_csv(metadata_strainnames, sep="\t")
     pango_des = pd.read_csv(pango_in, sep=",")
 
-    alpha_digits_regex = re.compile("[^A-Z0-9/]")
+    alpha_digits_regex = re.compile("[^A-Z0-9/\-]")
 
     pango_des["canonical"] = pango_des.taxon.apply(
         lambda x: alpha_digits_regex.sub("", x.upper())
@@ -22,14 +22,16 @@ def format(metadata_strainnames, pango_in, pango_designations, pango_designated_
         lambda x: alpha_digits_regex.sub("", x.upper())
     )
 
+    pango_des.drop_duplicates(subset=["canonical"], keep=False, inplace=True)
+    meta_strains.drop_duplicates(subset=["canonical"], keep=False, inplace=True)
+
     pango_des.set_index("canonical", inplace=True)
     meta_strains.set_index("canonical", inplace=True)
 
-    pango_des = pango_des.join(meta_strains, on="canonical")
+    pango_des = pango_des.join(meta_strains, on="canonical", how="left")
 
     pango_des.dropna(inplace=True)
 
-    click.echo(pango_des)
     pango_des.to_csv(pango_designations, columns=["strain", "lineage"], index=False)
     pango_des.to_csv(
         pango_designated_strains, columns=["strain"], header=False, index=False
