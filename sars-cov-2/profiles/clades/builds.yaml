@@ -18,7 +18,7 @@ data_source:
   color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
   # pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
   # Contains SA B.1.1.529, switch back to master later
-  pango: https://raw.githubusercontent.com/cov-lineages/pango-designation/c4895ef2aa690f744fe6f4bd3b6ff06416e44604/lineages.csv
+  pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/c4895ef2aa690f744fe6f4bd3b6ff06416e44604/lineages.csv"
 
 origins:
   metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"
