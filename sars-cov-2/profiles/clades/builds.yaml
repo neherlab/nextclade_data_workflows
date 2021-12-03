@@ -71,7 +71,7 @@ samples:
   recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
 
 # exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
-exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
+exclude-where-args: "Nextstrain_clade='21K (Omicron)' recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
 
 builds:
   nextclade:
@@ -86,7 +86,7 @@ builds:
         filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
       latest-pango:
         filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
-      21K-pango:
-        filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_designated!='B.1.1.529'"
+      # 21K-pango:
+      #   filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_designated!='B.1.1.529'"
       very_recent:
         filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
