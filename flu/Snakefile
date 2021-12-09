@@ -1,9 +1,3 @@
-# rule preprocess:
-#     input:
-#         sequences = "pre-processed/vic.aligned.fasta",
-#         metadata = "pre-processed/metadata.tsv",
-#         sequence_index = "pre-processed/sequence_index.tsv",
-#         mutation_summary = "pre-processed/mutation_summary.tsv"
 from datetime import datetime
 
 wildcard_constraints:
@@ -127,6 +121,7 @@ rule prealign:
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
             --jobs {threads} \
+            --verbosity error \
             --output-basename prealign > /dev/null
         """
 
@@ -468,5 +463,5 @@ rule clean:
 rule clean_all:
     shell:
         """
-        rm -rf output test auspice build pre-processed data/clades* data/include*
+        rm -rf output test auspice build pre-processed data
         """
