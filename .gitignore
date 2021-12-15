@@ -9,6 +9,7 @@
 */test
 */references-old
 */nextalign
+tmp/
 build/
 builds/
 examples/

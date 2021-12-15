@@ -7,7 +7,7 @@
 from datetime import datetime
 
 wildcard_constraints:
-    flu_type="[AB]",
+    flu_type="[A-Za-z0-9]+",
     segment="\d",
     year="\d\d\d\d",
     strain="[^_/]+",
@@ -47,50 +47,14 @@ rule download_includes:
         source = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["include_url"]
     shell: "curl {params.source} >{output}"
 
-rule download:
-    output: temp("data/download_{flu_type}_{segment_name}_{year}.fasta")
-    params: segment_number = lambda w: segment_number(w.segment_name)
-    shell:
-        "curl -ksSL -o {output} "
-        "'https://www.viprbrc.org/brc/api/sequence?"
-        "datatype=genome&"
-        "completeseq=N&"
-        "family=influenza&"
-        "flutype={wildcards.flu_type}&"
-        "fromyear={wildcards.year}&"
-        "toyear={wildcards.year}&"
-        "segment={params.segment_number}&"
-        "host=human&"
-        "metadata=continent,country,date,fluSeason,fluType,host,length,state,strainName&"
-        "output=fasta'"
-
-rule clean_download:
-    input: "data/download_{flu_type}_{segment_name}_{year}.fasta"
-    output: temp("data/cleaned_download_{flu_type}_{segment_name}_{year}.fasta")
-    shell:
-        """
-        if [ $(wc -l < {input}) -lt 2 ]
-        then
-            touch {output}
-        else
-            cp {input} {output}
-        fi
-        """
-
-rule join_downloads:
-    input:
-        expand("data/cleaned_download_{{flu_type}}_{{segment_name}}_{year}.fasta",year=range(1989,2022))
-    output: "data/download_{flu_type}_{segment_name}.fasta"
-    shell: "cat {input} >> {output}"
-
 rule parse:
     input:
-        sequences = "data/download_{flu_type}_{segment_name}.fasta"
+        sequences = "data/{strain}_{segment_name}.fasta"
     output:
-        metadata = "data/{flu_type}_{segment_name}_metadata.tsv",
-        sequences = "data/{flu_type}_{segment_name}_sequences.fasta"
+        metadata = "data/{strain}_{segment_name}_metadata.tsv",
+        sequences = "data/{strain}_{segment_name}_sequences.fasta"
     params:
-        fields = "ncbiAcc continent country date fluSeason fluType host length state strainName"
+        fields = "strainName virus EPI_ISL date region country division location passage collecting_lab submitting_lab age sex"
     shell:
         """
         augur parse \
@@ -102,14 +66,9 @@ rule parse:
 
 genes = ["SigPep","HA1","HA2"]
 
-def flu_type(strain):
-    if strain in ["vic","yam"]:
-        return "B"
-    return "A"
-
 rule prealign:
     input:
-        sequences = lambda w: f"data/{flu_type(w.strain)}_{w.segment_name}_sequences.fasta",
+        sequences = "data/{strain}_{segment_name}_sequences.fasta",
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output:
@@ -117,7 +76,7 @@ rule prealign:
         insertions = "pre-processed/{strain}/{segment_name}/{reference}/prealign.insertions.csv",
     params:
         outdir = "pre-processed/{strain}/{segment_name}/{reference}",
-    threads: 6
+    threads: 8
     shell:
         """
         nextalign \
@@ -127,65 +86,52 @@ rule prealign:
             --sequences {input.sequences} \
             --output-dir {params.outdir} \
             --jobs {threads} \
-            --output-basename prealign > /dev/null
+            --verbosity error \
+            --output-basename prealign 2>&1 >/dev/null
         """
 
-rule mutation_summary:
-    message: "Summarizing {input.alignment}"
-    input:
-        alignment = rules.prealign.output.alignment,
-        insertions = rules.prealign.output.insertions,
-        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
-        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
-    output:
-        mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv"
-    params:
-        outdir = "pre-processed/{strain}/{segment_name}/{reference}",
-    shell:
-        """
-        python3 scripts/mutation_summary.py \
-            --alignment {input.alignment} \
-            --insertions {input.insertions} \
-            --directory {params.outdir} \
-            --basename mutation_summary \
-            --reference {input.reference} \
-            --genes=SigPep,HA1,HA2 \
-            --genemap {input.genemap} \
-            --output {output.mutation_summary} > /dev/null
-        """
+# rule mutation_summary:
+#     message: "Summarizing {input.alignment}"
+#     input:
+#         alignment = rules.prealign.output.alignment,
+#         insertions = rules.prealign.output.insertions,
+#         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
+#         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
+#     output:
+#         mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv"
+#     params:
+#         outdir = "pre-processed/{strain}/{segment_name}/{reference}",
+#     shell:
+#         """
+#         python3 scripts/mutation_summary.py \
+#             --alignment {input.alignment} \
+#             --insertions {input.insertions} \
+#             --directory {params.outdir} \
+#             --basename mutation_summary \
+#             --reference {input.reference} \
+#             --genes=SigPep,HA1,HA2 \
+#             --genemap {input.genemap} \
+#             --output {output.mutation_summary} > /dev/null
+#         """
 
 # TODO: Add nextclade QC/clade output to enriched metadata script
 # TODO: Need to filter out sequences that fail to translate using nextclade, easy by running nextclade on it
 # - Deduplicate strains (sort of randomly, could be improved by filtering out egg etc.)
-rule enrich_metadata:
-    input:
-        metadata = lambda w: f"data/{flu_type(w.strain)}_{w.segment_name}_metadata.tsv",
-        mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv",
-    output:
-        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv"
-    shell:
-        """
-        python3 scripts/metadata_enrichment.py \
-            --metadata-path {input.metadata} \
-            --mutation-summary-path {input.mutation_summary} \
-            --output-path {output.enriched_metadata} \
-            --reference-accession {wildcards.reference} \
-            > /dev/null
-        """
-
-rule generate_include_accessions:
-    input: 
-        strain_names = "data/includes_{strain}_{segment_name}_{reference}.tsv",
-        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
-    output: "data/include_accessions_{strain}_{segment_name}_{reference}.txt"
-    shell:
-        """
-        python3 scripts/generate_include_accessions.py \
-            --strain-names-path {input.strain_names} \
-            --enriched-metadata-path {input.enriched_metadata} \
-            --output-path {output}
-        """
-
+# rule enrich_metadata:
+#     input:
+#         metadata = "data/{strain}_{segment_name}_metadata.tsv",
+#         mutation_summary = "pre-processed/{strain}/{segment_name}/{reference}/mutation_summary.tsv",
+#     output:
+#         enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv"
+#     shell:
+#         """
+#         python3 scripts/metadata_enrichment.py \
+#             --metadata-path {input.metadata} \
+#             --mutation-summary-path {input.mutation_summary} \
+#             --output-path {output.enriched_metadata} \
+#             --reference-accession {wildcards.reference} \
+#             > /dev/null
+#         """
 
 rule subsample:
     input:
@@ -387,7 +333,7 @@ rule swap_strain_accession:
 #use segment name rather than no all the way through to make things easier
 rule generate_sample_sequences:
     input:
-        sequences = lambda w: f"data/{flu_type(w.strain)}_{w.segment_name}_sequences.fasta",
+        sequences = "data/{strain}_{segment_name}_sequences.fasta",
         metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
     output:
         sequences = "build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
