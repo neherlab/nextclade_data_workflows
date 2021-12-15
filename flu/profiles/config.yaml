@@ -1,3 +1,10 @@
 configfile: profiles/builds.yaml
 
-cores: 12
+cores: 10
+
+printshellcmds: True
+keep-going: True
+reason: True
+stats: stats.json
+
+show-failed-logs: True

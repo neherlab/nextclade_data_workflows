@@ -136,45 +136,46 @@ rule prealign:
 rule subsample:
     input:
         aligned_sequences = "pre-processed/{strain}/{segment_name}/{reference}/prealign.aligned.fasta",
-        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
-        include_accessions = "data/include_accessions_{strain}_{segment_name}_{reference}.txt",
+        enriched_metadata = rules.parse.output.metadata,
+        include_accessions = "data/includes_{strain}_{segment_name}_{reference}.tsv",
     output:
         sampled_sequences = "build/{strain}/{segment_name}/{reference}/subsample_raw.fasta",
         sampled_strains = "build/{strain}/{segment_name}/{reference}/subsample_raw.txt",
     params:
-        filter_arguments = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["filter"]
+        filter_arguments = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["filter"],
+        reference_EPI_ISL = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["reference_EPI_ISL"]
     shell:
         """
         augur filter \
             --sequences {input.aligned_sequences} \
             --metadata {input.enriched_metadata} \
             --include {input.include_accessions} \
-            --include-where ncbiAcc={wildcards.reference} \
+            --include-where EPI_ISL={params.reference_EPI_ISL} \
             {params.filter_arguments} \
             --output {output.sampled_sequences} \
-            --output-strains {output.sampled_strains} \
-            > /dev/null
+            --output-strains {output.sampled_strains}
         """
 
 rule exclude_outliers:
     input:
         sequences = rules.subsample.output.sampled_sequences,
-        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
+        enriched_metadata = rules.parse.output.metadata,
         exclude = "profiles/exclude.txt",
     output:
         sampled_sequences = "build/{strain}/{segment_name}/{reference}/subsample.fasta",
         sampled_strains = "build/{strain}/{segment_name}/{reference}/subsample.txt",
+    params:
+        reference_EPI_ISL = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["reference_EPI_ISL"],
     shell:
         """
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.enriched_metadata} \
             --exclude {input.exclude} \
-            --include-where ncbiAcc={wildcards.reference} \
+            --include-where EPI_ISL={params.reference_EPI_ISL} \
             --min-date 2016 \
             --output {output.sampled_sequences} \
-            --output-strains {output.sampled_strains} \
-            > /dev/null
+            --output-strains {output.sampled_strains}
         """
 
 rule tree:
@@ -204,10 +205,12 @@ rule refine:
     input:
         tree = rules.tree.output.tree,
         alignment = rules.exclude_outliers.output.sampled_sequences,
-        enriched_metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
+        enriched_metadata = rules.parse.output.metadata,
     output:
         tree = "build/{strain}/{segment_name}/{reference}/tree.nwk",
         node_data = "build/{strain}/{segment_name}/{reference}/branch_lengths.json"
+    params:
+        reference_strain = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["reference_strain"],
     threads: 1
     shell:
         """
@@ -217,7 +220,7 @@ rule refine:
             --metadata {input.enriched_metadata} \
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
-            --root {wildcards.reference} \
+            --root {params.reference_strain} \
             --divergence-unit mutations-per-site \
             > /dev/null
         """
@@ -300,7 +303,7 @@ rule export:
     message: "Exporting data files for auspice"
     input:
         tree = rules.refine.output.tree,
-        metadata = rules.enrich_metadata.output.enriched_metadata,
+        metadata = rules.parse.output.metadata,
         node_data = lambda w: [rules.__dict__[rule].output.node_data for rule in node_data(w)],
         auspice_config = lambda w: config['files']['auspice_config']
     output:
@@ -334,7 +337,7 @@ rule swap_strain_accession:
 rule generate_sample_sequences:
     input:
         sequences = "data/{strain}_{segment_name}_sequences.fasta",
-        metadata = "pre-processed/{strain}/{segment_name}/{reference}/metadata_enriched.tsv",
+        metadata = rules.parse.output.metadata,
     output:
         sequences = "build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
     shell:
@@ -342,7 +345,7 @@ rule generate_sample_sequences:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --min-date 2020 --query 's1_dist<120.0' --group-by s1_dist year --subsample-max-sequences 50  \
+            --min-date 2020 --group-by year --subsample-max-sequences 50  \
             --exclude-ambiguous-dates-by year \
             --probabilistic-sampling \
             --output {output.sequences}
