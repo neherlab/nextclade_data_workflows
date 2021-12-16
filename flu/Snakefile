@@ -73,30 +73,6 @@ rule parse:
 
 genes = ["SigPep","HA1","HA2"]
 
-rule prealign:
-    input:
-        sequences = "data/{strain}_{segment_name}_sequences.fasta",
-        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
-        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
-    output:
-        alignment = "pre-processed/{strain}/{segment_name}/{reference}/prealign.aligned.fasta",
-        insertions = "pre-processed/{strain}/{segment_name}/{reference}/prealign.insertions.csv",
-    params:
-        outdir = "pre-processed/{strain}/{segment_name}/{reference}",
-    threads: 8
-    shell:
-        """
-        nextalign \
-            --reference {input.reference} \
-            --genemap {input.genemap} \
-            --genes=SigPep,HA1,HA2 \
-            --sequences {input.sequences} \
-            --output-dir {params.outdir} \
-            --jobs {threads} \
-            --verbosity error \
-            --output-basename prealign 2>&1 >/dev/null
-        """
-
 rule subsample:
     input:
         aligned_sequences = "pre-processed/{strain}/{segment_name}/{reference}/prealign.aligned.fasta",
@@ -152,6 +128,30 @@ rule add_reference:
         
         tail -n +2 {input.reference} | \
         cat <(echo {params.first_line:q}) - {input.sample} >{output}
+        """
+
+rule align:
+    input:
+        sequences = rules.add_reference.output,
+        genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
+        reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
+    output:
+        alignment = "pre-processed/{strain}/{segment_name}/{reference}/align.aligned.fasta",
+        insertions = "pre-processed/{strain}/{segment_name}/{reference}/align.insertions.csv",
+    params:
+        outdir = "pre-processed/{strain}/{segment_name}/{reference}",
+    threads: 8
+    shell:
+        """
+        nextalign \
+            --reference {input.reference} \
+            --genemap {input.genemap} \
+            --genes=SigPep,HA1,HA2 \
+            --sequences {input.sequences} \
+            --output-dir {params.outdir} \
+            --jobs {threads} \
+            --verbosity error \
+            --output-basename align 2>&1 >/dev/null
         """
 
 rule tree:
@@ -225,6 +225,7 @@ rule ancestral:
 rule aa_muts_explicit:
     message: "Translating amino acid sequences"
     input:
+        translations = rules.align.output.alignment,
         tree = rules.refine.output.tree,
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
@@ -232,7 +233,7 @@ rule aa_muts_explicit:
         node_data = "build/{strain}/{segment_name}/{reference}/aa_muts_explicit.json",
     params:
         genes = ["SigPep","HA1","HA2"],
-        translations = lambda w: expand("pre-processed/{strain}/{segment_name}/{reference}/prealign.gene.{genes}.fasta",strain=w.strain,segment_name=w.segment_name,genes=["SigPep","HA1","HA2"],reference=w.reference),
+        translations = lambda w: expand("pre-processed/{strain}/{segment_name}/{reference}/align.gene.{genes}.fasta",strain=w.strain,segment_name=w.segment_name,genes=["SigPep","HA1","HA2"],reference=w.reference),
     shell:
         """
         python3 scripts/explicit_translation.py \
@@ -285,6 +286,7 @@ rule export:
         fields = "continent fluSeason strainName" #deleted country"
     shell:
         """
+        AUGUR_RECURSION_LIMIT=10000 \
         augur export v2 \
             --tree {input.tree} \
             --metadata {input.metadata} \
