@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 wildcard_constraints:
     flu_type="[A-Za-z0-9]+",
@@ -165,7 +165,7 @@ rule tree:
         tree = "build/{strain}/{segment_name}/{reference}/tree_raw.nwk"
     params:
         args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
-    threads: 4
+    threads: 3
     shell:
         """
         augur tree \
@@ -284,7 +284,8 @@ rule export:
     output:
         auspice_json = "auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
     params:
-        fields = "continent fluSeason strainName" #deleted country"
+        fields = "region strainName country date EPI_ISL",
+        date = datetime.datetime.utcnow().strftime('%Y-%m-%d')
     shell:
         """
         AUGUR_RECURSION_LIMIT=10000 \
@@ -294,6 +295,7 @@ rule export:
             --node-data {input.node_data}\
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
+            --title "Nextclade reference tree for Influenza type:{wildcards.strain} segment:{wildcards.segment_name} with root {wildcards.reference} built on {params.date}" \
             --output {output.auspice_json} 2>&1;
         """
 
@@ -355,7 +357,7 @@ rule assemble_folder:
         cp {input.tree} {output.tree};
         """
 
-timestamp = datetime.utcnow().isoformat()[:-7]+'Z'
+timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
     input: expand("output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files/tree.json",timestamp=timestamp),
     output: "test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta"
