@@ -9,8 +9,9 @@ builds:
         clade_offset: 0
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h1n1pdm.txt"
+        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_h1n1pdm.txt
         reference_EPI_ISL: EPI1583287
-        reference_strain: A/California/7/2009-egg
+        reference_strain: A/California/7/2009-egg #TODO: use previous reference, throw out duplicates, throw out eggs, exclude
   h3n2:
     ha:
       CY163680:
@@ -18,6 +19,7 @@ builds:
         clade_offset: 17
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h3n2.txt"
+        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_h3n2.txt
         reference_EPI_ISL: EPI545340
         reference_strain: A/Wisconsin/67/2005-egg
   vic:
@@ -27,6 +29,7 @@ builds:
         clade_offset: 22
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_vic.txt"
+        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_vic.txt
         reference_EPI_ISL: EPI696970
         reference_strain: B/Brisbane/60/2008-egg
   yam:
@@ -36,6 +39,7 @@ builds:
         clade_offset: -11
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_yam.txt"
+        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_yam.txt
         reference_EPI_ISL: EPI271545
         reference_strain: B/Wisconsin/1/2010-egg
 
