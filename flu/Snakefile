@@ -43,14 +43,14 @@ rule offset_clades:
 rule download_includes:
     output:
         "data/includes_{strain}_{segment_name}_{reference}.tsv"
-    params: 
+    params:
         source = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["include_url"]
     shell: "curl {params.source} >{output}"
 
 rule download_excludes:
     output:
         "data/excludes_{strain}_{segment_name}_{reference}.txt"
-    params: 
+    params:
         source = lambda w: config["builds"][w.strain][w.segment_name][w.reference]["exclude_url"]
     shell: "curl {params.source} >{output}"
 
@@ -96,9 +96,15 @@ rule subsample:
             --output-strains {output.sampled_strains}
         """
 
+rule remove_duplicates:
+    input: rules.subsample.output.sampled_sequences,
+    output:
+        sequences = "build/{strain}/{segment_name}/{reference}/subsample_ex_duplicates.fasta"
+    shell: "seqkit rmdup -sP {input} >{output}"
+
 rule exclude_outliers:
     input:
-        sequences = rules.subsample.output.sampled_sequences,
+        sequences = rules.remove_duplicates.output.sequences,
         enriched_metadata = rules.parse.output.metadata,
         exclude = "profiles/exclude.txt",
         exclude_specific = rules.download_excludes.output,
@@ -117,15 +123,14 @@ rule exclude_outliers:
         """
 
 rule add_reference:
-    input: 
+    input:
         sample = rules.exclude_outliers.output.sampled_sequences,
         reference = "references/{strain}/{segment_name}/{reference}/reference.fasta",
     output: "build/{strain}/{segment_name}/{reference}/subsample.fasta",
     params:
         first_line = lambda w: f">{w.reference}"
-    shell: 
+    shell:
         """
-        
         tail -n +2 {input.reference} | \
         cat <(echo {params.first_line:q}) - {input.sample} >{output}
         """
