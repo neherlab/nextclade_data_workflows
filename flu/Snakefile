@@ -1,9 +1,3 @@
-# rule preprocess:
-#     input:
-#         sequences = "pre-processed/vic.aligned.fasta",
-#         metadata = "pre-processed/metadata.tsv",
-#         sequence_index = "pre-processed/sequence_index.tsv",
-#         mutation_summary = "pre-processed/mutation_summary.tsv"
 from datetime import datetime
 
 wildcard_constraints:
@@ -260,9 +254,6 @@ rule clades:
         clades = rules.offset_clades.output
     output:
         node_data = "build/{strain}/{segment_name}/{reference}/clades.json"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024)
     shell:
         """
         augur clades --tree {input.tree} \
@@ -274,6 +265,7 @@ rule clades:
 
 def node_data(w):
     nodes = ['ancestral','refine','aa_muts_explicit']
+
     if w.segment_name == "ha":
         nodes.extend(['clades'])
     return nodes
@@ -313,7 +305,6 @@ rule swap_strain_accession:
             --tree-output-path {output.auspice_json}
         """
 
-#use segment name rather than no all the way through to make things easier
 rule generate_sample_sequences:
     input:
         sequences = "data/{strain}_{segment_name}_sequences.fasta",
@@ -331,7 +322,6 @@ rule generate_sample_sequences:
             --output {output.sequences}
         """
 
-# make segment_no function
 rule assemble_folder:
     input:
         genemap = "references/{strain}/{segment_name}/{reference}/genemap.gff",
@@ -382,8 +372,7 @@ rule test_nextclade:
          --output-tree={params.outdir}/nextclade.auspice.json\
          --output-basename=nextclade 2>&1
         """
-# print(config)
-# print(                [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]])
+
 rule all:
     input:
         [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]]
