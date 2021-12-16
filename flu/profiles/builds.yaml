@@ -11,7 +11,7 @@ builds:
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h1n1pdm.txt"
         exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_h1n1pdm.txt
         reference_EPI_ISL: EPI1583287
-        reference_strain: A/California/7/2009-egg #TODO: throw out eggs, exclude
+        reference_strain: A/California/7/2009-egg #TODO: exclude
   h3n2:
     ha:
       CY163680:

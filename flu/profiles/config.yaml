@@ -1,6 +1,6 @@
 configfile: profiles/builds.yaml
 
-cores: 10
+cores: 12
 
 printshellcmds: True
 keep-going: True

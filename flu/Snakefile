@@ -94,7 +94,11 @@ rule remove_duplicates:
     input: rules.subsample.output.sampled_sequences,
     output:
         sequences = "build/{strain}/{segment_name}/{reference}/subsample_ex_duplicates.fasta"
-    shell: "seqkit rmdup -sP {input} >{output}"
+    shell: 
+        """
+        seqkit grep -ivr -p '-egg' {input} | \
+        seqkit rmdup -sP - >{output}
+        """
 
 rule exclude_outliers:
     input:
@@ -139,7 +143,7 @@ rule align:
         insertions = "pre-processed/{strain}/{segment_name}/{reference}/align.insertions.csv",
     params:
         outdir = "pre-processed/{strain}/{segment_name}/{reference}",
-    threads: 8
+    threads: 3
     shell:
         """
         nextalign \
