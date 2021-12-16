@@ -73,8 +73,12 @@ if __name__ == '__main__':
             if s.id in leafs:
                 seqs.append(s)
 
-
-        tt = TreeAnc(tree=T, aln=MultipleSeqAlignment(seqs), alphabet='aa')
+        try:
+            tt = TreeAnc(tree=T, aln=MultipleSeqAlignment(seqs), alphabet='aa')
+        except ValueError as err:
+            if err == "Sequences must all be the same length":
+                print(seqs)
+                raise
 
         tt.infer_ancestral_sequences(reconstruct_tip_states=True)
 
