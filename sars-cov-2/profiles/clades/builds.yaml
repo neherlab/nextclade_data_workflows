@@ -71,7 +71,7 @@ samples:
   recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
 
 # exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
-exclude-where-args: "Nextstrain_clade='21K (Omicron)' recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
+exclude-where-args: "Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
 
 builds:
   nextclade:
