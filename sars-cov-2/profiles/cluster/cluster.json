@@ -3,7 +3,7 @@
     "time": "05:59:00",
     "qos": "6hours",
     "n": 1,
-    "mem": "16G"
+    "mem": "32G"
   },
   "generate_bgzip": {
     "time": "05:59:00",
