@@ -12,6 +12,8 @@ and produces files
 
 '''
 
+localrules: add_custom_node_attr_to_meta, add_branch_labels,
+
 build_dir = config.get("build_dir", "builds")
 auspice_dir = config.get("auspice_dir", "auspice")
 auspice_prefix = config.get("auspice_prefix", "ncov")
@@ -292,6 +294,24 @@ rule clades:
             --clades {input.clades} \
             --output-node-data {output.node_data} 2>&1 | tee {log}
         """
+rule internal_pango:
+    input:
+        tree = rules.refine.output.tree,
+        aliases = rules.download_pango_alias.output,
+        designations = rules.pango_strain_rename.output.pango_designations,
+    output:
+        node_data = build_dir + "/{build_name}/internal_pango.json"
+    log:
+        "logs/internal_pango_{build_name}.txt"
+    shell:
+        """
+        python scripts/internal_pango.py \
+            --tree {input.tree} \
+            --alias {input.aliases} \
+            --designations {input.designations} \
+            --output {output.node_data}
+            --field_name inferred_lineage 2>&1 | tee {log}
+        """
         
 rule colors:
     message: "Constructing colors file"
@@ -330,7 +350,8 @@ def _get_node_data_by_wildcards(wildcards):
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
         rules.clades.output.node_data,
-        rules.aa_muts_explicit.output.node_data
+        rules.aa_muts_explicit.output.node_data,
+        rules.internal_pango.output.node_data
     ]
     if "distances" in config: inputs.append(rules.distances.output.node_data)
 
@@ -374,10 +395,23 @@ rule export:
             --output {output.auspice_json} 2>&1 | tee {log};
         """
 
+rule add_custom_node_attr_to_meta:
+    input:
+        auspice_json: rules.export.output.auspice_json,
+    output:
+        auspice_json: "auspice/{build_name}/auspice_custom_node.json"
+    log: "logs/add_custom_node_attr_to_meta_{build_name}.txt"
+    shell:
+        """
+        cat {input.auspice_json} | \
+        jq '.meta.extensions.nextclade.clade_node_attrs_keys = ["inferred_lineage"]' \
+        > {output.auspice_json} 2>&1 | tee {log};
+        """
+
 rule add_branch_labels:
     message: "Adding custom branch labels to the Auspice JSON"
     input:
-        auspice_json = rules.export.output.auspice_json,
+        auspice_json = rules.add_custom_node_attr_to_meta.output.auspice_json,
         mutations = rules.aa_muts_explicit.output.node_data
     output:
         auspice_json = "auspice/{build_name}/auspice.json",

@@ -12,7 +12,7 @@ and produces
 '''
 
 import os
-localrules: download_sequences, download_metadata, download_exclude, download_clades, preprocess, download_color_ordering, download_curated_pango
+localrules: download_pango_alias, download_sequences, download_metadata, download_exclude, download_clades, preprocess, download_color_ordering, download_curated_pango
 
 rule preprocess:
     input:
@@ -122,6 +122,13 @@ rule download_curated_pango:
         "pre-processed/pango_raw.csv"
     params:
         source = config["data_source"]["pango"]
+    shell: "curl {params.source} -o {output}"
+
+rule download_pango_alias:
+    output:
+        "pre-processed/alias.json"
+    params:
+        source = config["data_source"]["aliases"]
     shell: "curl {params.source} -o {output}"
 
 rule diagnostic:
