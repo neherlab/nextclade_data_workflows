@@ -18,6 +18,7 @@ data_source:
   color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
   pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
   aliases: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json"
+  clade_emergence_dates: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_emergence_dates.tsv"
 
 origins:
   metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"

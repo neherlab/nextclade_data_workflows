@@ -12,7 +12,7 @@ and produces
 '''
 
 import os
-localrules: download_pango_alias, download_sequences, download_metadata, download_exclude, download_clades, preprocess, download_color_ordering, download_curated_pango
+localrules: download_clade_emergence_dates,download_pango_alias, download_sequences, download_metadata, download_exclude, download_clades, preprocess, download_color_ordering, download_curated_pango
 
 rule preprocess:
     input:
@@ -59,23 +59,6 @@ rule download_metadata:
     output:
         metadata = "data/metadata_raw.tsv"
     shell: "aws s3 cp {params.address} - | {params.deflate} {input} > {output:q}"
-
-# rule download_sequences:
-#     message: "Downloading sequences from {params.address} -> {output[0]}"
-#     params:
-#         address = lambda w: config['origins']['sequences']
-#     output:
-#         "data/sequences.fasta.xz"
-#     shell: "curl {params.address} -o {output}"
-
-# rule download_metadata:
-#     message: "Downloading metadata from {params.address} -> {output}"
-#     params:
-#         deflate = lambda w: _infer_decompression(config['origins']['metadata']),
-#         address = lambda w: config['origins']['metadata']
-#     output:
-#         metadata = "data/metadata_raw.tsv"
-#     shell: "curl {params.address} | {params.deflate} > {output:q}"
 
 rule fix_metadata:
     input: "data/metadata_raw.tsv"
@@ -131,10 +114,18 @@ rule download_pango_alias:
         source = config["data_source"]["aliases"]
     shell: "curl {params.source} -o {output}"
 
+rule download_clade_emergence_dates:
+    output:
+        "pre-processed/clade_emergence_dates.tsv"
+    params:
+        source = config["data_source"]["aliases"]
+    shell: "curl {params.source} -o {output}"
+
 rule diagnostic:
     message: "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
     input:
         metadata = "data/metadata.tsv",
+        clade_emergence_dates = "pre-processed/clade_emergence_dates.tsv",
     output:
         to_exclude = "pre-processed/problematic_exclude.txt",
         exclude_reasons = "pre-processed/exclude_reasons.txt",
@@ -156,6 +147,7 @@ rule diagnostic:
         """
         python3 scripts/diagnostic.py \
             --metadata {input.metadata} \
+            --clade_emergence_dates {input.clade_emergence_dates} \
             --clock-filter {params.clock_filter} \
             --rare-mutations {params.rare_mutations} \
             --clock-plus-rare {params.clock_plus_rare} \

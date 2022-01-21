@@ -65,6 +65,7 @@ rule pango_sampling:
         sequences = "pre-processed/open_pango.fasta.xz",
         metadata = "pre-processed/open_pango_metadata.tsv",
         priority = "pre-processed/priority.tsv",
+        problematic_exclude = "pre-processed/problematic_exclude.txt",
     output:
         sequences = build_dir + "/{build_name}/sample-{subsample}-pango.fasta",
         strains=build_dir + "/{build_name}/sample-{subsample}-pango.txt",
@@ -84,7 +85,9 @@ rule pango_sampling:
         """
         augur filter \
             --sequences {input.sequences} \
+            --sequence-index {input.sequence_index} \
             --metadata {input.metadata} \
+            --exclude {input.problematic_exclude} \
             {params.filter_arguments} {params.exclude_where_args} \
             --query "pango_designated != ''" \
             --priority {input.priority} \
