@@ -5,6 +5,11 @@
       {"name": "Cornelius Roemer", "url": "https://neherlab.org"},
       {"name": "Richard Neher", "url": "https://neherlab.org"}
     ],
+    "data_provenance": [
+      {
+        "name": "GISAID"
+      }
+    ],
     "colorings": [
       {
         "key": "region",
