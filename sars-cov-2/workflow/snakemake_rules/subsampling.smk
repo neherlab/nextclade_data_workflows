@@ -63,6 +63,7 @@ rule subsample:
 rule pango_sampling:
     input:
         sequences = "pre-processed/open_pango.fasta.xz",
+        sequence_index = "pre-processed/sequence_index.tsv",
         metadata = "pre-processed/open_pango_metadata.tsv",
         priority = "pre-processed/priority.tsv",
         problematic_exclude = "pre-processed/problematic_exclude.txt",

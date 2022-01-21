@@ -397,9 +397,9 @@ rule export:
 
 rule add_custom_node_attr_to_meta:
     input:
-        auspice_json: rules.export.output.auspice_json,
+        auspice_json= rules.export.output.auspice_json,
     output:
-        auspice_json: "auspice/{build_name}/auspice_custom_node.json"
+        auspice_json= "auspice/{build_name}/auspice_custom_node.json",
     log: "logs/add_custom_node_attr_to_meta_{build_name}.txt"
     shell:
         """
