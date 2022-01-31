@@ -60,13 +60,42 @@ rule subsample:
             --output-strains {output.strains} 2>&1 | tee {log}
         """
 
-rule pango_sampling:
+rule pango_pick:
+    input:
+        counts = "defaults/nr.tsv",
+        metadata = "pre-processed/open_pango_metadata.tsv",
+        exclude = "pre-processed/problematic_exclude.txt",
+    output:
+        strains = build_dir + "/{build_name}/chosen_pango_strains.txt",
+    log:
+        "logs/pango_pick_{build_name}.txt"
+    shell:
+        """
+        python scripts/pick_samples.py \
+            --designations {input.metadata} \
+            --counts {input.counts} \
+            --exclude {input.exclude} \
+            --output {output.strains} 2>&1 \
+        | tee {log}
+        """
+
+rule pango_select:
     input:
         sequences = "pre-processed/open_pango.fasta.xz",
+        strains = rules.pango_pick.output.strains,
+    output:
+        sequences = build_dir + "/{build_name}/picked_pango.fasta",
+    shell:
+        """
+        xzcat {input.sequences} | \
+        seqkit grep -f {input.strains} -o {output.sequences}
+        """
+
+rule pango_sampling:
+    input:
+        sequences = rules.pango_select.output.sequences,
         sequence_index = "pre-processed/sequence_index.tsv",
         metadata = "pre-processed/open_pango_metadata.tsv",
-        priority = "pre-processed/priority.tsv",
-        problematic_exclude = "pre-processed/problematic_exclude.txt",
     output:
         sequences = build_dir + "/{build_name}/sample-{subsample}-pango.fasta",
         strains=build_dir + "/{build_name}/sample-{subsample}-pango.txt",
@@ -75,8 +104,6 @@ rule pango_sampling:
     benchmark:
         "benchmarks/subsample_{build_name}_{subsample}-pango.txt"
     params:
-        filter_arguments = lambda w: config["builds"][w.build_name]["subsamples"][w.subsample+'-pango']['filters'],
-        date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
         exclude_where_args = config["exclude-where-args"],
     resources:
         # Memory use scales primarily with the size of the metadata file.
@@ -88,13 +115,10 @@ rule pango_sampling:
             --sequences {input.sequences} \
             --sequence-index {input.sequence_index} \
             --metadata {input.metadata} \
-            --exclude {input.problematic_exclude} \
-            {params.filter_arguments} {params.exclude_where_args} \
-            --query "pango_designated != ''" \
-            --priority {input.priority} \
+            --exclude-where Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True \
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}
-        """ 
+        """
 
 rule combine_subsamples:
     # Similar to rule combine_input_metadata, this rule should only be run if multiple inputs are being used (i.e. multiple origins)

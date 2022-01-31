@@ -78,15 +78,31 @@ builds:
     subsamples:
       clades:
         filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 500 --exclude-where"
-      recent:
-        filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
-      early-pango:
-        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200 --max-date 2020-12-31 --exclude-where"
-      late-pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
-      latest-pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
+      # recent:
+      #   filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
+      picked-pango:
+        filters: ""
+      # late-pango:
+      #   filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
+      # latest-pango:
+      #   filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
       # 21K-pango:
       #   filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_designated!='B.1.1.529'"
-      very_recent:
-        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
+      # very_recent:
+      #   filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
+  nextclade-big:
+    subsamples:
+      clades:
+        filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 2500 --exclude-where"
+      # recent:
+      #   filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
+      picked-pango:
+        filters: ""
+  nextclade-huge:
+    subsamples:
+      clades:
+        filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 5000 --exclude-where"
+      # recent:
+      #   filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
+      picked-pango:
+        filters: ""
