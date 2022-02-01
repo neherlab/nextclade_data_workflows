@@ -13,7 +13,7 @@ import click
 @click.option("--counts", default="nr.tsv")
 @click.option("--exclude", default="problematic_exclude.txt")
 @click.option("--outfile", default="chosen_pango_strains.txt")
-def pick_samples(designations, counts, excludes, outfile):
+def pick_samples(designations, counts, exclude, outfile):
     des = pd.read_csv(
         designations,
         sep="\t",
@@ -40,7 +40,7 @@ def pick_samples(designations, counts, excludes, outfile):
     # des.groupby('pango_lineage').date.quantile([0.05,0.5,0.95]).to_csv('clock_deviation_q.tsv', sep='\t')
 
     #%%
-    excl = pd.read_csv(excludes, sep=" ", header=None, names=["strain"])
+    excl = pd.read_csv(exclude, sep=" ", header=None, names=["strain"])
     #%%
     # Exclude strains in problematic_exclude.txt
     des = des[~des.strain.isin(excl.strain)]
