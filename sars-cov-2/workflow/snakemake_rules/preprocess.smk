@@ -118,7 +118,7 @@ rule download_clade_emergence_dates:
     output:
         "pre-processed/clade_emergence_dates.tsv"
     params:
-        source = config["data_source"]["aliases"]
+        source = config["data_source"]["clade_emergence_dates"]
     shell: "curl {params.source} -o {output}"
 
 rule diagnostic:
