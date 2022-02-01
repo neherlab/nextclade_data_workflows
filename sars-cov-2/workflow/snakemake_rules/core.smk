@@ -310,7 +310,7 @@ rule internal_pango:
             --alias {input.aliases} \
             --designations {input.designations} \
             --output {output.node_data} \
-            --field_name inferred_lineage 2>&1 | tee {log}
+            --field-name inferred_lineage 2>&1 | tee {log}
         """
         
 rule colors:
