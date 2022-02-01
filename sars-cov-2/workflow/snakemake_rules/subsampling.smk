@@ -75,7 +75,7 @@ rule pango_pick:
             --designations {input.metadata} \
             --counts {input.counts} \
             --exclude {input.exclude} \
-            --output {output.strains} 2>&1 \
+            --outfile {output.strains} 2>&1 \
         | tee {log}
         """
 
