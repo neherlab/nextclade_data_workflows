@@ -28,7 +28,7 @@
     "qos": "6hours",
     "time": "05:59:00"
   },
-  "filter":{
+  "filter": {
     "qos": "6hours",
     "time": "05:59:00"
   },
@@ -46,11 +46,7 @@
     "qos": "30min",
     "mem": "32G"
   },
-  "colors": {
-    "time": "00:29:00",
-    "qos": "30min"
-  },
-    "combine_sumbsamples": {
+  "combine_sumbsamples": {
     "time": "00:29:00",
     "qos": "30min"
   },
@@ -65,7 +61,7 @@
   "proximity_score": {
     "time": "00:29:00",
     "qos": "30min"
-  }, 
+  },
   "tip_frequencies": {
     "time": "00:29:00",
     "qos": "30min"
@@ -85,7 +81,7 @@
   "extract_metadata": {
     "time": "00:29:00",
     "qos": "30min"
-  }, 
+  },
   "clades": {
     "time": "00:29:00",
     "qos": "30min"
