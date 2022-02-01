@@ -309,7 +309,7 @@ rule internal_pango:
             --tree {input.tree} \
             --alias {input.aliases} \
             --designations {input.designations} \
-            --output {output.node_data}
+            --output {output.node_data} \
             --field_name inferred_lineage 2>&1 | tee {log}
         """
         
