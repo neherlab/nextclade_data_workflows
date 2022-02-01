@@ -11,7 +11,7 @@ import click
 @click.command()
 @click.option("--designations", default="open_pango_metadata.tsv")
 @click.option("--counts", default="nr.tsv")
-@click.option("--excludes", default="problematic_exclude.txt")
+@click.option("--exclude", default="problematic_exclude.txt")
 @click.option("--outfile", default="chosen_pango_strains.txt")
 def pick_samples(designations, counts, excludes, outfile):
     des = pd.read_csv(
