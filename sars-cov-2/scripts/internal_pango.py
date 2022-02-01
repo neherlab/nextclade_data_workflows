@@ -73,7 +73,7 @@ def main(designations, tree, alias, output, field_name):
     meta = pd.read_csv(designations, index_col=0)
     #%%
     # Read tree
-    tree = Phylo.read("test_data/nextstrain__tree.nwk", format="newick")
+    tree = Phylo.read(tree, format="newick")
     #%%
     # Get tip names
     tips = list(map(lambda x: x.name, tree.get_terminals()))
