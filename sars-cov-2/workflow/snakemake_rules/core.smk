@@ -411,7 +411,9 @@ rule add_custom_node_attr_to_meta:
 rule add_branch_labels:
     message: "Adding custom branch labels to the Auspice JSON"
     input:
-        auspice_json = rules.add_custom_node_attr_to_meta.output.auspice_json,
+        # Uncomment to enable pango inference feature
+        # auspice_json = rules.add_custom_node_attr_to_meta.output.auspice_json,
+        auspice_json = rules.export.output.auspice_json,
         mutations = rules.aa_muts_explicit.output.node_data
     output:
         auspice_json = "auspice/{build_name}/auspice.json",
@@ -423,5 +425,5 @@ rule add_branch_labels:
         python3 scripts/add_branch_labels.py \
             --input {input.auspice_json} \
             --mutations {input.mutations} \
-            --output {output.auspice_json} 
+            --output {output.auspice_json}
         """
