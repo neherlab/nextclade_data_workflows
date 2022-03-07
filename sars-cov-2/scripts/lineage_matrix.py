@@ -105,7 +105,8 @@ def main(
         return acc
 
     result = {}
-    for i, g in tqdm(df.groupby("pango_designated")):
+    # for i, g in tqdm(df.groupby("pango_designated")):
+    for i, g in df.groupby("pango_designated"):
         result[i] = process_group(g)
 
     np.savez_compressed(out, **result)
