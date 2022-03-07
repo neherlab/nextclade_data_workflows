@@ -286,7 +286,7 @@ rule join_meta_nextclade:
         """
         tsv-select -H -f strain,pango_designated,deletions,insertions,substitutions {input.open_pango_metadata} > meta_muts.tsv
         aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.gz - \
-            | gzcat -d \
+            | zcat -d \
             | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd \
             | tsv-join -H -f meta_muts.tsv -k 1 -a 2-5 missing.tsv \
             > {output}
