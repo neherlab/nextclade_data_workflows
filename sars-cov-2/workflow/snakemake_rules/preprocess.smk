@@ -12,7 +12,7 @@ and produces
 '''
 
 import os
-localrules: download_clade_emergence_dates,download_pango_alias, download_sequences, download_metadata, download_exclude, download_clades, preprocess, download_color_ordering, download_curated_pango
+localrules: join_meta_nextclade,download_clade_emergence_dates,download_pango_alias, download_sequences, download_metadata, download_exclude, download_clades, preprocess, download_color_ordering, download_curated_pango
 
 rule preprocess:
     input:
