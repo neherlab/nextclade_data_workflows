@@ -277,3 +277,37 @@ rule priorities:
             --seed 0 \
             2>&1 | tee {log} 
         """
+
+rule join_meta_nextclade:
+    input:
+        open_pango_metadata = rules.open_pango.output.metadata,
+    output: "pre-processed/full_sequence_details.tsv"
+    shell:
+        """
+        tsv-select -H -f strain,pango_designated,deletions,insertions,substitutions open_pango_metadata.tsv > meta_muts.tsv
+        aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.gz - \
+            | gzcat -d \
+            | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd \
+            | tsv-join -H -f meta_muts.tsv -k 1 -a 2-5 missing.tsv \
+            > {output}
+        rm meta_muts.tsv
+        """
+
+rule lineage_stats:
+    input:
+        reference = "references/MN908947/reference.fasta",
+        meta = rules.join_meta_nextclade.output,
+    output:
+        outfile = "pre-processed/pango_matrix.npz"
+    log: "logs/lineage_stats.txt"
+    shell:
+        """
+        python3 scripts/lineage_matrix.py \
+            --ref {input.reference} \
+            --meta {input.meta} \
+            --out {output.outfile} \
+            2>&1 | tee {log} 
+        """
+
+# rule make_synthetic_pangos:
+#     input:
