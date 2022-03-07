@@ -288,7 +288,7 @@ rule join_meta_nextclade:
         aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.gz - \
             | zcat -d \
             | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd \
-            | tsv-join -H -f meta_muts.tsv -k 1 -a 2-5 missing.tsv \
+            | tsv-join -H -f meta_muts.tsv -k 1 -a 2-5 \
             > {output}
         rm meta_muts.tsv
         """
