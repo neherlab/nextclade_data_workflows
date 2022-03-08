@@ -82,11 +82,12 @@ def pick_samples(designations, counts, exclude, outfile):
                 f"{i} has {len(g.strain)} samples, but should sample {target}"
             )
             target = len(g.strain)
-        if target > 0:
-            picked.add(g[g.date == lin.loc[i, "date"]].strain.iloc[0])
-            if len(picked) != 1:
-                print(f"{i} has {len(picked)} after quantile")
-        c = 0
+        # if target > 0:
+        #     picked.add(g[g.date == lin.loc[i, "date"]].strain.iloc[0])
+        #     if len(picked) != 1:
+        #         print(f"{i} has {len(picked)} after quantile")
+        # Commented out because synthetic used instead
+        c = 1
         while len(picked) < target and c < 10 * len(g.strain):
             picked.add(g.strain.sample(n=1).item())
             c += 1

@@ -60,6 +60,10 @@ rule subsample:
             --output-strains {output.strains} 2>&1 | tee {log}
         """
 
+# 1. Choose synthetic sequences
+# 2. Choose non-synthetic sequences
+
+
 rule pango_pick:
     input:
         counts = "defaults/nr.tsv",
@@ -119,6 +123,39 @@ rule pango_sampling:
             --output {output.sequences} \
             --output-strains {output.strains} 2>&1 | tee {log}
         """
+    
+
+rule synthetic_pick:
+    input:
+        counts = "defaults/nr.tsv",
+        metadata = "pre-processed/open_pango_metadata.tsv",
+    output:
+        strains = build_dir + "/{build_name}/chosen_synthetic_strains.txt",
+    log:
+        "logs/synthetic_pick_{build_name}.txt"
+    shell:
+        """
+        python scripts/pick_synthetic.py \
+            --designations {input.metadata} \
+            --counts {input.counts} \
+            --outfile {output.strains} 2>&1 \
+        | tee {log}
+        """
+
+rule synthetic_select:
+    input:
+        sequences = "pre-processed/synthetic.fasta",
+        strains = rules.synthetic_pick.output.strains,
+    output:
+        sequences = build_dir + "/{build_name}/picked_synthetic.fasta",
+    log:
+        "logs/synthetic_select_{build_name}.txt"
+    shell:
+        """
+        seqkit grep -f {input.strains} -o {output.sequences} {input.sequences} \
+        2>&1 | tee {log}
+        """
+
 
 rule combine_subsamples:
     # Similar to rule combine_input_metadata, this rule should only be run if multiple inputs are being used (i.e. multiple origins)
@@ -127,8 +164,9 @@ rule combine_subsamples:
         Combine and deduplicate aligned & filtered FASTAs from multiple origins in preparation for subsampling: {input}.
         """
     input:
-        lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.fasta"
-                   for subsample in config["builds"][w.build_name]["subsamples"]]
+        natural = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.fasta"
+                   for subsample in config["builds"][w.build_name]["subsamples"]],
+        synthetic = rules.synthetic_select.output.sequences,
     output:
         build_dir + "/{build_name}/sequences_raw.fasta"
     benchmark:
@@ -145,7 +183,7 @@ rule extract_metadata:
                 for subsample in config["builds"][w.build_name]["subsamples"]],
         metadata = "data/metadata.tsv"
     output:
-        metadata = rules.prepare_build.input.metadata
+        metadata = build_dir + "/{build_name}/extracted_metadata.tsv"
     params:
         adjust = lambda w: config["builds"][w.build_name].get("metadata_adjustments",{}),
     benchmark:
@@ -157,13 +195,31 @@ rule extract_metadata:
             with open(f) as fh:
                 strains.update([x.strip() for x in fh if x[0]!='#'])
 
-        d = pd.read_csv(input.metadata, index_col='strain', sep='\t').loc[list(strains)]
+        d = pd.read_csv(input.metadata, index_col='strain', sep='\t')
+        d = d[d.index.isin(list(strains))]
         if len(params.adjust):
             for adjustment  in params.adjust:
                 ind = d.eval(adjustment["query"])
                 d.loc[ind, adjustment['dst']] = d.loc[ind, adjustment['src']]
 
         d.to_csv(output.metadata, sep='\t')
+
+rule add_synthetic_metadata:
+    input:
+        metadata = rules.extract_metadata.output.metadata,
+        synthetic = rules.synthetic_pick.output.strains,
+    output:
+        metadata = rules.prepare_build.input.metadata
+    log:
+        "logs/add_synthetic_metadata_{build_name}.txt"
+    shell:
+        """
+        python3 scripts/add_synthetic_metadata.py \
+            --metadata {input.metadata} \
+            --sequences {input.synthetic} \
+            --outfile {output.metadata} 2>&1 \
+        | tee {log}
+        """
 
 rule exclude_outliers:
     input:
