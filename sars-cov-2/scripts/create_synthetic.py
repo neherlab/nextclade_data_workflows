@@ -7,11 +7,11 @@ def main(
 ):
     import numpy as np
     from pango_aliasor.aliasor import Aliasor
+    from Bio import SeqIO
 
     npzfile = np.load(matrix)
 
-    reference = open(ref, "r").read()
-
+    reference = str(SeqIO.read(ref, "fasta"))
 
     def char_to_int(char):
         if char == "A":

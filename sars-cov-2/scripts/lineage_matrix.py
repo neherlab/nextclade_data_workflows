@@ -9,10 +9,11 @@ def main(
     import numpy as np
     import pandas as pd
     from tqdm import tqdm
+    from Bio import SeqIO
 
     df = pd.read_csv(meta, sep="\t")
 
-    reference = open(ref, "r").read()
+    reference = str(SeqIO.read(ref, "fasta"))
 
     def append_tails(start, end, missing):
         if pd.isna(missing):
