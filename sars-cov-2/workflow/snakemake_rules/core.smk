@@ -297,7 +297,7 @@ rule clades:
 rule internal_pango:
     input:
         tree = rules.refine.output.tree,
-        aliases = rules.download_pango_alias.output,
+        synthetic = rules.synthetic_pick.output,
         designations = rules.pango_strain_rename.output.pango_designations,
     output:
         node_data = build_dir + "/{build_name}/internal_pango.json"
@@ -307,7 +307,7 @@ rule internal_pango:
         """
         python scripts/internal_pango.py \
             --tree {input.tree} \
-            --alias {input.aliases} \
+            --synthetic {input.synthetic} \
             --designations {input.designations} \
             --output {output.node_data} \
             --field-name inferred_lineage 2>&1 | tee {log}

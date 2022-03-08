@@ -8,69 +8,40 @@ import augur.utils
 import Bio.Align
 import click
 import pandas as pd
+from pango_aliasor.aliasor import Aliasor
 from Bio import Phylo
 from treetime import TreeAnc
 
 
 #%%
-class Aliasor:
-    def __init__(self, alias_file):
-        import pandas as pd
-
-        aliases = pd.read_json(alias_file)
-
-        self.alias_dict = {}
-        for column in aliases.columns:
-            if column.startswith("X"):
-                self.alias_dict[column] = column
-            else:
-                self.alias_dict[column] = aliases[column][0]
-
-        self.alias_dict["A"] = "A"
-        self.alias_dict["B"] = "B"
-
-        self.realias_dict = {v: k for k, v in self.alias_dict.items()}
-
-    def compress(self, name):
-        name_split = name.split(".")
-        if len(name_split) < 5:
-            return name
-        letter = self.realias_dict[".".join(name_split[0:4])]
-        if len(name_split) == 5:
-            return letter + "." + name_split[4]
-        else:
-            return letter + "." + ".".join(name_split[4:])
-
-    def uncompress(self, name):
-        name_split = name.split(".")
-        letter = name_split[0]
-        unaliased = self.alias_dict[letter]
-        if len(name_split) == 1:
-            return name
-        if len(name_split) == 2:
-            return unaliased + "." + name_split[1]
-        else:
-            return unaliased + "." + ".".join(name_split[1:])
-
-
-#%%
 @click.command()
 @click.option("--designations", required=True, type=str)
+@click.option("--synthetic", required=False, type=str)
 @click.option("--tree", required=True, type=str)
-@click.option("--alias", required=True, type=str)
 @click.option("--output", required=True, type=str)
 @click.option("--field-name", default="inferred_lineage")
-def main(designations, tree, alias, output, field_name):
+def main(designations, tree, synthetic, output, field_name):
     """
     Takes designation csv, nwk tree, and alias json
     Produces node.json with field-name (default: inferred_lineage)
     """
     #%%
     # Initialize aliasor
-    aliasor = Aliasor(alias)
+    aliasor = Aliasor()
     #%%
     # Read in meta
     meta = pd.read_csv(designations, index_col=0)
+
+    #%%
+    # Read in meta
+    meta = pd.read_csv(designations, index_col=0)
+    #%%
+    # Read in synthetic lineages
+    synthetic = pd.read_csv(synthetic, header=None, names=["lineage"])
+    synthetic.index = synthetic.lineage
+
+    meta = pd.concat([meta, synthetic], axis=0)
+
     #%%
     # Read tree
     tree = Phylo.read(tree, format="newick")
