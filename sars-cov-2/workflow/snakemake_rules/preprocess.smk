@@ -309,5 +309,21 @@ rule lineage_stats:
             2>&1 | tee {log} 
         """
 
-# rule make_synthetic_pangos:
-#     input:
+rule make_synthetic_pangos:
+    input:
+        reference = "references/MN908947/reference.fasta",
+        matrix = rules.lineage_stats.output.outfile,
+    output:
+        outfile = "pre-processed/synthetic.fasta"
+    log: "logs/make_synthetic_pangos.txt"
+    shell:
+        """
+        python3 scripts/create_synthetic.py \
+            --ref {input.reference} \
+            --matrix {input.matrix} \
+            --out {output.outfile} \
+            2>&1 | tee {log} 
+        """
+
+# Need to create fake metadata for synthetic pangos
+# Maybe in the above script?
