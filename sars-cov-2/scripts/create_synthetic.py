@@ -1,8 +1,8 @@
 import typer
 
 def main(
-    ref: str = "reference.fasta",
-    matrix: str = "pango_matrix.npz",
+    ref: str = "references/MN908947/reference.fasta",
+    matrix: str = "pre-processed/pango_matrix.npz",
     out: str = "synthetic.fasta",
 ):
     import numpy as np
@@ -11,7 +11,7 @@ def main(
 
     npzfile = np.load(matrix)
 
-    reference = str(SeqIO.read(ref, "fasta"))
+    reference = str(SeqIO.read(ref, "fasta").seq)
 
     def char_to_int(char):
         if char == "A":

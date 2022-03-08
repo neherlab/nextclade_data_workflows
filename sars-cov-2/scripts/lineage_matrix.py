@@ -13,7 +13,7 @@ def main(
 
     df = pd.read_csv(meta, sep="\t")
 
-    reference = str(SeqIO.read(ref, "fasta"))
+    reference = str(SeqIO.read(ref, "fasta").seq)
 
     def append_tails(start, end, missing):
         if pd.isna(missing):
