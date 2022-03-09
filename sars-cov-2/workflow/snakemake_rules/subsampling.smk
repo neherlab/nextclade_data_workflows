@@ -216,7 +216,7 @@ rule add_synthetic_metadata:
         """
         python3 scripts/add_synthetic_metadata.py \
             --metadata {input.metadata} \
-            --sequences {input.synthetic} \
+            --synthetic {input.synthetic} \
             --outfile {output.metadata} 2>&1 \
         | tee {log}
         """
