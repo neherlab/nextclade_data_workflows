@@ -116,7 +116,6 @@ rule pango_sampling:
         """
         augur filter \
             --sequences {input.sequences} \
-            --sequence-index {input.sequence_index} \
             --metadata {input.metadata} \
             --exclude-where Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True \
             --output {output.sequences} \
@@ -234,7 +233,6 @@ rule exclude_outliers:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --sequence-index {input.sequence_index} \
             --exclude {input.exclude} \
             --output {output.sampled_sequences} \
             --output-strains {output.sampled_strains} \
