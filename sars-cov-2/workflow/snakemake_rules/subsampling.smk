@@ -98,7 +98,6 @@ rule pango_select:
 rule pango_sampling:
     input:
         sequences = rules.pango_select.output.sequences,
-        sequence_index = "pre-processed/sequence_index.tsv",
         metadata = "pre-processed/open_pango_metadata.tsv",
     output:
         sequences = build_dir + "/{build_name}/sample-{subsample}-pango.fasta",
@@ -226,10 +225,10 @@ rule exclude_outliers:
         sequences = "builds/{build_name}/sequences_raw.fasta",
         metadata = rules.prepare_build.input.metadata,
         exclude = "profiles/exclude.txt",
-        sequence_index = "pre-processed/sequence_index.tsv",
     output:
         sampled_sequences = "builds/{build_name}/sequences.fasta",
         sampled_strains = "builds/{build_name}/subsample.txt",
+    log: "logs/exclude_outliers_{build_name}.txt"
     shell:
         """
         augur filter \
@@ -238,5 +237,6 @@ rule exclude_outliers:
             --sequence-index {input.sequence_index} \
             --exclude {input.exclude} \
             --output {output.sampled_sequences} \
-            --output-strains {output.sampled_strains}
+            --output-strains {output.sampled_strains} \
+        2>&1 | tee {log}
         """
