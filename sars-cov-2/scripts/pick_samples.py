@@ -87,8 +87,8 @@ def pick_samples(designations, counts, exclude, outfile):
         #     if len(picked) != 1:
         #         print(f"{i} has {len(picked)} after quantile")
         # Commented out because synthetic used instead
-        c = 1
-        while len(picked) < target and c < 10 * len(g.strain):
+        c = 0
+        while len(picked) < target-1 and c < 10 * len(g.strain):
             picked.add(g.strain.sample(n=1).item())
             c += 1
         if len(picked) != target:
