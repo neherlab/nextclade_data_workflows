@@ -5,18 +5,16 @@
       {"name": "Cornelius Roemer", "url": "https://neherlab.org"},
       {"name": "Richard Neher", "url": "https://neherlab.org"}
     ],
-    "meta": {
-      "extensions": {
-        "nextclade": {
-          "clade_node_attrs": [
-            {
-              "name": "Nextclade_pango",
-              "displayName": "Pango lineage (Nextclade)",
-              "description": "Pango lineage as inferred by Nextclade from the nearest neighbour in the reference tree. 98% accurate for recent sequences, for higher accuracy use dedicated pangolin software in UShER or pangoLEARN mode"
+    "extensions": {
+      "nextclade": {
+        "clade_node_attrs": [
+          {
+            "name": "Nextclade_pango",
+            "displayName": "Pango lineage (Nextclade)",
+            "description": "Pango lineage as inferred by Nextclade from the nearest neighbour in the reference tree. 98% accurate for recent sequences, for higher accuracy use dedicated pangolin software in UShER or pangoLEARN mode"
 
-            }
-          ]
-        }
+          }
+        ]
       }
     },
     "data_provenance": [
@@ -43,6 +41,11 @@
       {
         "key": "pango_lineage",
         "title": "Pango Lineage",
+        "type": "categorical"
+      },
+      {
+        "key": "Nextclade_pango",
+        "title": "Nextclade Pango Lineage",
         "type": "categorical"
       },
       {
@@ -73,7 +76,8 @@
       "division",
       "new_node",
       "pango_lineage",
-      "clade_membership"
+      "clade_membership",
+      "Nextclade_pango"
     ],
     "panels": [
       "tree",
