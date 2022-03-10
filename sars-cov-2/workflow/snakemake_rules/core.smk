@@ -310,7 +310,7 @@ rule internal_pango:
             --synthetic {input.synthetic} \
             --designations {input.designations} \
             --output {output.node_data} \
-            --field-name inferred_lineage 2>&1 | tee {log}
+            --field-name Nextclade_pango 2>&1 | tee {log}
         """
         
 rule colors:
@@ -395,24 +395,9 @@ rule export:
             --output {output.auspice_json} 2>&1 | tee {log};
         """
 
-rule add_custom_node_attr_to_meta:
-    input:
-        auspice_json= rules.export.output.auspice_json,
-    output:
-        auspice_json= "auspice/{build_name}/auspice_custom_node.json",
-    log: "logs/add_custom_node_attr_to_meta_{build_name}.txt"
-    shell:
-        """
-        cat {input.auspice_json} | \
-        jq '.meta.extensions.nextclade.clade_node_attrs_keys = ["inferred_lineage"]' \
-        > {output.auspice_json} 2>&1 | tee {log};
-        """
-
 rule add_branch_labels:
     message: "Adding custom branch labels to the Auspice JSON"
     input:
-        # Uncomment to enable pango inference feature
-        # auspice_json = rules.add_custom_node_attr_to_meta.output.auspice_json,
         auspice_json = rules.export.output.auspice_json,
         mutations = rules.aa_muts_explicit.output.node_data
     output:
