@@ -18,7 +18,7 @@ files:
   description: "defaults/description.md"
 
 tree:
-  tree-builder-args: "'-ninit 50 -nstop 20 -czb'"
+  tree-builder-args: "'-ninit 100 -nstop 100 -pers 0.6 -ntop 40 -nbest 10 -czb'"
 
 # mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987"
 # mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987 24410 28461 23403 21621 21846 22917 23012 23063 23604 23664 24642 2491"
