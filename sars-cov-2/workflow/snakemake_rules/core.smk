@@ -350,14 +350,14 @@ rule overwrite_recombinant_clades:
     input:
         clades_json = rules.clades.output.node_data,
     output:
-        clades_json = build_dir + "/{build_name}/clades.json"
+        node_data = build_dir + "/{build_name}/clades.json"
     log:
         "logs/overwrite_recombinant_clades_{build_name}.txt"
     shell:
         """
         python scripts/overwrite_recombinant_clades.py \
             --clades {input.clades_json} \
-            --output {output.clades_json} \
+            --output {output.node_data} \
         | 2>&1 | tee {log}
         """
 
