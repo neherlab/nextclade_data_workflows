@@ -84,10 +84,27 @@ rule mask:
             --output {output.alignment} 2>&1 | tee {log}
         """
 
+rule remove_recombinants_from_alignment:
+    input:
+        alignment = rules.mask.output.alignment,
+        recombinants = build_dir + "/{build_name}/recombinants.txt",
+    output:
+        alignment = build_dir + "/{build_name}/masked_without_recombinants.fasta",
+    log:
+        "logs/remove_recombinants_{build_name}.txt"
+    benchmark:
+        "benchmarks/remove_recombinants_{build_name}.txt"
+    conda: config["conda_environment"]
+    shell:
+        """
+        seqkit grep -v -f {input.recombinants} {input.alignment} > {output.alignment}
+        2>&1 | tee {log}
+        """
+
 rule tree:
     message: "Building tree"
     input:
-        alignment = rules.mask.output.alignment
+        alignment = rules.remove_recombinants_from_alignment.output.alignment,
         constraint_tree = config["files"]["constraint_tree"]
     output:
         tree = build_dir + "/{build_name}/tree_raw.nwk"
@@ -113,13 +130,35 @@ rule tree:
             --nthreads {threads} 2>&1 | tee {log}
         """
 
+rule add_recombinants_to_tree:
+    message: "Adding recombinant singlets to root of raw tree"
+    input:
+        tree = rules.tree.output.tree,
+        recombinants = build_dir + "/{build_name}/recombinants.txt",
+        reference = config["files"]["alignment_reference"]
+    output:
+        tree = build_dir + "/{build_name}/tree_with_recombinants.nwk"
+    log:
+        "logs/add_recombinants_{build_name}.txt"
+    benchmark:
+        "benchmarks/add_recombinants_{build_name}.txt"
+    conda: config["conda_environment"]
+    shell:
+        """
+        python add_recombinants.py \
+            --tree {input.tree} \
+            --recombinants {input.recombinants} \
+            --reference {input.reference} \
+            --output {output.tree} 2>&1 | tee {log}
+        """
+
 rule refine:
     message:
         """
         Refining tree
         """
     input:
-        tree = rules.tree.output.tree,
+        tree = rules.add_recombinants_to_tree.output.tree,
         alignment = rules.align.output.alignment,
         metadata =  "builds/{build_name}/metadata.tsv"
     output:
