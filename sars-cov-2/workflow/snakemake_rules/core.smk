@@ -329,7 +329,7 @@ rule clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["clades"]
     output:
-        node_data = build_dir + "/{build_name}/clades.json"
+        node_data = build_dir + "/{build_name}/clades_raw.json"
     log:
         "logs/clades_{build_name}.txt"
     benchmark:
@@ -344,6 +344,21 @@ rule clades:
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
             --output-node-data {output.node_data} 2>&1 | tee {log}
+        """
+
+rule overwrite_recombinant_clades:
+    input:
+        clades_json = rules.clades.output.node_data,
+    output:
+        clades_json = build_dir + "/{build_name}/clades.json"
+    log:
+        "logs/overwrite_recombinant_clades_{build_name}.txt"
+    shell:
+        """
+        python scripts/overwrite_recombinant_clades.py \
+            --clades {input.clades_json} \
+            --output {output.clades_json} \
+        | 2>&1 | tee {log}
         """
 
 rule internal_pango:
@@ -401,7 +416,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
-        rules.clades.output.node_data,
+        rules.overwrite_recombinant_clades.output.node_data,
         rules.aa_muts_explicit.output.node_data,
         rules.internal_pango.output.node_data
     ]
