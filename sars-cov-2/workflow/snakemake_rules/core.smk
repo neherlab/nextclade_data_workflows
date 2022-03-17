@@ -358,7 +358,7 @@ rule overwrite_recombinant_clades:
         python scripts/overwrite_recombinant_clades.py \
             --clades {input.clades_json} \
             --output {output.node_data} \
-        | 2>&1 | tee {log}
+        2>&1 | tee {log}
         """
 
 rule internal_pango:
