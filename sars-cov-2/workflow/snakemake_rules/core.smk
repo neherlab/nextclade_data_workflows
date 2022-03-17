@@ -84,6 +84,16 @@ rule mask:
             --output {output.alignment} 2>&1 | tee {log}
         """
 
+rule identify_recombinants:
+    input:
+        strains = rules.exclude_outliers.output.sampled_strains,
+    output:
+        recombinants = build_dir + "/{build_name}/recombinants.txt"
+    shell:
+        """
+        grep '^X' {input.strains} > {output.recombinants}
+        """
+
 rule remove_recombinants_from_alignment:
     input:
         alignment = rules.mask.output.alignment,
@@ -334,6 +344,7 @@ rule clades:
             --clades {input.clades} \
             --output-node-data {output.node_data} 2>&1 | tee {log}
         """
+
 rule internal_pango:
     input:
         tree = rules.refine.output.tree,
