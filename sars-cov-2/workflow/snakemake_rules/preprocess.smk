@@ -20,6 +20,7 @@ rule preprocess:
         metadata = "data/metadata.tsv",
         sequence_index = "pre-processed/sequence_index.tsv",
         problematic_exclude = "pre-processed/problematic_exclude.txt",
+        synthetic = rules.make_synthetic_pangos.output.outfile,
     params:
         slack_hook = config.get('slackHook',"google.com")
     shell:
