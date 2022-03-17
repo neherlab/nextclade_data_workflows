@@ -88,6 +88,7 @@ rule tree:
     message: "Building tree"
     input:
         alignment = rules.mask.output.alignment
+        constraint_tree = config["files"]["constraint_tree"]
     output:
         tree = build_dir + "/{build_name}/tree_raw.nwk"
     params:

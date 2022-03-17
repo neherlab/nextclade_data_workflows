@@ -16,9 +16,10 @@ files:
   lat_longs: "defaults/lat_longs.tsv"
   auspice_config: "defaults/auspice_config.json"
   description: "defaults/description.md"
+  constraint_tree: "defaults/constraint.nwk"
 
 tree:
-  tree-builder-args: "'-ninit 300 -nstop 10 -pers 0.6 -ntop 20 -nbest 5 -czb'"
+  tree-builder-args: "'-g defaults/constraint.nwk -ninit 100 -n 2 --radius 50 --allnni -czb'"
 
 # mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987"
 # mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987 24410 28461 23403 21621 21846 22917 23012 23063 23604 23664 24642 2491"
