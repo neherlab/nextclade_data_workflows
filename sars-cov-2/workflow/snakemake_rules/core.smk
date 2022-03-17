@@ -155,7 +155,7 @@ rule add_recombinants_to_tree:
     conda: config["conda_environment"]
     shell:
         """
-        python add_recombinants.py \
+        python scripts/add_recombinants.py \
             --tree {input.tree} \
             --recombinants {input.recombinants} \
             --reference {input.reference} \
