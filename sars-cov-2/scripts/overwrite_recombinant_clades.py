@@ -4,8 +4,8 @@ import typer
 # --clades {input.clades_json} \
 # --output {output.clades_json}
 def main(
-    clades: str,
-    output: str,
+    clades: str = "",
+    output: str = "",
     ):
     import json
 
