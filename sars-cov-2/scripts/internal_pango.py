@@ -13,7 +13,6 @@ from Bio import Phylo
 from treetime import TreeAnc
 
 
-#%%
 @click.command()
 @click.option("--designations", required=True, type=str)
 @click.option("--synthetic", required=False, type=str)
@@ -68,7 +67,7 @@ def main(designations, tree, synthetic, output, field_name):
         lineage_split = lineage.split(".")
         hierarchy = []
         if len(lineage_split) == 1:
-            return lineage
+            return lineage_split
         for i in range(len(lineage_split)):
             hierarchy.append(".".join(lineage_split[0 : i + 1]))
         return hierarchy
@@ -163,3 +162,5 @@ def main(designations, tree, synthetic, output, field_name):
 
 if __name__ == "__main__":
     main()
+    # For debugging
+    # main(['--tree', 'builds/nextclade/tree.nwk', '--synthetic', 'builds/nextclade/chosen_synthetic_strains.txt', '--designations', 'pre-processed/pango_designations_nextstrain_names.csv', '--output', 'builds/nextclade/internal_pango.json', '--field-name', 'Nextclade_pango'])
