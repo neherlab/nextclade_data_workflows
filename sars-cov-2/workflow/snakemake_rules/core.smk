@@ -12,7 +12,7 @@ and produces files
 
 '''
 
-localrules: add_custom_node_attr_to_meta, add_branch_labels,
+localrules: add_custom_node_attr_to_meta, add_branch_labels, colors,internal_pango,overwrite_recombinant_clades,add_recombinants_to_tree, remove_recombinants_from_alignment,identify_recombinants,
 
 build_dir = config.get("build_dir", "builds")
 auspice_dir = config.get("auspice_dir", "auspice")
