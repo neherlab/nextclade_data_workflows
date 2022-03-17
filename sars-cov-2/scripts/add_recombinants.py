@@ -2,7 +2,7 @@
 # python add_recombinants.py \
 # --tree {input.tree} \
 # --recombinants {input.recombinants} \
-# --reference {input.reference} \
+# --root {input.root} \
 # --output {output.tree} 2>&1 | tee {log}
 
 import typer
@@ -11,7 +11,7 @@ import typer
 def main(
     tree: str = "builds/nextclade/tree_raw.nwk",
     recombinants: str = "builds/nextclade/recombinants.txt",
-    reference: str = "Wuhan/Hu-1/2019",
+    root: str = "Wuhan/Hu-1/2019",
     output: str = "builds/nextclade/tree_with_recombinants.nwk",
 ):
     from Bio import Phylo 
@@ -20,7 +20,7 @@ def main(
     tree = Phylo.read(tree, "newick")
 
     # Root tree on reference
-    tree.root_with_outgroup(reference)
+    tree.root_with_outgroup(root)
 
     # Load recombinants from txt into a list
     with open(recombinants, "r") as f:

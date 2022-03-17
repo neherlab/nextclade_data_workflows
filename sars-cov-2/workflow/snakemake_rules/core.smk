@@ -145,7 +145,6 @@ rule add_recombinants_to_tree:
     input:
         tree = rules.tree.output.tree,
         recombinants = build_dir + "/{build_name}/recombinants.txt",
-        reference = config["files"]["alignment_reference"]
     output:
         tree = build_dir + "/{build_name}/tree_with_recombinants.nwk"
     log:
@@ -153,12 +152,14 @@ rule add_recombinants_to_tree:
     benchmark:
         "benchmarks/add_recombinants_{build_name}.txt"
     conda: config["conda_environment"]
+    params:
+        root = config["refine"]["root"],
     shell:
         """
         python scripts/add_recombinants.py \
             --tree {input.tree} \
             --recombinants {input.recombinants} \
-            --reference {input.reference} \
+            --root {params.root} \
             --output {output.tree} 2>&1 | tee {log}
         """
 
