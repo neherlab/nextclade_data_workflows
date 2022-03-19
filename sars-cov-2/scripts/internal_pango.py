@@ -17,16 +17,17 @@ from treetime import TreeAnc
 @click.option("--designations", required=True, type=str)
 @click.option("--synthetic", required=False, type=str)
 @click.option("--tree", required=True, type=str)
+@click.option("--alias", required=True, type=str)
 @click.option("--output", required=True, type=str)
 @click.option("--field-name", default="inferred_lineage")
-def main(designations, tree, synthetic, output, field_name):
+def main(designations, tree, alias, synthetic, output, field_name):
     """
     Takes designation csv, nwk tree, and alias json
     Produces node.json with field-name (default: inferred_lineage)
     """
     #%%
     # Initialize aliasor
-    aliasor = Aliasor()
+    aliasor = Aliasor(alias)
     #%%
     # Read in meta
     meta = pd.read_csv(designations, index_col=0)

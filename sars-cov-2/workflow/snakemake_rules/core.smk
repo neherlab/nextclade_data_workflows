@@ -364,6 +364,7 @@ rule overwrite_recombinant_clades:
 rule internal_pango:
     input:
         tree = rules.refine.output.tree,
+        alias = rules.download_pango_alias.output,
         synthetic = rules.synthetic_pick.output,
         designations = rules.pango_strain_rename.output.pango_designations,
     output:
@@ -375,6 +376,7 @@ rule internal_pango:
         python scripts/internal_pango.py \
             --tree {input.tree} \
             --synthetic {input.synthetic} \
+            --alias {input.alias} \
             --designations {input.designations} \
             --output {output.node_data} \
             --field-name Nextclade_pango 2>&1 | tee {log}
