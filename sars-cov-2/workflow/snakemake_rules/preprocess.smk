@@ -314,6 +314,7 @@ rule make_synthetic_pangos:
     input:
         reference = "references/MN908947/reference.fasta",
         matrix = rules.lineage_stats.output.outfile,
+        alias = rules.download_pango_alias.output,
     output:
         outfile = "pre-processed/synthetic.fasta"
     log: "logs/make_synthetic_pangos.txt"
@@ -322,6 +323,7 @@ rule make_synthetic_pangos:
         python3 scripts/create_synthetic.py \
             --ref {input.reference} \
             --matrix {input.matrix} \
+            --alias {input.alias} \
             --out {output.outfile} \
             2>&1 | tee {log} 
         """

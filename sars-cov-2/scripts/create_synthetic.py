@@ -3,6 +3,7 @@ import typer
 def main(
     ref: str = "references/MN908947/reference.fasta",
     matrix: str = "pre-processed/pango_matrix.npz",
+    alias: str = "",
     out: str = "synthetic.fasta",
 ):
     import numpy as np
@@ -59,9 +60,10 @@ def main(
                 )
         return muts
 
-
-    aliasor = Aliasor()
-
+    if alias != "":
+        aliasor = Aliasor(alias)
+    else:
+        aliasor = Aliasor()
 
     def parent(lineage):
         """
