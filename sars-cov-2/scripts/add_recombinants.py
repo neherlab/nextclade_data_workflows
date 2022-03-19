@@ -32,7 +32,8 @@ def main(
             tree.prune(target=recombinant)
         except ValueError:
             pass
-        tree.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=0.0001))
+        # Need large branch length to make sure recombinants ignored for ancestral reconstruction
+        tree.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=1.000))
 
     # Write tree to output
     Phylo.write(tree, output, "newick", format_branch_length='%1.8f', branch_length_only=True)
