@@ -137,7 +137,14 @@ def main(designations, tree, alias, synthetic, output, field_name):
         return lineage_list
 
     def lineage_list_to_lineage(lineage_list):
-        return lineage_list[-1]
+        """
+        Return B by default in case can't agree on lineage
+        """
+        try:
+            to_return = lineage_list[-1]
+        except IndexError:
+            to_return = "B"
+        return to_return
 
     #%%
     for rec in aln:
@@ -164,4 +171,4 @@ def main(designations, tree, alias, synthetic, output, field_name):
 if __name__ == "__main__":
     main()
     # For debugging
-    # main(['--tree', 'builds/nextclade/tree.nwk', '--synthetic', 'builds/nextclade/chosen_synthetic_strains.txt', '--designations', 'pre-processed/pango_designations_nextstrain_names.csv', '--output', 'builds/nextclade/internal_pango.json', '--field-name', 'Nextclade_pango'])
+    # main(['--tree', 'builds/nextclade/tree.nwk', '--synthetic', 'builds/nextclade/chosen_synthetic_strains.txt', '--alias','pre-processed/alias.json', '--designations', 'pre-processed/pango_designations_nextstrain_names.csv', '--output', 'builds/nextclade/internal_pango.json', '--field-name', 'Nextclade_pango'])
