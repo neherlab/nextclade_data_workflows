@@ -197,7 +197,7 @@ rule refine:
             --metadata {input.metadata} \
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
-            --root {params.root} \
+            --keep-root \
             --divergence-unit {params.divergence_unit} | tee {log}
         """
 
