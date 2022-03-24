@@ -1,5 +1,11 @@
 # Produce files helpful for updating Nextclade's qc.json
 
+rule all:
+    input:
+        "pre-processed/frameshifts.tsv",
+        "pre-processed/stops.tsv",
+        "pre-processed/stops_long.tsv"
+
 rule select_frameshifts:
     input:
         "data/metadata_raw.tsv",
