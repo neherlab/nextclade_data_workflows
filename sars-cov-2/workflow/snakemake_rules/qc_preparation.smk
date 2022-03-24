@@ -1,6 +1,6 @@
 # Produce files helpful for updating Nextclade's qc.json
 
-rule all:
+rule prepare_qc:
     input:
         "pre-processed/frameshifts.tsv",
         "pre-processed/stops.tsv",
