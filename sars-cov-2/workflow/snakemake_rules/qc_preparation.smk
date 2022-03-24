@@ -4,7 +4,9 @@ rule prepare_qc:
     input:
         "pre-processed/frameshifts.tsv",
         "pre-processed/stops.tsv",
-        "pre-processed/stops_long.tsv"
+        "pre-processed/stops_long.tsv",
+        "pre-processed/stops.txt",
+        "pre-processed/frameshifts.txt",
 
 rule select_frameshifts:
     input:
@@ -44,4 +46,24 @@ rule rank_stops:
     shell:
         """
         tsv-select -H -f stops {input} | tsv-summarize -H -w --group-by stops --count | keep-header -- sort -k2 -rn -t$'\\t' > {output} 
+        """
+
+rule format_stops:
+    input:
+        "pre-processed/stops.tsv"
+    output:
+        "pre-processed/stops.txt"
+    shell:
+        """
+        python scripts/common_stops.py --number 50 --input-file {input} >{output}
+        """
+
+rule format_frameshifts:
+    input:
+        "pre-processed/frameshifts.tsv"
+    output:
+        "pre-processed/frameshifts.txt"
+    shell:
+        """
+        python scripts/common_frameshifts.py --number 100 --input-file {input} >{output}
         """
