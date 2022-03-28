@@ -271,8 +271,8 @@ rule get_designated_sequences:
         "benchmarks/get_designated_sequences.txt"
     shell:
         """
-        seqkit grep -f {input.pango} {input.sequences} >{output.sequences} 2>&1 | tee {log};
-        seqkit seq -i {output.sequences} >{output.strains} 2>&1 | tee {log};
+        seqkit grep -f {input.pango} {input.sequences} 2>&1 >{output.sequences} | tee {log};
+        seqkit seq -i {output.sequences} 2>&1 >{output.strains} | tee {log};
         """
 
 rule get_designated_metadata:
@@ -287,7 +287,7 @@ rule get_designated_metadata:
         "benchmarks/get_designated_metadata.txt"
     shell:
         """
-        tsv-join -H --filter-file {input.strains} --key-fields 1 {input.metadata} >{output.metadata} 2>&1 | tee {log}
+        tsv-join -H --filter-file {input.strains} --key-fields 1 {input.metadata} 2>&1 >{output.metadata} | tee {log}
         """
 
 rule strains:
