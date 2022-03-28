@@ -316,7 +316,7 @@ rule priorities:
 
 rule join_meta_nextclade:
     input:
-        open_pango_metadata = rules.open_pango.output.metadata,
+        open_pango_metadata = rules.get_designated_metadata.output.metadata,
     output: "pre-processed/full_sequence_details.tsv"
     shell:
         """
