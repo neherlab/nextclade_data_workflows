@@ -222,37 +222,72 @@ rule fix_pango_lineages:
         2>&1
         """
 
-rule open_pango:
-    # include only sequences that are in pango.csv using augur filter
+# rule open_pango:
+#     # include only sequences that are in pango.csv using augur filter
+#     # could be sped up using seqkit grep
+#     # only problem: metadata, but can probably do with tsv-join
+#     # and do inner join, not selecting sequences/meta without matches on both sides
+#     input:
+#         sequences = "data/sequences.fasta.xz",
+#         pango = "pre-processed/pango_designated_strains_nextstrain_names.txt",
+#         sequence_index = "pre-processed/sequence_index.tsv",
+#         metadata = "data/metadata.tsv",
+#     output: 
+#         sequences = "pre-processed/open_pango.fasta.xz",
+#         metadata = "pre-processed/open_pango_metadata.tsv",
+#         strains = "pre-processed/open_pango_strains.txt",
+#     params:
+#         date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+#     log:
+#         "logs/open_pango.txt"
+#     benchmark:
+#         "benchmarks/open_pango.txt"
+#     conda: config["conda_environment"]
+#     shell:
+#         """
+#         augur filter \
+#             --sequences {input.sequences} \
+#             --sequence-index {input.sequence_index} \
+#             --metadata {input.metadata} \
+#             --exclude-all \
+#             --max-date {params.date} \
+#             --include {input.pango} \
+#             --output-metadata {output.metadata} \
+#             --output-strains {output.strains} \
+#             --output-sequences {output.sequences} \
+#             2>&1 | tee {log} 
+#         """
+
+rule get_designated_sequences:
     input:
         sequences = "data/sequences.fasta.xz",
         pango = "pre-processed/pango_designated_strains_nextstrain_names.txt",
-        sequence_index = "pre-processed/sequence_index.tsv",
-        metadata = "data/metadata.tsv",
-    output: 
+    output:
         sequences = "pre-processed/open_pango.fasta.xz",
-        metadata = "pre-processed/open_pango_metadata.tsv",
         strains = "pre-processed/open_pango_strains.txt",
-    params:
-        date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
     log:
-        "logs/open_pango.txt"
+        "logs/get_designated_sequences.txt"
     benchmark:
-        "benchmarks/open_pango.txt"
-    conda: config["conda_environment"]
+        "benchmarks/get_designated_sequences.txt"
     shell:
         """
-        augur filter \
-            --sequences {input.sequences} \
-            --sequence-index {input.sequence_index} \
-            --metadata {input.metadata} \
-            --exclude-all \
-            --max-date {params.date} \
-            --include {input.pango} \
-            --output-metadata {output.metadata} \
-            --output-strains {output.strains} \
-            --output-sequences {output.sequences} \
-            2>&1 | tee {log} 
+        seqkit grep -f {input.pango} {input.sequences} >{output.sequence} 2>&1 | tee {log};
+        seqkit seq -i {output.sequences} >{output.strains} 2>&1 | tee {log};
+        """
+
+rule get_designated_metadata:
+    input:
+        strains = "pre-processed/open_pango_strains.txt",
+        metadata = "data/metadata.tsv",
+    output:
+        metadata = "pre-processed/open_pango_metadata.tsv",
+    log:
+        "logs/get_designated_metadata.txt"
+    benchmark:
+        "benchmarks/get_designated_metadata.txt"
+    shell:
+        """
+        tsv-join -H --filter-file {input.strains} --key-fields 1 {input.metadata} >{output.metadata} 2>&1 | tee {log}
         """
 
 rule strains:
