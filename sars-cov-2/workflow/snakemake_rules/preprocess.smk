@@ -271,7 +271,7 @@ rule get_designated_sequences:
         "benchmarks/get_designated_sequences.txt"
     shell:
         """
-        seqkit grep -f {input.pango} {input.sequences} >{output.sequence} 2>&1 | tee {log};
+        seqkit grep -f {input.pango} {input.sequences} >{output.sequences} 2>&1 | tee {log};
         seqkit seq -i {output.sequences} >{output.strains} 2>&1 | tee {log};
         """
 
