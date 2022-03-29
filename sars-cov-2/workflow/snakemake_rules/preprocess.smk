@@ -264,15 +264,32 @@ rule get_designated_sequences:
         pango = "pre-processed/pango_designated_strains_nextstrain_names.txt",
     output:
         sequences = "pre-processed/open_pango.fasta.xz",
-        strains = "pre-processed/open_pango_strains.txt",
     log:
         "logs/get_designated_sequences.txt"
     benchmark:
         "benchmarks/get_designated_sequences.txt"
+    threads: 3
     shell:
         """
-        seqkit grep -f {input.pango} {input.sequences} -o {output.sequences} 2>&1 | tee {log};
-        seqkit seq -i {output.sequences} -o {output.strains} 2>&1 | tee {log};
+        xz -dc {input.sequences} | \
+        seqkit grep -f {input.pango} 2>{log} | \
+        xz -0 >{output.sequences}
+        """
+
+rule get_designated_strains:
+    input:
+        sequences = rules.get_designated_sequences.output.sequences,
+    output:
+        strains = "pre-processed/open_pango_strains.txt",
+    log:
+        "logs/get_designated_strains.txt"
+    benchmark:
+        "benchmarks/get_designated_strains.txt"
+    threads: 2
+    shell:
+        """
+        xz -dc {input.sequences} | \
+        seqkit seq -in -o {output.strains} 2>{log}
         """
 
 rule get_designated_metadata:
