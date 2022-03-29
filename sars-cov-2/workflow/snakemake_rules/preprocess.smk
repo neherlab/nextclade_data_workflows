@@ -125,7 +125,7 @@ rule download_clade_emergence_dates:
 rule diagnostic:
     message: "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
     input:
-        metadata = "data/metadata.tsv",
+        metadata = "data/metadata_raw2.tsv",
         clade_emergence_dates = "pre-processed/clade_emergence_dates.tsv",
     output:
         to_exclude = "pre-processed/problematic_exclude.txt",
