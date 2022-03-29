@@ -95,7 +95,7 @@ def pick_samples(designations, counts, exclude, outfile):
             print(f"{i} has {len(picked)}, but should be {target}")
         lineages |= picked
     # lineages
-    lineages |= 'Wuhan/Hu-1/2019'
+    lineages.add('Wuhan/Hu-1/2019')
 
     # %%
     # Lineages lacking designated samples
