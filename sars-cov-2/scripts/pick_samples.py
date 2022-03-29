@@ -91,16 +91,17 @@ def pick_samples(designations, counts, exclude, outfile):
         while len(picked) < target-1 and c < 10 * len(g.strain):
             picked.add(g.strain.sample(n=1).item())
             c += 1
-        if len(picked) != target:
+        if len(picked) != max(target - 1, 0):
             print(f"{i} has {len(picked)}, but should be {target}")
         lineages |= picked
     # lineages
+    lineages |= 'Wuhan/Hu-1/2019'
 
     # %%
     # Lineages lacking designated samples
     print(f"Missing in metadata.tsv:\n{lin[~lin.index.isin(des.pango_lineage.unique())].counts}")
     # %%
-    pd.Series(list(lineages).append('Wuhan/Hu-1/2019')).to_csv(
+    pd.Series(list(lineages)).to_csv(
         outfile, sep="\t", index=False, header=False
     )
 
