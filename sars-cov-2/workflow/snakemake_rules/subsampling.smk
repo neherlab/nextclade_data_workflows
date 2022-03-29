@@ -165,6 +165,7 @@ rule combine_subsamples:
         # natural = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.fasta"
         #            for subsample in config["builds"][w.build_name]["subsamples"]],
         synthetic = rules.synthetic_select.output.sequences,
+        pango = rules.pango_sampling.output.sequences,
     output:
         build_dir + "/{build_name}/sequences_raw.fasta"
     benchmark:
