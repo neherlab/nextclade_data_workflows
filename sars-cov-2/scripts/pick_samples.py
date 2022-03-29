@@ -100,7 +100,7 @@ def pick_samples(designations, counts, exclude, outfile):
     # Lineages lacking designated samples
     print(f"Missing in metadata.tsv:\n{lin[~lin.index.isin(des.pango_lineage.unique())].counts}")
     # %%
-    pd.Series(list(lineages)).to_csv(
+    pd.Series(list(lineages).append('Wuhan/Hu-1/2019')).to_csv(
         outfile, sep="\t", index=False, header=False
     )
 
