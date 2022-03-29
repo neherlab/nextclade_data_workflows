@@ -100,12 +100,12 @@ rule pango_sampling:
         sequences = rules.pango_select.output.sequences,
         metadata = "pre-processed/open_pango_metadata.tsv",
     output:
-        sequences = build_dir + "/{build_name}/sample-{subsample}-pango.fasta",
-        strains=build_dir + "/{build_name}/sample-{subsample}-pango.txt",
+        sequences = build_dir + "/{build_name}/sample-pango.fasta",
+        strains=build_dir + "/{build_name}/sample-pango.txt",
     log:
-        "logs/subsample_{build_name}_{subsample}-pango.txt"
+        "logs/subsample_{build_name}_pango.txt"
     benchmark:
-        "benchmarks/subsample_{build_name}_{subsample}-pango.txt"
+        "benchmarks/subsample_{build_name}_pango.txt"
     params:
         exclude_where_args = config["exclude-where-args"],
     resources:
