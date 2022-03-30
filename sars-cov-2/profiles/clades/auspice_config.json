@@ -50,6 +50,11 @@
         "key": "genbank_accesion",
         "title": "Genbank Accession",
         "type": "categorical"
+      },
+      {
+        "key": "gisaid_epi_isl",
+        "title": "GISAID Accession",
+        "type": "categorical"
       }
     ],
     "geo_resolutions": [
