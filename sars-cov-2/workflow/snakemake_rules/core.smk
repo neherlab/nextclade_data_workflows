@@ -481,3 +481,16 @@ rule add_branch_labels:
             --mutations {input.mutations} \
             --output {output.auspice_json}
         """
+rule remove_recombinants_from_auspice:
+    input:
+        auspice_json = rules.add_branch_labels.output.auspice_json,
+    output:
+        auspice_json = "auspice/{build_name}/auspice_without_recombinants.json",
+    log:
+        "logs/remove_recombinants_from_auspice_{build_name}.txt"
+    shell:
+        """
+        python3 scripts/remove_recombinants_from_auspice.py \
+            --input {input.auspice_json} \
+            --output {output.auspice_json}
+        """
