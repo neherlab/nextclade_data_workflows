@@ -481,6 +481,7 @@ rule add_branch_labels:
             --mutations {input.mutations} \
             --output {output.auspice_json}
         """
+
 rule remove_recombinants_from_auspice:
     input:
         auspice_json = rules.add_branch_labels.output.auspice_json,
@@ -494,3 +495,7 @@ rule remove_recombinants_from_auspice:
             --input {input.auspice_json} \
             --output {output.auspice_json}
         """
+
+rule produce_trees:
+    input:
+        "auspice/nextclade/auspice.json", "auspice/nextclade/auspice_without_recombinants.json"
