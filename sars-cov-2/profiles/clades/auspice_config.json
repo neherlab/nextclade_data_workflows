@@ -45,6 +45,11 @@
         "key": "subclade_membership",
         "title": "Emerging clade",
         "type": "categorical"
+      },
+      {
+        "key": "genbank_accesion",
+        "title": "Genbank Accession",
+        "type": "categorical"
       }
     ],
     "geo_resolutions": [
