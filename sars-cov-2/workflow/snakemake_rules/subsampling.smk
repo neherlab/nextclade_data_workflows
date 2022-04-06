@@ -178,8 +178,8 @@ rule combine_subsamples:
 
 rule extract_metadata:
     input:
-        strains = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.txt"
-                for subsample in config["builds"][w.build_name]["subsamples"]],
+        strains = [build_dir + "/{build_name}/chosen_synthetic_strains.txt",
+                    build_dir + "/{build_name}/chosen_pango_strains.txt"],
         metadata = "data/metadata.tsv"
     output:
         metadata = build_dir + "/{build_name}/extracted_metadata.tsv"
