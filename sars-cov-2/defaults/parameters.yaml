@@ -5,21 +5,9 @@ conda_environment: "nextstrain.yaml"
 # Define files used for external configuration. Common examples consist of a reference sequence to
 # align sequences to, colors for strain attributes in auspice, and auspice
 # configuration files.
-files:
-  reference: "defaults/reference_seq.gb"
-  alignment_reference: "defaults/reference_seq.fasta"
-  annotation: "defaults/annotation.gff"
-  include: "defaults/include.txt"
-  color_schemes: "defaults/color_schemes.tsv"
-  clades: "defaults/clades.tsv"
-  ordering: "defaults/color_ordering.tsv"
-  lat_longs: "defaults/lat_longs.tsv"
-  auspice_config: "defaults/auspice_config.json"
-  description: "defaults/description.md"
-  constraint_tree: "defaults/constraint.nwk"
 
 tree:
-  tree-builder-args: "'-g defaults/constraint.nwk -ninit 100 -n 2 --radius 50 --allnni -czb'"
+  tree-builder-args: "'-g defaults/constraint.nwk -ninit 30 -n 2 --radius 50 --allnni -czb'"
 
 # mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987"
 # mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 11083 21987 24410 28461 23403 21621 21846 22917 23012 23063 23604 23664 24642 2491"

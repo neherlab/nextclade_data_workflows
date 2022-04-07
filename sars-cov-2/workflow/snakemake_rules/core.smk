@@ -115,7 +115,8 @@ rule tree:
     message: "Building tree"
     input:
         alignment = rules.remove_recombinants_from_alignment.output.alignment,
-        constraint_tree = config["files"]["constraint_tree"]
+        constraint_tree = config["files"]["constraint_tree"],
+        exclude_sites = config["files"]["exclude_sites"],
     output:
         tree = build_dir + "/{build_name}/tree_raw.nwk"
     params:
@@ -135,6 +136,7 @@ rule tree:
         """
         augur tree \
             --alignment {input.alignment} \
+            --exclude-sites {input.exclude_sites} \
             --tree-builder-args {params.args} \
             --output {output.tree} \
             --nthreads {threads} 2>&1 | tee {log}

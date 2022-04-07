@@ -11,6 +11,8 @@ files:
   clades: "builds/clades.tsv"
   ordering: "builds/color_ordering.tsv"
   lat_longs: "builds/lat_longs.tsv"
+  exclude_sites: "defaults/exclude_sites.tsv"
+  constraint_tree: "defaults/constraint.nwk"
 
 data_source:
   clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
@@ -61,7 +63,7 @@ refine:
 #28461 - N:63
 #28887 - N:205
 #28975 - N:234
-mask: "--mask-from-beginning 100 --mask-from-end 200 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 26767 28461 28887 28975"
+mask: "--mask-from-beginning 100 --mask-from-end 200 --mask-terminal-gaps"
 
 samples:
   clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
