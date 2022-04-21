@@ -11,6 +11,10 @@
   "get_designated_strains":{
     "n": 2
   },
+  "diagnostic": {
+    "time": "23:59:00",
+    "qos": "1day"
+  },
   "generate_bgzip": {
     "time": "05:59:00",
     "qos": "6hours",
