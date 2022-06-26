@@ -5,6 +5,9 @@
     "n": 1,
     "mem": "32G"
   },
+  "fix_pango_lineages": {
+    "mem": "64G"
+  },
   "get_designated_sequences":{
     "n": 3
   },
