@@ -81,7 +81,6 @@ def main(
                 raise
             return compressed
 
-
     def reversion_check(lineage, muts):
         """
         Check if mutations are reverted in lineage

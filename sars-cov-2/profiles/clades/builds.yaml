@@ -31,7 +31,7 @@ origins:
   filters: "--min-length 27000"
 
 refine:
-  root: "B"
+  root: "B" #"Wuhan/Hu-1/2019"
   divergence_unit: "mutations"
   clock_filter_iqd: 4
   no_timetree: True
