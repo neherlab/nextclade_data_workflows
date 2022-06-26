@@ -31,7 +31,7 @@ origins:
   filters: "--min-length 27000"
 
 refine:
-  root: "Wuhan/Hu-1/2019"
+  root: "B"
   divergence_unit: "mutations"
   clock_filter_iqd: 4
   no_timetree: True
@@ -63,7 +63,7 @@ refine:
 #28461 - N:63
 #28887 - N:205
 #28975 - N:234
-mask: "--mask-from-beginning 100 --mask-from-end 200 --mask-terminal-gaps"
+mask: "--mask-from-beginning 100 --mask-from-end 200 --mask-terminal-gaps --mask-sites 26577"
 
 samples:
   clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
