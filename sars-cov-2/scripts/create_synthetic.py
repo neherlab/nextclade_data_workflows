@@ -74,7 +74,11 @@ def main(
         if len(lineage_split) == 1:
             return None
         else:
-            compressed = aliasor.compress(".".join(lineage_split[:-1]))
+            try:
+                compressed = aliasor.compress(".".join(lineage_split[:-1]))
+            except:
+                print(f"uncompressed: {uncompressed}, lineage_split: {lineage_split}, lineage_split[:-1]: {lineage_split[:-1]}")
+                raise
             return compressed
 
 
