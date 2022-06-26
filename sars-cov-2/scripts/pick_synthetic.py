@@ -46,7 +46,7 @@ def pick_samples(designations, counts, exclude, outfile):
     lin["count_with_recent"] = lin["count_with_recent"].fillna(0).astype(int)
 
     lin.loc[
-        pd.Timestamp("today") - pd.Timedelta(days=360) < lin.date,
+        pd.Timestamp("today") - pd.Timedelta(days=420) < lin.date,
         "count_with_recent",
     ] = lin["count_with_recent"].apply(lambda x: max(1, x))
 
