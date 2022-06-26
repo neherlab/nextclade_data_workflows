@@ -1,6 +1,6 @@
 # conda environment file to use by default
 # This must be a relative path to the top-level Snakefile directory (e.g., `ncov/`).
-conda_environment: "nextstrain.yaml"
+# conda_environment: "nextstrain.yaml"
 
 # Define files used for external configuration. Common examples consist of a reference sequence to
 # align sequences to, colors for strain attributes in auspice, and auspice
