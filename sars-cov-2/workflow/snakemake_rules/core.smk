@@ -41,13 +41,12 @@ rule align:
         reference=config["files"]["alignment_reference"],
     output:
         alignment=build_dir + "/{build_name}/aligned.fasta",
-        insertions=build_dir + "/{build_name}/insertions.tsv",
         translations=expand(
             build_dir + "/{{build_name}}/translations/aligned.gene.{gene}.fasta",
             gene=config.get("genes", ["S"]),
         ),
     params:
-        outdir=build_dir + "/{build_name}/translations",
+        outdir=build_dir + "/{build_name}/translations/aligned.gene.{{gene}}.fasta",
         genes=",".join(config.get("genes", ["S"])),
         basename="aligned",
     log:
@@ -61,12 +60,11 @@ rule align:
         """
         nextalign run \
             --jobs={threads} \
-            --reference {input.reference} \
-            --genemap {input.genemap} \
+            --input-ref {input.reference} \
+            --input-genemap {input.genemap} \
             --genes {params.genes} \
             {input.sequences} \
-            --output-dir {params.outdir} \
-            --output-basename {params.basename} \
+            --output-translations {params.outdir} \
             --output-fasta {output.alignment} \
             > {log} 2>&1
         """
