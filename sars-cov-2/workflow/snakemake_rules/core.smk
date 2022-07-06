@@ -229,7 +229,7 @@ rule ancestral:
         """
     input:
         tree=rules.refine.output.tree,
-        alignment=rules.mask.output.alignment,
+        alignment=rules.align.output.alignment,
     output:
         node_data=build_dir + "/{build_name}/nt_muts.json",
     log:
