@@ -59,16 +59,16 @@ rule align:
         mem_mb=3000,
     shell:
         """
-        nextalign \
+        nextalign run \
             --jobs={threads} \
             --reference {input.reference} \
             --genemap {input.genemap} \
             --genes {params.genes} \
-            --sequences {input.sequences} \
+            {input.sequences} \
             --output-dir {params.outdir} \
             --output-basename {params.basename} \
             --output-fasta {output.alignment} \
-            --output-insertions {output.insertions} > {log} 2>&1
+            > {log} 2>&1
         """
 
 
