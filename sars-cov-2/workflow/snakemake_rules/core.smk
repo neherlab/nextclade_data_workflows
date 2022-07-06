@@ -63,7 +63,7 @@ rule align:
         nextalign run \
             --jobs={threads} \
             --input-ref {input.reference} \
-            --input-genemap {input.genemap} \
+            --input-gene-map {input.genemap} \
             --genes {params.genes} \
             {input.sequences} \
             --output-translations {params.outdir} \
