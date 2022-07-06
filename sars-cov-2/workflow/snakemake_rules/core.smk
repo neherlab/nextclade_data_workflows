@@ -46,7 +46,9 @@ rule align:
             gene=config.get("genes", ["S"]),
         ),
     params:
-        outdir=build_dir + "/{build_name}/translations/aligned.gene.{{gene}}.fasta",
+        outdir=lambda w: build_dir
+        + f"/{w.build_name}/"
+        + "translations/aligned.gene.{gene}.fasta",
         genes=",".join(config.get("genes", ["S"])),
         basename="aligned",
     log:
