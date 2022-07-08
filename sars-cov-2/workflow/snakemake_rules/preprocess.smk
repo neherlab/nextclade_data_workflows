@@ -431,6 +431,7 @@ rule make_synthetic_pangos:
         reference="references/MN908947/reference.fasta",
         matrix=rules.lineage_stats.output.outfile,
         alias=rules.download_pango_alias.output,
+        overwrites="profiles/clades/lineage_overwrite.tsv",
     output:
         outfile="pre-processed/synthetic.fasta",
     log:
@@ -441,6 +442,7 @@ rule make_synthetic_pangos:
             --ref {input.reference} \
             --matrix {input.matrix} \
             --alias {input.alias} \
+            --overwrites {input.overwrites} \
             --out {output.outfile} \
             2>&1 | tee {log} 
         """
