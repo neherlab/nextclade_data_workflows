@@ -161,6 +161,7 @@ def main(
                 print(
                     f"Overwrote {lineage} with {pos}{char}, removed: {lineage_muts - new_lineage_muts}"
                 )
+            lineage_muts = new_lineage_muts
 
         muts[lineage] = lineage_muts
         return lineage_muts
