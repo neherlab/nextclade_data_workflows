@@ -190,7 +190,7 @@ rule refine:
         """
     input:
         tree=rules.add_recombinants_to_tree.output.tree,
-        alignment=rules.mask.output.alignment,
+        alignment=rules.align.output.alignment,
         metadata="builds/{build_name}/metadata.tsv",
     output:
         tree=build_dir + "/{build_name}/tree.nwk",
