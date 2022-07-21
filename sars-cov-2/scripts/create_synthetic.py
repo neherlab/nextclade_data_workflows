@@ -128,7 +128,7 @@ def main(
         for mut, (present, total) in reversion_check(
             lineage, lineage_muts
         ).items():
-            if present / total < 0.2 and total > 3:
+            if total > 3 and present / total < 0.2:
                 lineage_muts.remove(mut)
 
         try:
@@ -183,7 +183,7 @@ def main(
             lineage = row["lineage"]
             if lineage not in overwrite_dict:
                 overwrite_dict[lineage] = set()
-            overwrite_dict[lineage].add((row["pos"], row["char"]))
+            overwrite_dict[lineage].add((int(row["pos"]), row["char"]))
 
     with open(out, "w") as f:
         muts = {}
