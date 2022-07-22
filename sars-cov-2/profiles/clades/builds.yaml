@@ -68,7 +68,7 @@ refine:
 #22305 S:248 Homoplasic
 #22331 S:257 Homoplasic
 #26577 M:19 Messy
-mask: " --mask-from-beginning 100 --mask-from-end 200 --mask-terminal-gaps --mask-sites 21765 22197 22305 22331 26577"
+mask: " --mask-from-beginning 100 --mask-from-end 100 --mask-terminal-gaps"
 
 samples:
   clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
