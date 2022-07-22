@@ -17,10 +17,20 @@ auspice_dir = config.get("auspice_dir", "auspice")
 build_dir = config.get("build_dir", "builds")
 
 date = datetime.date.today()
+timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
 
 rule all:
     input:
-        "test/MN908947/nextclade.aligned.fasta"
+        lambda w: f"deploy/staging.log"
+
+rule deploy_staging_dated:
+    input:
+        tree = "auspice/nextclade/auspice.json",
+    output: 'deploy/staging.log',
+    shell:
+        """
+        nextstrain deploy s3://nextstrain-staging/nextclade/sars-cov-2 {input.tree} 2>&1 | tee {output}
+        """
 
 rule generate_sample_sequences:
     input:
@@ -102,7 +112,6 @@ rule assemble_folder:
         cp {input.tree} {output.tree};
         """
 
-timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
     input: expand("output/sars-cov-2/references/{{reference}}/versions/{timestamp}/files/tree.json", timestamp=timestamp),
     output: "test/{reference}/nextclade.aligned.fasta"
