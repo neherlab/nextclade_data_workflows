@@ -16,7 +16,8 @@
   },
   "diagnostic": {
     "time": "23:59:00",
-    "qos": "1day"
+    "qos": "1day",
+	"mem": "64G"
   },
   "generate_bgzip": {
     "time": "05:59:00",
@@ -93,7 +94,8 @@
   },
   "extract_metadata": {
     "time": "00:29:00",
-    "qos": "30min"
+    "qos": "30min",
+	"mem": "64G"
   },
   "clades": {
     "time": "00:29:00",
