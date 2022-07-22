@@ -26,16 +26,24 @@ rule all:
 rule deploy_staging:
     input:
         tree = "auspice/nextclade/auspice.json",
-        root = "auspice/nextclade/auspice_raw_root-sequence.json"
+        tree_no_recomb = "auspice/nextclade/auspice_without_recombinants.json",
+        root = "auspice/nextclade/auspice_raw_root-sequence.json",
     output:
         log = 'deploy/staging.log',
         tree = temp("nextclade_sars-cov-2.json"),
-        root = temp("nextclade_sars-cov-2_root-sequence.json")
+        tree_no_recomb = temp("nextclade_sars-cov-2-no-recomb.json"),
+        root = temp("nextclade_sars-cov-2_root-sequence.json"),
+        root_no_recomb = temp("nextclade_sars-cov-2-no-recomb_root-sequence.json")
     shell:
         """
         cp {input.tree} {output.tree}
+        cp {input.tree_no_recomb} {output.tree_no_recomb}
         cp {input.root} {output.root}
-        nextstrain deploy s3://nextstrain-staging {output.tree} {output.root} 2>&1 | tee {output.log}
+        cp {input.root} {output.root_no_recomb}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root} \
+            {output.tree_no_recomb} {output.root_no_recomb} \
+            2>&1 | tee {output.log}
         """
 
 rule generate_sample_sequences:
