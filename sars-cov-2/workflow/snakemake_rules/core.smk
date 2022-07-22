@@ -475,6 +475,7 @@ rule export:
         colors=lambda w: rules.colors.output.colors.format(**w),
     output:
         auspice_json="auspice/{build_name}/auspice_raw.json",
+        root_json="auspice/{build_name}/auspice_raw_root-sequence.json",
     log:
         "logs/export_{build_name}.txt",
     benchmark:
@@ -496,6 +497,7 @@ rule export:
             --auspice-config {input.auspice_config} \
             --title {params.title:q} \
             --description {input.description} \
+            --include-root-sequence \
             --output {output.auspice_json} 2>&1 | tee {log};
         """
 
