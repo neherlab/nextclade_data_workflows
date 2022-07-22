@@ -1,6 +1,6 @@
 import datetime
 
-localrules: all, clean, clean_all, dump_config
+localrules: all, clean, clean_all, dump_config, deploy_staging
 
 if "builds" not in config:
     config["builds"] = {}
@@ -23,7 +23,7 @@ rule all:
     input:
         lambda w: f"deploy/staging.log"
 
-rule deploy_staging_dated:
+rule deploy_staging:
     input:
         tree = "auspice/nextclade/auspice.json",
     output: 'deploy/staging.log',
