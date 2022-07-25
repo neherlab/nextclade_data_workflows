@@ -28,12 +28,12 @@ def main(
     
     # Add common ancestor for all recombinants to prevent massive polytomy
     clade_cls = type(tree.root)
-    rec_parent = clade_cls(name="rec_parent", branch_length=1.000)
+    rec_parent = clade_cls(name="rec_parent", branch_length=0.1)
     
     # Add each recombinant to root node
     for recombinant in recombinants:
         # Need large branch length to make sure recombinants ignored for ancestral reconstruction
-        rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=1.000))
+        rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=10.0))
     tree.root.clades.append(rec_parent)
 
     # Write tree to output
