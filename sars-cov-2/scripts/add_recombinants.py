@@ -26,14 +26,15 @@ def main(
     with open(recombinants, "r") as f:
         recombinants = f.read().splitlines()
     
+    # Add common ancestor for all recombinants to prevent massive polytomy
+    clade_cls = type(tree.root)
+    rec_parent = clade_cls(name="rec_parent", branch_length=1.000)
+    
     # Add each recombinant to root node
     for recombinant in recombinants:
-        try:
-            tree.prune(target=recombinant)
-        except ValueError:
-            pass
         # Need large branch length to make sure recombinants ignored for ancestral reconstruction
-        tree.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=1.000))
+        rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=1.000))
+    tree.root.clades.append(rec_parent)
 
     # Write tree to output
     Phylo.write(tree, output, "newick", format_branch_length='%1.8f', branch_length_only=True)
