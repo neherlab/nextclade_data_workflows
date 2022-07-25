@@ -28,7 +28,7 @@ def main(
     
     # Add common ancestor for all recombinants to prevent massive polytomy
     clade_cls = type(tree.root)
-    rec_parent = clade_cls(name="rec_parent", branch_length=0.1)
+    rec_parent = clade_cls(name="rec_parent", branch_length=1.0)
     
     # Add each recombinant to root node
     for recombinant in recombinants:
