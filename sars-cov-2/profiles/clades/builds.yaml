@@ -11,21 +11,27 @@ files:
   clades: "builds/clades.tsv"
   ordering: "builds/color_ordering.tsv"
   lat_longs: "builds/lat_longs.tsv"
+  exclude_sites: "defaults/exclude_sites.tsv"
+  constraint_tree: "defaults/constraint.nwk"
 
 data_source:
   clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
   lat_longs: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv"
   color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
   pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
+  aliases: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json"
+  clade_emergence_dates: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_emergence_dates.tsv"
 
 origins:
-  metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
-  sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
+  metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"
+  sequences: "s3://nextstrain-ncov-private/sequences.fasta.xz"
+  # metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
+  # sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
   exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
   filters: "--min-length 27000"
 
 refine:
-  root: "Wuhan-Hu-1/2019"
+  root: "B" #"Wuhan/Hu-1/2019"
   divergence_unit: "mutations"
   clock_filter_iqd: 4
   no_timetree: True
@@ -57,7 +63,12 @@ refine:
 #28461 - N:63
 #28887 - N:205
 #28975 - N:234
-mask: "--mask-from-beginning 100 --mask-from-end 50 --mask-terminal-gaps --mask-sites 1820 9430 10323 11083 13019 21575 21614 21846 21987 22917 22992 23012 23063 23593 23604 24410 24642 26681 26767 28461 28887 28975"
+#21765 S:68T Homoplasic
+#22197 S:212 Homoplasic
+#22305 S:248 Homoplasic
+#22331 S:257 Homoplasic
+#26577 M:19 Messy
+mask: " --mask-from-beginning 100 --mask-from-end 100 --mask-terminal-gaps"
 
 samples:
   clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
@@ -66,20 +77,39 @@ samples:
   cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad"
   recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
 
-exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+# exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
+exclude-where-args: "Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
 
 builds:
   nextclade:
     subsamples:
       clades:
         filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 500 --exclude-where"
-      recent:
-        filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
-      early-pango:
-        filters: "--min-length 28500 --group-by year month pango_lineage --subsample-max-sequences 200 --max-date 2020-12-31 --exclude-where"
-      late-pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
-      latest-pango:
-        filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
-      very_recent:
-        filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
+      # recent:
+      #   filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
+      picked-pango:
+        filters: ""
+      # late-pango:
+      #   filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-01-01 --max-date 2021-05-31 --exclude-where"
+      # latest-pango:
+      #   filters: "--min-length 28500 --group-by month pango_lineage --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where"
+      # 21K-pango:
+      #   filters: "--min-length 28500 --subsample-max-sequences 500 --min-date 2021-06-01 --exclude-where pango_designated!='B.1.1.529'"
+      # very_recent:
+      #   filters: "--min-length 28500 --group-by country month --subsample-max-sequences 500 --min-date 2021-07-01 --exclude-where"
+  # nextclade-big:
+  #   subsamples:
+  #     clades:
+  #       filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 2500 --exclude-where"
+  #     # recent:
+  #     #   filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
+  #     picked-pango:
+  #       filters: ""
+  # nextclade-huge:
+  #   subsamples:
+  #     clades:
+  #       filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 5000 --exclude-where"
+  #     # recent:
+  #     #   filters: "--min-length 28500 --group-by country --subsample-max-sequences 500 --min-date 2021-03-01 --exclude-where"
+  #     picked-pango:
+  #       filters: ""

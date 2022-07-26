@@ -1,6 +1,6 @@
 import datetime
 
-localrules: all, clean, clean_all, dump_config
+localrules: all, clean, clean_all, dump_config, deploy_staging
 
 if "builds" not in config:
     config["builds"] = {}
@@ -8,6 +8,7 @@ if "builds" not in config:
 configfile: "defaults/parameters.yaml"
 include: "workflow/snakemake_rules/preprocess.smk"
 # include: "workflow/snakemake_rules/templated_build.smk"
+include: "workflow/snakemake_rules/qc_preparation.smk"
 include: "workflow/snakemake_rules/subsampling.smk"
 include: "workflow/snakemake_rules/core.smk"
 
@@ -16,10 +17,34 @@ auspice_dir = config.get("auspice_dir", "auspice")
 build_dir = config.get("build_dir", "builds")
 
 date = datetime.date.today()
+timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
 
 rule all:
     input:
-        "test/MN908947/nextclade.aligned.fasta"
+        lambda w: f"deploy/staging.log"
+
+rule deploy_staging:
+    input:
+        tree = "auspice/nextclade/auspice.json",
+        tree_no_recomb = "auspice/nextclade/auspice_without_recombinants.json",
+        root = "auspice/nextclade/auspice_raw_root-sequence.json",
+    output:
+        log = 'deploy/staging.log',
+        tree = temp("nextclade_sars-cov-2.json"),
+        tree_no_recomb = temp("nextclade_sars-cov-2-no-recomb.json"),
+        root = temp("nextclade_sars-cov-2_root-sequence.json"),
+        root_no_recomb = temp("nextclade_sars-cov-2-no-recomb_root-sequence.json")
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        cp {input.tree_no_recomb} {output.tree_no_recomb}
+        cp {input.root} {output.root}
+        cp {input.root} {output.root_no_recomb}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root} \
+            {output.tree_no_recomb} {output.root_no_recomb} \
+            2>&1 | tee {output.log}
+        """
 
 rule generate_sample_sequences:
     input:
@@ -101,7 +126,6 @@ rule assemble_folder:
         cp {input.tree} {output.tree};
         """
 
-timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
 rule test_nextclade:
     input: expand("output/sars-cov-2/references/{{reference}}/versions/{timestamp}/files/tree.json", timestamp=timestamp),
     output: "test/{reference}/nextclade.aligned.fasta"

@@ -392,5 +392,5 @@ rule clean:
 rule clean_all:
     shell:
         """
-        rm -rf output test auspice build pre-processed data/clades* data/include*
+        rm -rf output test auspice build pre-processed data
         """
