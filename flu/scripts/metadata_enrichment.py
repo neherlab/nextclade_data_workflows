@@ -25,10 +25,10 @@ def enrich(metadata_path, mutation_summary_path, output_path, reference_accessio
     )
 
     mutation_summary = mutation_summary.assign(s1_dist=mutation_summary.nucleotide.apply(lambda x: len(str(x).split(","))))
-    mutation_summary = mutation_summary.rename(columns={mutation_summary.columns[0]: "ncbiAcc"})
+    mutation_summary = mutation_summary.rename(columns={mutation_summary.columns[0]: "strainName"})
 
     meta = pd.read_csv(metadata_path, sep="\t")
-    meta = meta.merge(mutation_summary[["ncbiAcc", "s1_dist"]], on="ncbiAcc", how="inner")
+    meta = meta.merge(mutation_summary[["strainName", "s1_dist"]], on="ncbiAcc", how="inner")
 
     def parse_isostring(string):
         try:
