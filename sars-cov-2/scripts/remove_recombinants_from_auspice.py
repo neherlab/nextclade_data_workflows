@@ -4,7 +4,7 @@ def main(input: str = "", output: str = ""):
     import json
     tree = json.load(open(input))
     tree["tree"]["children"][:] = [
-        child for child in tree["tree"]["children"] if child["node_attrs"]["clade_membership"]["value"] != "recombinant"
+        child for child in tree["tree"]["children"] if child["node_attrs"] != "rec_parent"
     ]
     with open(output, 'w') as f:
         json.dump(tree, f, indent=2)
