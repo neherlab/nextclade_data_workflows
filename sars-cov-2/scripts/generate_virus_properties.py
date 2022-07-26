@@ -36,7 +36,8 @@ def aggregate_mutations(series) -> defaultdict(int):
         mutations = accumulate_mutations(mutations, row)
     return mutations
 
-
+# Overwrite with new clade name when new clade not yet in data
+# df[df["Nextclade_pango"] == "BA.2.75"]["Nextstrain_clade"] = "22D (Omicron)"
 #%%
 clade_muts = (
     df.groupby("Nextstrain_clade")
