@@ -18,8 +18,12 @@ def format(number, input_file):
         position = int(stop[1][1:-1]) - 1
         # {"geneName": "ORF7a", "codon": 61},
 
-        output.append(f'{{ "geneName": "{gene}", "codon": {position} }},')
-    click.echo("\n".join(sorted(output)))
+        output.append((gene,position))
+    
+    # output.sort()
+
+        # output.append(f'{{ "geneName": "{gene}", "codon": {position} }},')
+    click.echo("\n".join([f'{{ "geneName": "{gene}", "codon": {position} }},' for gene,position in sorted(output)]))
 
 
 if __name__ == "__main__":
