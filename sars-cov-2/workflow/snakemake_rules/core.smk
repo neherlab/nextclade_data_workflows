@@ -97,40 +97,11 @@ rule mask:
         """
 
 
-rule identify_recombinants:
-    input:
-        strains=rules.exclude_outliers.output.sampled_strains,
-    output:
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
-    shell:
-        """
-        grep '^X' {input.strains} > {output.recombinants}
-        touch {output.recombinants}
-        """
-
-
-rule remove_recombinants_from_alignment:
-    input:
-        alignment=rules.mask.output.alignment,
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
-    output:
-        alignment=build_dir + "/{build_name}/masked_without_recombinants.fasta",
-    log:
-        "logs/remove_recombinants_{build_name}.txt",
-    benchmark:
-        "benchmarks/remove_recombinants_{build_name}.txt"
-    shell:
-        """
-        seqkit grep -v -f {input.recombinants} {input.alignment} > {output.alignment}
-        2>&1 | tee {log}
-        """
-
-
 rule tree:
     message:
         "Building tree"
     input:
-        alignment=rules.remove_recombinants_from_alignment.output.alignment,
+        alignment=rules.mask.output.alignment,
         constraint_tree=config["files"]["constraint_tree"],
         exclude_sites=config["files"]["exclude_sites"],
     output:
@@ -160,37 +131,13 @@ rule tree:
         """
 
 
-rule add_recombinants_to_tree:
-    message:
-        "Adding recombinant singlets to root of raw tree"
-    input:
-        tree=rules.tree.output.tree,
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
-    output:
-        tree=build_dir + "/{build_name}/tree_with_recombinants.nwk",
-    log:
-        "logs/add_recombinants_{build_name}.txt",
-    benchmark:
-        "benchmarks/add_recombinants_{build_name}.txt"
-    params:
-        root=config["refine"]["root"],
-    shell:
-        """
-        python scripts/add_recombinants.py \
-            --tree {input.tree} \
-            --recombinants {input.recombinants} \
-            --root {params.root} \
-            --output {output.tree} 2>&1 | tee {log}
-        """
-
-
 rule refine:
     message:
         """
         Refining tree
         """
     input:
-        tree=rules.add_recombinants_to_tree.output.tree,
+        tree=rules.tree.output.tree,
         alignment=rules.align.output.alignment,
         metadata="builds/{build_name}/metadata.tsv",
     output:
