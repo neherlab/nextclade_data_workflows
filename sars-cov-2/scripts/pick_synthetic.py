@@ -62,7 +62,7 @@ def pick_samples(designations, counts, exclude, alias, outfile):
     lineages_to_keep = ["B.1.1.529.2","B.1.1.529.4","B.1.1.529.5"]
 
     for lineage in lineages:
-        if not any(lineages_to_keep.apply(lambda x: aliasor.uncompress(lineage).startswith(x))):
+        if not any(map(lambda x: aliasor.uncompress(lineage).startswith(x), lineages_to_keep)):
             lineages.discard(lineage)
 
     pd.Series(list(lineages)).to_csv(
