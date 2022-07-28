@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np
 import click
+from pango_aliasor.aliasor import Aliasor
 
 
 @click.command()
 @click.option("--designations", default="open_pango_metadata.tsv")
 @click.option("--counts", default="nr.tsv")
 @click.option("--exclude", default="problematic_exclude.txt")
+@click.option("--alias", default="")
 @click.option("--outfile", default="chosen_pango_strains.txt")
-def pick_samples(designations, counts, exclude, outfile):
+def pick_samples(designations, counts, exclude, alias, outfile):
     des = pd.read_csv(
         designations,
         sep="\t",
@@ -55,6 +57,13 @@ def pick_samples(designations, counts, exclude, outfile):
         target = lin.loc[i, "count_with_recent"]
         if target > 0:
             lineages.add(i)
+    
+    aliasor = Aliasor(alias)
+    lineages_to_keep = ["B.1.1.529.2","B.1.1.529.4","B.1.1.529.5"]
+
+    for lineage in lineages:
+        if not any(lineages_to_keep.apply(lambda x: aliasor.uncompress(lineage).startswith(x))):
+            lineages.discard(lineage)
 
     pd.Series(list(lineages)).to_csv(
         outfile, sep="\t", index=False, header=False

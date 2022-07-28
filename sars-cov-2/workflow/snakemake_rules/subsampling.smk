@@ -66,70 +66,71 @@ rule prepare_build:
 # 2. Choose non-synthetic sequences
 
 
-rule pango_pick:
-    input:
-        counts="defaults/nr.tsv",
-        metadata="pre-processed/open_pango_metadata.tsv",
-        exclude="pre-processed/problematic_exclude.txt",
-    output:
-        strains=build_dir + "/{build_name}/chosen_pango_strains.txt",
-    log:
-        "logs/pango_pick_{build_name}.txt",
-    shell:
-        """
-        python scripts/pick_samples.py \
-            --designations {input.metadata} \
-            --counts {input.counts} \
-            --exclude {input.exclude} \
-            --outfile {output.strains} 2>&1 \
-        | tee {log}
-        """
+# rule pango_pick:
+#     input:
+#         counts="defaults/nr.tsv",
+#         metadata="pre-processed/open_pango_metadata.tsv",
+#         exclude="pre-processed/problematic_exclude.txt",
+#     output:
+#         strains=build_dir + "/{build_name}/chosen_pango_strains.txt",
+#     log:
+#         "logs/pango_pick_{build_name}.txt",
+#     shell:
+#         """
+#         python scripts/pick_samples.py \
+#             --designations {input.metadata} \
+#             --counts {input.counts} \
+#             --exclude {input.exclude} \
+#             --outfile {output.strains} 2>&1 \
+#         | tee {log}
+#         """
 
 
-rule pango_select:
-    input:
-        sequences="pre-processed/open_pango.fasta.xz",
-        strains=rules.pango_pick.output.strains,
-    output:
-        sequences=build_dir + "/{build_name}/picked_pango.fasta",
-    shell:
-        """
-        xzcat {input.sequences} | \
-        seqkit grep -f {input.strains} -o {output.sequences}
-        """
+# rule pango_select:
+#     input:
+#         sequences="pre-processed/open_pango.fasta.xz",
+#         strains=rules.pango_pick.output.strains,
+#     output:
+#         sequences=build_dir + "/{build_name}/picked_pango.fasta",
+#     shell:
+#         """
+#         xzcat {input.sequences} | \
+#         seqkit grep -f {input.strains} -o {output.sequences}
+#         """
 
 
-rule pango_sampling:
-    input:
-        sequences=rules.pango_select.output.sequences,
-        metadata="pre-processed/open_pango_metadata.tsv",
-    output:
-        sequences=build_dir + "/{build_name}/sample-pango.fasta",
-        strains=build_dir + "/{build_name}/sample-pango.txt",
-    log:
-        "logs/subsample_{build_name}_pango.txt",
-    benchmark:
-        "benchmarks/subsample_{build_name}_pango.txt"
-    params:
-        exclude_where_args=config["exclude-where-args"],
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
-    shell:
-        """
-        augur filter \
-            --sequences {input.sequences} \
-            --metadata {input.metadata} \
-            --exclude-where Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True \
-            --output {output.sequences} \
-            --output-strains {output.strains} 2>&1 | tee {log}
-        """
+# rule pango_sampling:
+#     input:
+#         sequences=rules.pango_select.output.sequences,
+#         metadata="pre-processed/open_pango_metadata.tsv",
+#     output:
+#         sequences=build_dir + "/{build_name}/sample-pango.fasta",
+#         strains=build_dir + "/{build_name}/sample-pango.txt",
+#     log:
+#         "logs/subsample_{build_name}_pango.txt",
+#     benchmark:
+#         "benchmarks/subsample_{build_name}_pango.txt"
+#     params:
+#         exclude_where_args=config["exclude-where-args"],
+#     resources:
+#         # Memory use scales primarily with the size of the metadata file.
+#         mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
+#     shell:
+#         """
+#         augur filter \
+#             --sequences {input.sequences} \
+#             --metadata {input.metadata} \
+#             --exclude-where Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True \
+#             --output {output.sequences} \
+#             --output-strains {output.strains} 2>&1 | tee {log}
+#         """
 
 
 rule synthetic_pick:
     input:
         counts="defaults/nr.tsv",
         metadata="pre-processed/open_pango_metadata.tsv",
+        alias="pre-processed/alias.json",
     output:
         strains=build_dir + "/{build_name}/chosen_synthetic_strains.txt",
     log:
@@ -139,6 +140,7 @@ rule synthetic_pick:
         python scripts/pick_synthetic.py \
             --designations {input.metadata} \
             --counts {input.counts} \
+            --alias {input.alias} \
             --outfile {output.strains} 2>&1 \
         | tee {log}
         """
@@ -168,8 +170,8 @@ rule combine_subsamples:
     input:
         # natural = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.fasta"
         #            for subsample in config["builds"][w.build_name]["subsamples"]],
+        reference=config["files"]["alignment_reference"],
         synthetic=rules.synthetic_select.output.sequences,
-        pango=rules.pango_sampling.output.sequences,
     output:
         build_dir + "/{build_name}/sequences_raw.fasta",
     benchmark:
@@ -184,7 +186,6 @@ rule extract_metadata:
     input:
         strains=[
             build_dir + "/{build_name}/chosen_synthetic_strains.txt",
-            build_dir + "/{build_name}/chosen_pango_strains.txt",
         ],
         metadata="data/metadata.tsv",
     output:

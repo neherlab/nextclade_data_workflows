@@ -110,7 +110,7 @@ rule download_clades:
     output:
         "builds/clades.tsv",
     params:
-        source=config["data_source"]["clades"],
+        source=lambda w: config["data_source"]["clades"],
     shell:
         "curl {params.source} -o {output}"
 
@@ -121,7 +121,7 @@ rule download_color_ordering:
     output:
         "builds/color_ordering.tsv",
     params:
-        source=config["data_source"]["color_ordering"],
+        source=lambda w: config["data_source"]["color_ordering"],
     shell:
         "curl {params.source} -o {output}"
 
@@ -132,7 +132,7 @@ rule download_lat_longs:
     output:
         "builds/lat_longs.tsv",
     params:
-        source=config["data_source"]["lat_longs"],
+        source=lambda w: config["data_source"]["lat_longs"],
     shell:
         "curl {params.source} -o {output}"
 
@@ -141,7 +141,7 @@ rule download_curated_pango:
     output:
         "pre-processed/pango_raw.csv",
     params:
-        source=config["data_source"]["pango"],
+        source=lambda w: config["data_source"]["pango"],
     shell:
         "curl {params.source} -o {output}"
 
@@ -150,7 +150,7 @@ rule download_pango_alias:
     output:
         "pre-processed/alias.json",
     params:
-        source=config["data_source"]["aliases"],
+        source=lambda w: config["data_source"]["aliases"],
     shell:
         "curl {params.source} -o {output}"
 
@@ -159,7 +159,7 @@ rule download_clade_emergence_dates:
     output:
         "pre-processed/clade_emergence_dates.tsv",
     params:
-        source=config["data_source"]["clade_emergence_dates"],
+        source=lambda w: config["data_source"]["clade_emergence_dates"],
     shell:
         "curl {params.source} -o {output}"
 
