@@ -314,6 +314,7 @@ rule clades:
         mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
     shell:
         """
+        cat defaults/outgroup.tsv >> {input.clades};
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
@@ -356,6 +357,7 @@ rule internal_pango:
             --designations {input.designations} \
             --output {output.node_data} \
             --field-name Nextclade_pango 2>&1 | tee {log}
+        sed -i 's/BA.3//g' {output.node_data}
         """
 
 
