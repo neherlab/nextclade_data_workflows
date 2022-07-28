@@ -164,7 +164,7 @@ rule refine:
             --metadata {input.metadata} \
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
-            --keep-root \
+            --root 'BA.2' \
             --divergence-unit {params.divergence_unit} | tee {log}
         """
 
