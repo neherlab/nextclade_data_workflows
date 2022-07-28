@@ -61,11 +61,13 @@ def pick_samples(designations, counts, exclude, alias, outfile):
     aliasor = Aliasor(alias)
     lineages_to_keep = ["B.1.1.529.2","B.1.1.529.4","B.1.1.529.5"]
 
-    for lineage in lineages:
-        if not any(map(lambda x: aliasor.uncompress(lineage).startswith(x), lineages_to_keep)):
-            lineages.discard(lineage)
+    kept_lineages = set()
 
-    pd.Series(list(lineages)).to_csv(
+    for lineage in lineages:
+        if any(map(lambda x: aliasor.uncompress(lineage).startswith(x), lineages_to_keep)):
+            kept_lineages.add(lineage)
+
+    pd.Series(list(kept_lineages)).to_csv(
         outfile, sep="\t", index=False, header=False
     )
 
