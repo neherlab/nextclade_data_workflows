@@ -66,6 +66,9 @@ def pick_samples(designations, counts, exclude, alias, outfile):
     for lineage in lineages:
         if any(map(lambda x: aliasor.uncompress(lineage).startswith(x), lineages_to_keep)):
             kept_lineages.add(lineage)
+    
+    #For outgroup
+    kept_lineages.add("BA.3")
 
     pd.Series(list(kept_lineages)).to_csv(
         outfile, sep="\t", index=False, header=False
