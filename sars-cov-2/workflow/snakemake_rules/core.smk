@@ -105,6 +105,7 @@ rule identify_recombinants:
     shell:
         """
         grep '^X' {input.strains} > {output.recombinants}
+        touch {output.recombinants}
         """
 
 
