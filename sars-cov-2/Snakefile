@@ -50,7 +50,6 @@ rule deploy_staging:
         cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
             {output.tree} {output.root} \
-            {output.tree_no_recomb} {output.root_no_recomb} \
             2>&1 | tee {output.log}
         """
 
