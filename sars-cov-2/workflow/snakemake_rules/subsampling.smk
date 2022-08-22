@@ -88,13 +88,14 @@ rule pango_pick:
 
 rule pango_select:
     input:
-        sequences="pre-processed/open_pango.fasta.xz",
+        sequences="pre-processed/open_pango.fasta.zst",
         strains=rules.pango_pick.output.strains,
     output:
         sequences=build_dir + "/{build_name}/picked_pango.fasta",
+    threads: 3
     shell:
         """
-        xzcat {input.sequences} | \
+        zstdcat -T2 {input.sequences} | \
         seqkit grep -f {input.strains} -o {output.sequences}
         """
 

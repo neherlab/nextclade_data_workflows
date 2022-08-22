@@ -9,10 +9,16 @@
     "mem": "64G"
   },
   "get_designated_sequences":{
-    "n": 3
+    "n": 7
   },
   "get_designated_strains":{
-    "n": 2
+    "n": 5
+  },
+  "change_compression_to_zstd":{
+    "n": 5
+  },
+  "pango_select":{
+    "n": 3
   },
   "diagnostic": {
     "time": "23:59:00",

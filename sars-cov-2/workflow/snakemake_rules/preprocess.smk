@@ -29,7 +29,7 @@ localrules:
 
 rule preprocess:
     input:
-        sequences="data/sequences.fasta.xz",
+        sequences="data/sequences.fasta.zst",
         metadata="data/metadata.tsv",
         sequence_index="pre-processed/sequence_index.tsv",
         problematic_exclude="pre-processed/problematic_exclude.txt",
@@ -56,6 +56,8 @@ def _infer_decompression(input):
         return "xz -dcq"
     if input.endswith(".gz"):
         return "gunzip -cq"
+    if input.endswith(".zst"):
+        return "zstd -dcq"
     return "cat"
 
 
@@ -69,6 +71,14 @@ rule download_sequences:
     shell:
         "aws s3 cp {params.address} {output}"
 
+rule change_compression_to_zstd:
+    input:
+        "data/sequences.fasta.xz",
+    output:
+        "data/sequences.fasta.zst",
+    threads: 5,
+    shell:
+        "xzcat {input} | zstd -dc -10 -T4  > {output}"
 
 rule download_metadata:
     message:
@@ -162,7 +172,6 @@ rule download_clade_emergence_dates:
         source=config["data_source"]["clade_emergence_dates"],
     shell:
         "curl {params.source} -o {output}"
-
 
 rule diagnostic:
     message:
@@ -313,20 +322,20 @@ rule fix_pango_lineages:
 
 rule get_designated_sequences:
     input:
-        sequences="data/sequences.fasta.xz",
+        sequences="data/sequences.fasta.zst",
         pango="pre-processed/pango_designated_strains_nextstrain_names.txt",
     output:
-        sequences="pre-processed/open_pango.fasta.xz",
+        sequences="pre-processed/open_pango.fasta.zst",
     log:
         "logs/get_designated_sequences.txt",
     benchmark:
         "benchmarks/get_designated_sequences.txt"
-    threads: 3
+    threads: 7
     shell:
         """
-        xz -dc {input.sequences} | \
+        zstdcat -T2 {input.sequences} | \
         seqkit grep -f {input.pango} 2>{log} | \
-        xz -0 >{output.sequences}
+        zstd -dc -10 -T4  > >{output.sequences}
         """
 
 
@@ -339,10 +348,10 @@ rule get_designated_strains:
         "logs/get_designated_strains.txt",
     benchmark:
         "benchmarks/get_designated_strains.txt"
-    threads: 2
+    threads: 3
     shell:
         """
-        xz -dc {input.sequences} | \
+        zstdcat -T2 {input.sequences} | \
         seqkit seq -in -o {output.strains} 2>{log}
         """
 
