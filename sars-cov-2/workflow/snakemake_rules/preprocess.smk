@@ -335,7 +335,7 @@ rule get_designated_sequences:
         """
         zstdcat -T2 {input.sequences} | \
         seqkit grep -f {input.pango} 2>{log} | \
-        zstd -c -10 -T4  > >{output.sequences}
+        zstd -c -10 -T4  >{output.sequences}
         """
 
 
