@@ -78,7 +78,7 @@ rule change_compression_to_zstd:
         "data/sequences.fasta.zst",
     threads: 5,
     shell:
-        "xzcat {input} | zstd -dc -10 -T4  > {output}"
+        "xzcat {input} | zstd -c -10 -T4  > {output}"
 
 rule download_metadata:
     message:
@@ -335,7 +335,7 @@ rule get_designated_sequences:
         """
         zstdcat -T2 {input.sequences} | \
         seqkit grep -f {input.pango} 2>{log} | \
-        zstd -dc -10 -T4  > >{output.sequences}
+        zstd -c -10 -T4  > >{output.sequences}
         """
 
 
