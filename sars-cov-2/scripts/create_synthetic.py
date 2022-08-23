@@ -133,7 +133,7 @@ def main(
             lineage, lineage_muts
         ).items():
             if total > 3 and present / total < 0.2:
-                revs[lineage].append({mut: (present, total)}) 
+                revs[lineage].append(f"{mut}: ({present}, {total})")
                 lineage_muts.remove(mut)
 
         try:
