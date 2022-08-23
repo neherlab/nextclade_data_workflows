@@ -1,3 +1,5 @@
+from collections import defaultdict
+import json
 from typing import Dict, Set, Tuple
 import typer
 
@@ -12,6 +14,8 @@ def main(
     import numpy as np
     from pango_aliasor.aliasor import Aliasor
     from Bio import SeqIO
+
+    revs: defaultdict[str, list] = defaultdict(list)
 
     npzfile = np.load(matrix)
 
@@ -109,7 +113,7 @@ def main(
 
     muts: dict[str, set] = {}
 
-    def defining_mutations(lineage):
+    def defining_mutations(lineage: str):
         """
         Returns list of mutations compared to parent lineage
         Method:
@@ -129,6 +133,7 @@ def main(
             lineage, lineage_muts
         ).items():
             if total > 3 and present / total < 0.2:
+                revs[lineage].append({mut: (present, total)}) 
                 lineage_muts.remove(mut)
 
         try:
@@ -191,6 +196,9 @@ def main(
             f.write(f">{lineage}\n")
             f.write(clean_synthetic(lineage))
             f.write("\n")
+    
+    with open(out + ".revs", "w") as f:
+        json.dump(revs, f)
 
 
 if __name__ == "__main__":
