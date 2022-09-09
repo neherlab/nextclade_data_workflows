@@ -129,3 +129,6 @@ SouthAfrica/Tygerberg-449/2020
 Switzerland/GE-32978519/2021
 USA/WY-WPHL-21011250/2021
 Israel/n14276/2020
+Brazil/MG-LBI263/2021
+Russia/StPetersburg-RII10183S/2020
+Germany/BB-ChVir3232/2020
