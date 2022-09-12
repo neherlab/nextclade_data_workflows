@@ -1,0 +1,76 @@
+FV537349  #UNKNOWN_FV537349
+FV537350  #UNKNOWN_FV537350
+FV537351  #UNKNOWN_FV537351
+FV537352  #UNKNOWN_FV537352
+KC257459  #Sudan_2005_01
+KJ642614  #UTC
+MG693725  #MPX_Nig_2017_298481
+MN346693  #MPXV_TNP_2017_North_Ponan
+ON602722  # MPXV_FRA_2022_TLS67
+ON622721  #MPXV_1_IT_Milan_2022
+ON754989  #mpx_2022_Canada_AB2
+OP012849  #MPXV/human/Taiwan/110-364682/2022
+KJ642615  #Potential recombinant between clade IIa and IIb
+OP381201	# Very underdiverged on the clock, identical to UK_P2
+OP381202	# Very underdiverged on the clock, identical to UK_P2
+OP381203	# Very underdiverged on the clock, identical to UK_P2
+OP381204	# Very underdiverged on the clock, identical to UK_P2
+OP381205	# Very underdiverged on the clock, identical to UK_P2
+OP381206	# Very underdiverged on the clock, identical to UK_P2
+OP381207	# Very underdiverged on the clock, identical to UK_P2
+OP381208	# Very underdiverged on the clock, identical to UK_P2
+OP381209	# Reversion to reference, Idaho
+OP390186	# UK-LMO with artefacts
+OP390187	# UK-LMO with artefacts
+OP390188	# UK-LMO with artefacts
+OP390189	# UK-LMO with artefacts
+OP390190	# UK-LMO with artefacts
+OP390191	# UK-LMO with artefacts
+OP390192	# UK-LMO with artefacts
+OP390193	# UK-LMO with artefacts
+OP390194	# UK-LMO with artefacts
+OP390195	# UK-LMO with artefacts
+OP390196	# UK-LMO with artefacts
+OP390197	# UK-LMO with artefacts
+OP390198	# UK-LMO with artefacts
+OP390199	# UK-LMO with artefacts
+OP390200	# UK-LMO with artefacts
+OP390201	# UK-LMO with artefacts
+OP390202	# UK-LMO with artefacts
+OP390203	# UK-LMO with artefacts
+OP390204	# UK-LMO with artefacts
+OP390205	# UK-LMO with artefacts
+OP390206	# UK-LMO with artefacts
+OP390207	# UK-LMO with artefacts
+OP390208	# UK-LMO with artefacts
+OP390209	# UK-LMO with artefacts
+OP390210	# UK-LMO with artefacts
+OP390211	# UK-LMO with artefacts
+OP390212	# UK-LMO with artefacts
+OP390213	# UK-LMO with artefacts
+OP390214	# UK-LMO with artefacts
+OP390215	# UK-LMO with artefacts
+OP390216	# UK-LMO with artefacts
+OP390217	# UK-LMO with artefacts
+OP390218	# UK-LMO with artefacts
+OP390219	# UK-LMO with artefacts
+OP390220	# UK-LMO with artefacts
+OP390221	# UK-LMO with artefacts
+OP390222	# UK-LMO with artefacts
+OP390223	# UK-LMO with artefacts
+OP390224	# UK-LMO with artefacts
+
+
+# Duplicate of Rivers ref sequence
+MT903340
+
+# Duplicate of clade I ref seq
+AF380138
+
+# Overdiverged B.1
+OP012849
+
+# Colombian B.1 reverted to reference
+OP295382
+OP295383
+OP295383

@@ -1,0 +1,64 @@
+if not config:
+
+    configfile: "config/config.yaml"
+
+
+build_dir = "results"
+
+
+auspice_dir = "auspice"
+
+build_names = ["b1", "hpxv1", "MPXV"]
+
+
+rule deploy_all:
+    input:
+        auspice_json=[
+            f"{auspice_dir}/nextclade_monkeypox_{build_name}.json"
+            for build_name in build_names
+        ],
+        root_sequence_json=[
+            f"{auspice_dir}/nextclade_monkeypox_{build_name}_root-sequence.json"
+            for build_name in build_names
+        ],
+    shell:
+        """
+        nextstrain deploy s3://nextstrain-staging {input.auspice_json} {input.root_sequence_json}
+        """
+
+
+rule all:
+    input:
+        auspice_json=[
+            f"{auspice_dir}/nextclade_monkeypox_{build_name}.json"
+            for build_name in build_names
+        ],
+        root_sequence_json=[
+            f"{auspice_dir}/nextclade_monkeypox_{build_name}_root-sequence.json"
+            for build_name in build_names
+        ],
+
+
+include: "workflow/snakemake_rules/prepare.smk"
+include: "workflow/snakemake_rules/core.smk"
+
+
+rule clean:
+    message:
+        "Removing directories: {params}"
+    params:
+        build_dir,
+        auspice_dir,
+    shell:
+        "rm -rfv {params}"
+
+
+rule cleanall:
+    message:
+        "Removing directories: {params}"
+    params:
+        build_dir,
+        auspice_dir,
+        "data",
+    shell:
+        "rm -rfv {params}"

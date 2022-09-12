@@ -1,0 +1,42 @@
+include: "config/include_accessions.txt"
+exclude: "config/exclude_accessions.txt"
+reference: "config/reference.fasta"
+genemap: "config/genemap.gff"
+colors: "config/colors.tsv"
+lat_longs: "config/lat_longs.tsv"
+
+strain_id_field: "accession"
+display_strain_field: "strain_original"
+
+# build_name: "HPXV1"
+# auspice_name: "nextclade_mpx_hpxv1_NC063383"
+
+hpxv1:
+  root: "NC_063383"
+  min_date: "--min-date 2017"
+  exclude_where: "--exclude-where outbreak!=hMPXV-1"
+
+MPXV:
+  root: "reconstructed_ancestral_mpox"
+  min_date: ""
+  exclude_where: ""
+
+b1:
+  root: "ref_in_coord"
+  min_date: "--min-date 2022"
+  exclude_where: "--exclude-where outbreak!=hMPXV-1 lineage=A.2 lineage=A.2.1 lineage=A lineage=A.1 lineage=A.3"
+
+## filter
+min_length: 150000
+
+## align
+max_indel: 20000
+seed_spacing: 1000
+
+## refine
+timetree: false
+
+mask:
+  from_beginning: 1500
+  from_end: 6422
+  maskfile: "config/mask.bed"
