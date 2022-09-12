@@ -296,8 +296,8 @@ rule final_strain_name:
         metadata=build_dir + "/{build_name}/metadata.tsv",
         root_sequence=build_dir + "/{build_name}/raw_tree_root-sequence.json",
     output:
-        auspice_json=auspice_dir + "/{build_name}.json",
-        root_sequence=auspice_dir + "/{build_name}_root-sequence.json",
+        auspice_json=auspice_dir + "/nextclade_monkeypox_{build_name}.json",
+        root_sequence=auspice_dir + "/nextclade_monkeypox_{build_name}_root-sequence.json",
     params:
         display_strain_field=lambda w: config.get("display_strain_field", "strain"),
     shell:

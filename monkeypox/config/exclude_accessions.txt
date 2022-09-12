@@ -19,27 +19,53 @@ OP381205	# Very underdiverged on the clock, identical to UK_P2
 OP381206	# Very underdiverged on the clock, identical to UK_P2
 OP381207	# Very underdiverged on the clock, identical to UK_P2
 OP381208	# Very underdiverged on the clock, identical to UK_P2
-OP390207	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-004b/2022
-OP390208	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-005b/2022
-OP390209	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-010b/2022
-OP390210	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-022b/2022
-OP390211	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-023b/2022
-OP390212	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-024b/2022
-OP390213	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-026b/2022
-OP390214	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-029b/2022
-OP390215	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-031b/2022
-OP390216	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-032b/2022
-OP390217	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-033b/2022
-OP390218	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-034b/2022
-OP390219	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-036b/2022
-OP390220	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-038b/2022
-OP390221	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-040b/2022
-OP390222	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-043b/2022
-OP390223	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-046b/2022
-OP390224	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-047b/2022
+OP381209	# Reversion to reference, Idaho
+OP390186	# UK-LMO with artefacts
+OP390187	# UK-LMO with artefacts
+OP390188	# UK-LMO with artefacts
+OP390189	# UK-LMO with artefacts
+OP390190	# UK-LMO with artefacts
+OP390191	# UK-LMO with artefacts
+OP390192	# UK-LMO with artefacts
+OP390193	# UK-LMO with artefacts
+OP390194	# UK-LMO with artefacts
+OP390195	# UK-LMO with artefacts
+OP390196	# UK-LMO with artefacts
+OP390197	# UK-LMO with artefacts
+OP390198	# UK-LMO with artefacts
+OP390199	# UK-LMO with artefacts
+OP390200	# UK-LMO with artefacts
+OP390201	# UK-LMO with artefacts
+OP390202	# UK-LMO with artefacts
+OP390203	# UK-LMO with artefacts
+OP390204	# UK-LMO with artefacts
+OP390205	# UK-LMO with artefacts
+OP390206	# UK-LMO with artefacts
+OP390207	# UK-LMO with artefacts
+OP390208	# UK-LMO with artefacts
+OP390209	# UK-LMO with artefacts
+OP390210	# UK-LMO with artefacts
+OP390211	# UK-LMO with artefacts
+OP390212	# UK-LMO with artefacts
+OP390213	# UK-LMO with artefacts
+OP390214	# UK-LMO with artefacts
+OP390215	# UK-LMO with artefacts
+OP390216	# UK-LMO with artefacts
+OP390217	# UK-LMO with artefacts
+OP390218	# UK-LMO with artefacts
+OP390219	# UK-LMO with artefacts
+OP390220	# UK-LMO with artefacts
+OP390221	# UK-LMO with artefacts
+OP390222	# UK-LMO with artefacts
+OP390223	# UK-LMO with artefacts
+OP390224	# UK-LMO with artefacts
+
 
 # Duplicate of Rivers ref sequence
 MT903340
+
+# Duplicate of clade I ref seq
+AF380138
 
 # Overdiverged B.1
 OP012849
