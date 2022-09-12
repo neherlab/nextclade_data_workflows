@@ -1,0 +1,45 @@
+if not config:
+
+    configfile: "config/config.yaml"
+
+
+build_dir = "results"
+
+
+auspice_dir = "auspice"
+
+build_names = ["hpxv1"]  # ["b1","hpxv1","MPXV"]
+
+
+rule all:
+    input:
+        auspice_json=[f"{auspice_dir}/{build_name}.json" for build_name in build_names],
+        root_sequence_json=[
+            f"{auspice_dir}/{build_name}_root-sequence.json"
+            for build_name in build_names
+        ],
+
+
+include: "workflow/snakemake_rules/prepare.smk"
+include: "workflow/snakemake_rules/core.smk"
+
+
+rule clean:
+    message:
+        "Removing directories: {params}"
+    params:
+        build_dir,
+        auspice_dir,
+    shell:
+        "rm -rfv {params}"
+
+
+rule cleanall:
+    message:
+        "Removing directories: {params}"
+    params:
+        build_dir,
+        auspice_dir,
+        "data",
+    shell:
+        "rm -rfv {params}"
