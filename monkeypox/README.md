@@ -14,6 +14,14 @@ View results with:
 nextstrain view auspice/
 ```
 
+### Copy trees over to nextclade_data
+
+```bash
+cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_b1.json data/datasets/hMPXV_B1/references/pseudo_ON563414/versions/{timestamp}
+cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_MPXV.json data/datasets/MPXV/references/ancestral/versions/{timestamp}
+cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_hpxv1.json data/datasets/hMPXV_B1/references/pseudo_ON563414/versions/{timestamp}
+```
+
 ## Configuration
 
 Builds differ in paths, relevant configs are pulled in through lookup.
