@@ -29,27 +29,19 @@ rule wrangle_metadata:
 
 
 rule filter:
-    message:
-        """
-        Filtering to
-          - {params.sequences_per_group} sequence(s) per {params.group_by!s}
-          - from {params.min_date} onwards
-          - excluding strains in {input.exclude}
-          - minimum genome length of {params.min_length}
-        """
     input:
         sequences="data/sequences.fasta",
         metadata=build_dir + "/{build_name}/metadata.tsv",
         exclude=config["exclude"],
         specific_exclude="config/{build_name}/exclude_accessions.txt",
+        include="config/{build_name}/include_accessions.txt",
     output:
         sequences=build_dir + "/{build_name}/filtered.fasta",
         log=build_dir + "/{build_name}/filtered.log",
     params:
-        group_by="country year",
-        sequences_per_group=1000,
         min_date= lambda w: config[w.build_name]["min_date"],
         min_length=config["min_length"],
+        exclude_where=lambda w: config[w.build_name]["exclude_where"],
     shell:
         """
         augur filter \
@@ -57,8 +49,11 @@ rule filter:
             --metadata {input.metadata} \
             --metadata-id-columns strain \
             --exclude {input.exclude} {input.specific_exclude} \
+            {params.exclude_where} \
+            --include {input.include} \
             --output {output.sequences} \
             --min-length {params.min_length} \
+            --min-date {params.min_date} \
             --output-log {output.log}
         """
 
@@ -96,6 +91,7 @@ rule align:
             --gap-alignment-side left \
             --genemap config/genemap.gff \
             --output-fasta {output.alignment} \
+            --include-reference \
             --output-insertions {output.insertions}
         """
 
@@ -122,14 +118,14 @@ rule tree:
         alignment=build_dir + "/{build_name}/masked.fasta",
     output:
         tree=build_dir + "/{build_name}/tree_raw.nwk",
-    threads: 8
+    threads: 3
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
             --output {output.tree} \
-            --nthreads {threads} \
-            --tree-builder-args '-czb -redo'
+            --nthreads auto \
+            --tree-builder-args '-czb -redo -nt AUTO'
         """
     
 rule fix_tree:
@@ -140,7 +136,6 @@ rule fix_tree:
         alignment=build_dir + "/{build_name}/masked.fasta",
     output:
         tree=build_dir + "/{build_name}/tree_fixed.nwk",
-    threads: 8
     shell:
         """
         python3 scripts/fix_tree.py \

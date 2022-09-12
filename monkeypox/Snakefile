@@ -8,7 +8,7 @@ build_dir = "results"
 
 auspice_dir = "auspice"
 
-build_names = ["b1"]  # ["b1","hpxv1","MPXV"]
+build_names = ["b1","hpxv1","MPXV"]
 
 
 rule all:
