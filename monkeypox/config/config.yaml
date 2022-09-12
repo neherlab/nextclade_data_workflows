@@ -13,21 +13,21 @@ display_strain_field: "strain_original"
 
 hpxv1:
   root: "NC_063383"
-  min_date: 2017
+  min_date: "--min-date 2017"
   exclude_where: "--exclude-where outbreak!=hMPXV-1"
 
 MPXV:
   root: "reconstructed_ancestral_mpox"
-  min_date: 1950
+  min_date: ""
   exclude_where: ""
 
 b1:
   root: "ref_in_coord"
-  min_date: 2022
+  min_date: "--min-date 2022"
   exclude_where: "--exclude-where outbreak!=hMPXV-1 lineage=A.2 lineage=A.2.1"
 
 ## filter
-min_length: 100000
+min_length: 150000
 
 ## align
 max_indel: 20000

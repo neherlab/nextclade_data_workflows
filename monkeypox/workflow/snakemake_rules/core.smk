@@ -50,10 +50,10 @@ rule filter:
             --metadata-id-columns strain \
             --exclude {input.exclude} {input.specific_exclude} \
             {params.exclude_where} \
+            {params.min_date} \
             --include {input.include} \
             --output {output.sequences} \
             --min-length {params.min_length} \
-            --min-date {params.min_date} \
             --output-log {output.log}
         """
 
@@ -124,8 +124,8 @@ rule tree:
         augur tree \
             --alignment {input.alignment} \
             --output {output.tree} \
-            --nthreads auto \
-            --tree-builder-args '-czb -redo -nt AUTO'
+            --nthreads 5 \
+            --tree-builder-args '-czb -redo'
         """
     
 rule fix_tree:
