@@ -48,7 +48,7 @@ rule filter:
     params:
         group_by="country year",
         sequences_per_group=1000,
-        min_date=config["min_date"],
+        min_date= lambda w: config[w.build_name]["min_date"],
         min_length=config["min_length"],
     shell:
         """
@@ -71,7 +71,7 @@ rule align:
         """
     input:
         sequences=rules.filter.output.sequences,
-        reference=config["reference"],  #customize
+        reference="config/{build_name}/reference.fasta",
     output:
         alignment=build_dir + "/{build_name}/aligned.fasta",
         insertions=build_dir + "/{build_name}/insertions.fasta",
@@ -129,7 +129,7 @@ rule tree:
             --alignment {input.alignment} \
             --output {output.tree} \
             --nthreads {threads} \
-            --tree-builder-args '-ninit 10 -n 4 -czb -redo'
+            --tree-builder-args '-czb -redo'
         """
     
 rule fix_tree:
@@ -162,7 +162,7 @@ rule refine:
         tree=build_dir + "/{build_name}/tree.nwk",
         node_data=build_dir + "/{build_name}/branch_lengths.json",
     params:
-        root= lambda w: config[w.build_name]["root"],  #customize
+        root= lambda w: config[w.build_name]["root"],
     shell:
         """
         augur refine \

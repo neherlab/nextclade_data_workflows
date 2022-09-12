@@ -2,12 +2,8 @@ include: "config/include_accessions.txt"
 exclude: "config/exclude_accessions.txt"
 reference: "config/reference.fasta"
 genemap: "config/genemap.gff"
-genbank_reference: "config/reference.gb"
 colors: "config/colors.tsv"
 lat_longs: "config/lat_longs.tsv"
-auspice_config: "config/auspice_config.json"
-description: "config/description.md"
-clades: "config/clades.tsv"
 
 strain_id_field: "accession"
 display_strain_field: "strain_original"
@@ -17,12 +13,15 @@ display_strain_field: "strain_original"
 
 hpxv1:
   root: "NC_063383"
+  min_date: 2017
 
 MPXV:
-  root: "NC_063383"
+  root: "reconstructed_ancestral_mpox"
+  min_date: 1950
 
 b1:
-  root: "NC_063383"
+  root: "ref_in_coord"
+  min_date: 2020
 
 ## filter
 min_date: 1950
@@ -34,9 +33,6 @@ seed_spacing: 1000
 
 ## refine
 timetree: false
-root: "NC_063383"
-clock_rate: 5e-6
-clock_std_dev: 3e-6
 
 mask:
   from_beginning: 1500
