@@ -39,7 +39,7 @@ rule filter:
         sequences=build_dir + "/{build_name}/filtered.fasta",
         log=build_dir + "/{build_name}/filtered.log",
     params:
-        min_date= lambda w: config[w.build_name]["min_date"],
+        min_date=lambda w: config[w.build_name]["min_date"],
         min_length=config["min_length"],
         exclude_where=lambda w: config[w.build_name]["exclude_where"],
     shell:
@@ -76,7 +76,7 @@ rule align:
         seed_spacing=500,
         terminal_bandwidth=500,
         excess_bandwidth=20,
-    threads: workflow.cores
+    threads: workflow.cores // len(build_names)
     shell:
         """
         nextalign run \
@@ -118,16 +118,17 @@ rule tree:
         alignment=build_dir + "/{build_name}/masked.fasta",
     output:
         tree=build_dir + "/{build_name}/tree_raw.nwk",
-    threads: 3
+    threads: workflow.cores // len(build_names)
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
             --output {output.tree} \
-            --nthreads 5 \
+            --nthreads {threads} \
             --tree-builder-args '-czb -redo'
         """
-    
+
+
 rule fix_tree:
     message:
         "Building tree"
@@ -144,6 +145,7 @@ rule fix_tree:
             --output {output.tree}
         """
 
+
 rule refine:
     message:
         """
@@ -157,7 +159,7 @@ rule refine:
         tree=build_dir + "/{build_name}/tree.nwk",
         node_data=build_dir + "/{build_name}/branch_lengths.json",
     params:
-        root= lambda w: config[w.build_name]["root"],
+        root=lambda w: config[w.build_name]["root"],
     shell:
         """
         augur refine \
@@ -168,6 +170,7 @@ rule refine:
             --root {params.root} \
             --divergence-unit mutations \
             --keep-polytomies \
+            --use-fft \
             --output-node-data {output.node_data}
         """
 
@@ -297,7 +300,8 @@ rule final_strain_name:
         root_sequence=build_dir + "/{build_name}/raw_tree_root-sequence.json",
     output:
         auspice_json=auspice_dir + "/nextclade_monkeypox_{build_name}.json",
-        root_sequence=auspice_dir + "/nextclade_monkeypox_{build_name}_root-sequence.json",
+        root_sequence=auspice_dir
+        + "/nextclade_monkeypox_{build_name}_root-sequence.json",
     params:
         display_strain_field=lambda w: config.get("display_strain_field", "strain"),
     shell:
