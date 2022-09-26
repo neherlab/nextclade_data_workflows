@@ -130,18 +130,19 @@ rule tree:
 
 
 rule fix_tree:
-    message:
-        "Building tree"
     input:
         tree=rules.tree.output.tree,
         alignment=build_dir + "/{build_name}/masked.fasta",
     output:
         tree=build_dir + "/{build_name}/tree_fixed.nwk",
+    params:
+        root=lambda w: config[w.build_name]["root"],
     shell:
         """
         python3 scripts/fix_tree.py \
             --alignment {input.alignment} \
             --input-tree {input.tree} \
+            --root {params.root} \
             --output {output.tree}
         """
 
