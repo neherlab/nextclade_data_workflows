@@ -24,7 +24,7 @@ data_source:
 
 origins:
   metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"
-  sequences: "s3://nextstrain-ncov-private/sequences.fasta.xz"
+  sequences: "s3://nextstrain-ncov-private/sequences.fasta.zst"
   # metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
   # sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
   exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"

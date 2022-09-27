@@ -1,14 +1,8 @@
 """
 This part of the workflow downloads files from S3
 
-  - "data/{origin}/sequences.fasta.xz"
+  - "data/{origin}/sequences.fasta.zst"
   - "data/{origin}/metadata.tsv"
-
-and produces
-
-  - pre-processed/filtered.fasta.xz
-  - pre-processed/metadata.tsv
-
 """
 
 import os
@@ -31,7 +25,6 @@ rule preprocess:
     input:
         sequences="data/sequences.fasta.zst",
         metadata="data/metadata.tsv",
-        sequence_index="pre-processed/sequence_index.tsv",
         problematic_exclude="pre-processed/problematic_exclude.txt",
         synthetic="pre-processed/synthetic.fasta",
     params:
@@ -67,18 +60,10 @@ rule download_sequences:
     params:
         address=lambda w: config["origins"]["sequences"],
     output:
-        "data/sequences.fasta.xz",
+        "data/sequences.fasta.zst",
     shell:
         "aws s3 cp {params.address} {output}"
 
-rule change_compression_to_zstd:
-    input:
-        "data/sequences.fasta.xz",
-    output:
-        "data/sequences.fasta.zst",
-    threads: 5,
-    shell:
-        "xzcat {input} | zstd -c -10 -T4  > {output}"
 
 rule download_metadata:
     message:
@@ -173,6 +158,7 @@ rule download_clade_emergence_dates:
     shell:
         "curl {params.source} -o {output}"
 
+
 rule diagnostic:
     message:
         "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
@@ -208,27 +194,6 @@ rule diagnostic:
             --output-exclusion-list {output.to_exclude} \
             --output-exclusion-reasons {output.exclude_reasons} \
             2>&1 | tee {log}
-        """
-
-
-rule index_sequences:
-    message:
-        """
-        Index sequence composition for faster filtering.
-        """
-    input:
-        sequences="data/sequences.fasta.xz",
-    output:
-        sequence_index="pre-processed/sequence_index.tsv",
-    log:
-        "logs/index_sequences.txt",
-    benchmark:
-        "benchmarks/index_sequences.txt"
-    shell:
-        """
-        augur index \
-            --sequences {input.sequences} \
-            --output {output.sequence_index} 2>&1 | tee {log}
         """
 
 
@@ -281,43 +246,6 @@ rule fix_pango_lineages:
         --output {output.metadata} \
         2>&1
         """
-
-
-# rule open_pango:
-#     # include only sequences that are in pango.csv using augur filter
-#     # could be sped up using seqkit grep
-#     # only problem: metadata, but can probably do with tsv-join
-#     # and do inner join, not selecting sequences/meta without matches on both sides
-#     input:
-#         sequences = "data/sequences.fasta.xz",
-#         pango = "pre-processed/pango_designated_strains_nextstrain_names.txt",
-#         sequence_index = "pre-processed/sequence_index.tsv",
-#         metadata = "data/metadata.tsv",
-#     output:
-#         sequences = "pre-processed/open_pango.fasta.xz",
-#         metadata = "pre-processed/open_pango_metadata.tsv",
-#         strains = "pre-processed/open_pango_strains.txt",
-#     params:
-#         date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
-#     log:
-#         "logs/open_pango.txt"
-#     benchmark:
-#         "benchmarks/open_pango.txt"
-#     conda: config["conda_environment"]
-#     shell:
-#         """
-#         augur filter \
-#             --sequences {input.sequences} \
-#             --sequence-index {input.sequence_index} \
-#             --metadata {input.metadata} \
-#             --exclude-all \
-#             --max-date {params.date} \
-#             --include {input.pango} \
-#             --output-metadata {output.metadata} \
-#             --output-strains {output.strains} \
-#             --output-sequences {output.sequences} \
-#             2>&1 | tee {log}
-#         """
 
 
 rule get_designated_sequences:
