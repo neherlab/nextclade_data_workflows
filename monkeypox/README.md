@@ -17,9 +17,9 @@ nextstrain view auspice/
 ### Copy trees over to nextclade_data
 
 ```bash
-cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_b1.json data/datasets/hMPXV_B1/references/pseudo_ON563414/versions/{timestamp}
-cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_MPXV.json data/datasets/MPXV/references/ancestral/versions/{timestamp}
-cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_hpxv1.json data/datasets/hMPXV_B1/references/pseudo_ON563414/versions/{timestamp}
+cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_b1.json ~/code/nextclade_data/data/datasets/hMPXV_B1/references/pseudo_ON563414/versions/{timestamp}
+cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_MPXV.json ~/code/nextclade_data/data/datasets/MPXV/references/ancestral/versions/{timestamp}
+cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_hpxv1.json ~/code/nextclade_data/data/datasets/hMPXV/references/NC_063383.1/versions/{timestamp}
 ```
 
 ## Configuration
