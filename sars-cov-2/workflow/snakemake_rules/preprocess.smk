@@ -37,21 +37,21 @@ rule preprocess:
         """
 
 
-def _infer_decompression(input):
-    """
-    Returns a shell command to decompress the piped stream,
-    which will itself produce a stream of decompressed data to stdout.
-    If no decompression is needed, returns `cat`.
-    NOTE: a lot of this will become unnecessary once `augur` handles
-    compressed sequence inputs.
-    """
-    if input.endswith(".xz"):
-        return "xz -dcq"
-    if input.endswith(".gz"):
-        return "gunzip -cq"
-    if input.endswith(".zst"):
-        return "zstd -dcq"
-    return "cat"
+# def _infer_decompression(input):
+#     """
+#     Returns a shell command to decompress the piped stream,
+#     which will itself produce a stream of decompressed data to stdout.
+#     If no decompression is needed, returns `cat`.
+#     NOTE: a lot of this will become unnecessary once `augur` handles
+#     compressed sequence inputs.
+#     """
+#     if input.endswith(".xz"):
+#         return "xz -dcq"
+#     if input.endswith(".gz"):
+#         return "gunzip -cq"
+#     if input.endswith(".zst"):
+#         return "zstd -dcq"
+#     return "cat"
 
 
 rule download_sequences:
@@ -69,12 +69,11 @@ rule download_metadata:
     message:
         "Downloading metadata from {params.address} -> {output}"
     params:
-        deflate=lambda w: _infer_decompression(config["origins"]["metadata"]),
         address=lambda w: config["origins"]["metadata"],
     output:
         metadata="data/metadata_raw.tsv",
     shell:
-        "aws s3 cp {params.address} - | {params.deflate} {input} > {output:q}"
+        "aws s3 cp {params.address} - | gunzip -cq {input} > {output:q}"
 
 
 rule fix_metadata:
@@ -132,7 +131,7 @@ rule download_lat_longs:
         "curl {params.source} -o {output}"
 
 
-rule download_curated_pango:
+rule download_designations:
     output:
         "pre-processed/pango_raw.csv",
     params:
@@ -383,7 +382,3 @@ rule make_synthetic_pangos:
             --out {output.outfile} \
             2>&1 | tee {log} 
         """
-
-
-# Need to create fake metadata for synthetic pangos
-# Maybe in the above script?
