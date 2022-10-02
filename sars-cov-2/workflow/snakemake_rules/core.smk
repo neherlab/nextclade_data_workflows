@@ -14,7 +14,6 @@ and produces files
 
 
 localrules:
-    add_custom_node_attr_to_meta,
     add_branch_labels,
     colors,
     internal_pango,
@@ -237,7 +236,7 @@ rule ancestral:
     benchmark:
         "benchmarks/ancestral_{build_name}.txt"
     params:
-        inference=config["ancestral"]["inference"],
+        inference="joint",
     resources:
         # Multiple sequence alignments can use up to 15 times their disk size in
         # memory.
@@ -311,39 +310,6 @@ rule aa_muts_explicit:
             --translations {input.translations:q} \
             --genes {params.genes} \
             --output {output.node_data} 2>&1 | tee {log}
-        """
-
-
-rule traits:
-    message:
-        """
-        Inferring ancestral traits for {params.columns!s}
-          - increase uncertainty of reconstruction by {params.sampling_bias_correction} to partially account for sampling bias
-        """
-    input:
-        tree=rules.refine.output.tree,
-        metadata="builds/{build_name}/metadata.tsv",
-    output:
-        node_data=build_dir + "/{build_name}/traits.json",
-    log:
-        "logs/traits_{build_name}.txt",
-    benchmark:
-        "benchmarks/traits_{build_name}.txt"
-    params:
-        columns=config["traits"]["columns"],
-        sampling_bias_correction=config["traits"]["sampling_bias_correction"],
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
-    shell:
-        """
-        augur traits \
-            --tree {input.tree} \
-            --metadata {input.metadata} \
-            --output {output.node_data} \
-            --columns {params.columns} \
-            --confidence \
-            --sampling-bias-correction {params.sampling_bias_correction} 2>&1 | tee {log}
         """
 
 

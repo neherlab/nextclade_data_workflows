@@ -14,22 +14,6 @@ files:
   exclude_sites: "defaults/exclude_sites.tsv"
   constraint_tree: "defaults/constraint.nwk"
 
-data_source:
-  clades: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv"
-  lat_longs: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv"
-  color_ordering: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv"
-  pango: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv"
-  aliases: "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json"
-  clade_emergence_dates: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_emergence_dates.tsv"
-
-origins:
-  metadata: "s3://nextstrain-ncov-private/metadata.tsv.gz"
-  sequences: "s3://nextstrain-ncov-private/sequences.fasta.zst"
-  # metadata: "https://data.nextstrain.org/files/ncov/open/metadata.tsv.gz"
-  # sequences: "https://data.nextstrain.org/files/ncov/open/sequences.fasta.xz"
-  exclude: "https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/exclude.txt"
-  filters: "--min-length 27000"
-
 refine:
   root: "B" #"Wuhan/Hu-1/2019"
   divergence_unit: "mutations"

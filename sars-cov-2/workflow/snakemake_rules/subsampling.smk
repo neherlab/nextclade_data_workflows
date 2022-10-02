@@ -17,15 +17,16 @@ build_dir = "builds"
 rule synthetic_pick:
     input:
         counts="defaults/nr.tsv",
-        metadata="pre-processed/open_pango_metadata.tsv",
+        metadata="pre-processed/open_pango_metadata.tsv.zst",
     output:
         strains=build_dir + "/{build_name}/chosen_synthetic_strains.txt",
     log:
         "logs/synthetic_pick_{build_name}.txt",
     shell:
         """
+        zstdcat {input.metadata} | \
         python scripts/pick_synthetic.py \
-            --designations {input.metadata} \
+            --designations /dev/stdin \
             --counts {input.counts} \
             --outfile {output.strains} 2>&1 \
         | tee {log}
@@ -47,39 +48,8 @@ rule synthetic_select:
         """
 
 
-rule extract_metadata:
-    input:
-        strains=[
-            build_dir + "/{build_name}/chosen_synthetic_strains.txt",
-        ],
-        metadata="data/metadata.tsv",
-    output:
-        metadata=build_dir + "/{build_name}/extracted_metadata.tsv",
-    params:
-        adjust=lambda w: config["builds"][w.build_name].get("metadata_adjustments", {}),
-    benchmark:
-        "benchmarks/extract_metadata_{build_name}.txt"
-    run:
-        import pandas as pd
-
-        strains = set()
-        for f in input.strains:
-            with open(f) as fh:
-                strains.update([x.strip() for x in fh if x[0] != "#"])
-
-        d = pd.read_csv(input.metadata, index_col="strain", sep="\t")
-        d = d[d.index.isin(list(strains))]
-        if len(params.adjust):
-            for adjustment in params.adjust:
-                ind = d.eval(adjustment["query"])
-                d.loc[ind, adjustment["dst"]] = d.loc[ind, adjustment["src"]]
-
-        d.to_csv(output.metadata, sep="\t")
-
-
 rule add_synthetic_metadata:
     input:
-        metadata=rules.extract_metadata.output.metadata,
         synthetic=rules.synthetic_pick.output.strains,
     output:
         metadata=build_dir + "/{build_name}/metadata.tsv",
@@ -88,7 +58,6 @@ rule add_synthetic_metadata:
     shell:
         """
         python3 scripts/add_synthetic_metadata.py \
-            --metadata {input.metadata} \
             --synthetic {input.synthetic} \
             --outfile {output.metadata} 2>&1 \
         | tee {log}
@@ -98,7 +67,6 @@ rule add_synthetic_metadata:
 rule exclude_outliers:
     input:
         sequences="builds/{build_name}/sequences_raw.fasta",
-        metadata=rules.extract_metadata.output.metadata,
         exclude="profiles/exclude.txt",
     output:
         sampled_sequences="builds/{build_name}/sequences.fasta",
@@ -109,7 +77,6 @@ rule exclude_outliers:
         """
         augur filter \
             --sequences {input.sequences} \
-            --metadata {input.metadata} \
             --exclude {input.exclude} \
             --output {output.sampled_sequences} \
             --output-strains {output.sampled_strains} \

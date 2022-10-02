@@ -1,11 +1,6 @@
 """
-This part of the workflow downloads files from S3
-
-  - "data/{origin}/sequences.fasta.zst"
-  - "data/{origin}/metadata.tsv"
+Download and prepare workflow input data
 """
-
-import os
 
 
 localrules:
@@ -18,13 +13,13 @@ localrules:
     download_clades,
     preprocess,
     download_color_ordering,
-    download_curated_pango,
+    download_designations,
 
 
 rule preprocess:
     input:
         sequences="data/sequences.fasta.zst",
-        metadata="data/metadata.tsv",
+        metadata="data/metadata.tsv.zst",
         problematic_exclude="pre-processed/problematic_exclude.txt",
         synthetic="pre-processed/synthetic.fasta",
     params:
@@ -37,28 +32,11 @@ rule preprocess:
         """
 
 
-# def _infer_decompression(input):
-#     """
-#     Returns a shell command to decompress the piped stream,
-#     which will itself produce a stream of decompressed data to stdout.
-#     If no decompression is needed, returns `cat`.
-#     NOTE: a lot of this will become unnecessary once `augur` handles
-#     compressed sequence inputs.
-#     """
-#     if input.endswith(".xz"):
-#         return "xz -dcq"
-#     if input.endswith(".gz"):
-#         return "gunzip -cq"
-#     if input.endswith(".zst"):
-#         return "zstd -dcq"
-#     return "cat"
-
-
 rule download_sequences:
     message:
         "Downloading sequences from {params.address} -> {output[0]}"
     params:
-        address=lambda w: config["origins"]["sequences"],
+        address="s3://nextstrain-ncov-private/sequences.fasta.zst",
     output:
         "data/sequences.fasta.zst",
     shell:
@@ -69,33 +47,24 @@ rule download_metadata:
     message:
         "Downloading metadata from {params.address} -> {output}"
     params:
-        address=lambda w: config["origins"]["metadata"],
+        address="s3://nextstrain-ncov-private/metadata.tsv.zst",
     output:
-        metadata="data/metadata_raw.tsv",
+        metadata="data/metadata_raw.tsv.zst",
     shell:
-        "aws s3 cp {params.address} - | gunzip -cq {input} > {output:q}"
+        "aws s3 cp {params.address} {output:q}"
 
 
 rule fix_metadata:
     input:
-        "data/metadata_raw.tsv",
+        "data/metadata_raw.tsv.zst",
     output:
-        "data/metadata_raw2.tsv",
+        "data/metadata_raw2.tsv.zst",
     shell:
         """
-        awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' {input} >{output}
+        zstdcat {input} | \
+        awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' {input} | \
+        zstd -o {output}
         """
-
-
-rule download_exclude:
-    message:
-        "Downloading exclude from {params.source} -> {output}"
-    output:
-        "data/exclude.txt",
-    params:
-        source=lambda w: config["origins"]["exclude"],
-    shell:
-        "curl {params.source} -o {output}"
 
 
 rule download_clades:
@@ -104,7 +73,7 @@ rule download_clades:
     output:
         "builds/clades.tsv",
     params:
-        source=config["data_source"]["clades"],
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv",
     shell:
         "curl {params.source} -o {output}"
 
@@ -115,7 +84,7 @@ rule download_color_ordering:
     output:
         "builds/color_ordering.tsv",
     params:
-        source=config["data_source"]["color_ordering"],
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv",
     shell:
         "curl {params.source} -o {output}"
 
@@ -126,16 +95,16 @@ rule download_lat_longs:
     output:
         "builds/lat_longs.tsv",
     params:
-        source=config["data_source"]["lat_longs"],
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv",
     shell:
         "curl {params.source} -o {output}"
 
 
 rule download_designations:
     output:
-        "pre-processed/pango_raw.csv",
+        "pre-processed/designations.csv",
     params:
-        source=config["data_source"]["pango"],
+        source="https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineages.csv",
     shell:
         "curl {params.source} -o {output}"
 
@@ -144,7 +113,7 @@ rule download_pango_alias:
     output:
         "pre-processed/alias.json",
     params:
-        source=config["data_source"]["aliases"],
+        source="https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json",
     shell:
         "curl {params.source} -o {output}"
 
@@ -153,59 +122,23 @@ rule download_clade_emergence_dates:
     output:
         "pre-processed/clade_emergence_dates.tsv",
     params:
-        source=config["data_source"]["clade_emergence_dates"],
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_emergence_dates.tsv",
     shell:
         "curl {params.source} -o {output}"
-
-
-rule diagnostic:
-    message:
-        "Scanning metadata {input.metadata} for problematic sequences. Removing sequences with >{params.clock_filter} deviation from the clock and with more than {params.snp_clusters}."
-    input:
-        metadata="data/metadata_raw2.tsv",
-        clade_emergence_dates="pre-processed/clade_emergence_dates.tsv",
-    output:
-        to_exclude="pre-processed/problematic_exclude.txt",
-        exclude_reasons="pre-processed/exclude_reasons.txt",
-    params:
-        clock_filter=12,
-        clock_filter_recent=17,
-        clock_filter_lower_limit=-10,
-        snp_clusters=1,
-        rare_mutations=45,
-        clock_plus_rare=50,
-    log:
-        "logs/diagnostics.txt",
-    benchmark:
-        "benchmarks/diagnostics.txt"
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=12000,
-    shell:
-        """
-        python3 scripts/diagnostic.py \
-            --metadata {input.metadata} \
-            --clade_emergence_dates {input.clade_emergence_dates} \
-            --clock-filter {params.clock_filter} \
-            --rare-mutations {params.rare_mutations} \
-            --clock-plus-rare {params.clock_plus_rare} \
-            --snp-clusters {params.snp_clusters} \
-            --output-exclusion-list {output.to_exclude} \
-            --output-exclusion-reasons {output.exclude_reasons} \
-            2>&1 | tee {log}
-        """
 
 
 rule nextclade_strainnames:
     message:
         "Extract strain names using tsv-select"
     input:
-        "data/metadata_raw2.tsv",
+        "data/metadata_raw2.tsv.zst",
     output:
-        "pre-processed/metadata_strainnames.tsv",
+        "pre-processed/metadata_strainnames.tsv.zst",
     shell:
         """
-        tsv-select -H -f strain {input} >{output}
+        zstdcat {input} | \
+        tsv-select -H -f strain | \
+        zstd -o {output}
         """
 
 
@@ -213,8 +146,8 @@ rule pango_strain_rename:
     message:
         "Convert pango strain names to nextclade strain names"
     input:
-        metadata_strainnames="pre-processed/metadata_strainnames.tsv",
-        pango="pre-processed/pango_raw.csv",
+        metadata_strainnames="pre-processed/metadata_strainnames.tsv.zst",
+        pango="pre-processed/designations.csv",
     output:
         pango_designations="pre-processed/pango_designations_nextstrain_names.csv",
         pango_designated_strains="pre-processed/pango_designated_strains_nextstrain_names.txt",
@@ -231,19 +164,21 @@ rule pango_strain_rename:
 
 rule fix_pango_lineages:
     message:
-        "Add new column to open_pango_metadata_raw.tsv by joining pango_raw.csv on field strain name"
+        "Add new column to open_pango_metadata_raw.tsv by joining designations.csv on field strain name"
     input:
-        metadata="data/metadata_raw2.tsv",
+        metadata="data/metadata_raw2.tsv.zst",
         pango_designations="pre-processed/pango_designations_nextstrain_names.csv",
     output:
-        metadata="data/metadata.tsv",
+        metadata="data/metadata.tsv.zst",
     shell:
         """
+        zstdcat {input.metadata} | \
         python3 scripts/fix_open_pango_lineages.py \
-        --metadata {input.metadata} \
+        --metadata /dev/stdin \
         --designations {input.pango_designations} \
-        --output {output.metadata} \
+        --output data/metadata.tsv \
         2>&1
+        zstd data/metadata.tsv
         """
 
 
@@ -286,44 +221,30 @@ rule get_designated_strains:
 rule get_designated_metadata:
     input:
         strains="pre-processed/open_pango_strains.txt",
-        metadata="data/metadata.tsv",
+        metadata="data/metadata.tsv.zst",
     output:
-        metadata="pre-processed/open_pango_metadata.tsv",
+        metadata="pre-processed/open_pango_metadata.tsv.zst",
     log:
         "logs/get_designated_metadata.txt",
     benchmark:
         "benchmarks/get_designated_metadata.txt"
     shell:
         """
-        tsv-join -H --filter-file {input.strains} --key-fields 1 {input.metadata} 2>&1 >{output.metadata} | tee {log}
+        zstdcat {input.metadata} | \
+        tsv-join -H --filter-file {input.strains} --key-fields 1 {input.metadata} 2>&1 | \
+        zstd -o {output.metadata}
         """
 
 
 rule strains:
     input:
-        "data/metadata.tsv",
+        "data/metadata.tsv.zst",
     output:
         "pre-processed/strains.txt",
     shell:
-        "awk -F'\t' '{{print $1}}' {input} > {output}"
-
-
-rule priorities:
-    input:
-        strains="pre-processed/strains.txt",
-    output:
-        priorities="pre-processed/priority.tsv",
-    log:
-        "logs/priorities.txt",
-    benchmark:
-        "benchmarks/priorities.txt"
-    shell:
         """
-        python3 scripts/priority_hash.py \
-            --input {input.strains} \
-            --output {output.priorities} \
-            --seed 0 \
-            2>&1 | tee {log} 
+        zstdcat {input.metadata} | \
+        awk -F'\t' '{{print $1}}' > {output} 
         """
 
 
@@ -331,15 +252,17 @@ rule join_meta_nextclade:
     input:
         open_pango_metadata=rules.get_designated_metadata.output.metadata,
     output:
-        "pre-processed/full_sequence_details.tsv",
+        "pre-processed/full_sequence_details.tsv.zst",
     shell:
         """
-        tsv-select -H -f strain,pango_designated,deletions,insertions,substitutions {input.open_pango_metadata} > meta_muts.tsv
+        zstcat {input} | \
+        tsv-select -H -f strain,pango_designated,deletions,insertions,substitutions > meta_muts.tsv
+
         aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.gz - \
             | zcat -d \
             | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd \
             | tsv-join -H -f meta_muts.tsv -k 1 -a 2-5 \
-            > {output}
+            | zstd -o {output}
         rm meta_muts.tsv
         """
 
@@ -354,9 +277,10 @@ rule lineage_stats:
         "logs/lineage_stats.txt",
     shell:
         """
+        zstdcat {input.meta} | \
         python3 scripts/lineage_matrix.py \
             --ref {input.reference} \
-            --meta {input.meta} \
+            --meta /dev/stdin \
             --out {output.outfile} \
             2>&1 | tee {log} 
         """

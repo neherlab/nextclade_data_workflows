@@ -6,7 +6,7 @@ import pandas as pd
 
 @click.command()
 @click.option("--metadata-strainnames", default="pre-processed/metadata_strainnames.tsv")
-@click.option("--pango-in", default="pre-processed/pango_raw.csv")
+@click.option("--pango-in", default="pre-processed/designations.csv")
 @click.option("--pango-designations", default="pre-processed/pango_designations.csv")
 @click.option("--pango-designated-strains", default="pre-processed/pango_designated_strains.txt")
 def format(metadata_strainnames, pango_in, pango_designations, pango_designated_strains):
