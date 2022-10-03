@@ -457,7 +457,7 @@ rule colors:
     message:
         "Constructing colors file"
     input:
-        ordering=config["files"]["ordering"],
+        ordering="defaults/color_ordering.tsv",
         color_schemes=config["files"]["color_schemes"],
         metadata="builds/{build_name}/metadata.tsv",
     output:
