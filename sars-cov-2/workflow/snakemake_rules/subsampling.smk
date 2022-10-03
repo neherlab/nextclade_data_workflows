@@ -38,7 +38,7 @@ rule synthetic_select:
         sequences="pre-processed/synthetic.fasta",
         strains=rules.synthetic_pick.output.strains,
     output:
-        sequences=build_dir + "/{build_name}/sequences_raw.fasta",
+        sequences=build_dir + "/{build_name}/sequences.fasta",
     log:
         "logs/synthetic_select_{build_name}.txt",
     shell:
@@ -64,21 +64,12 @@ rule add_synthetic_metadata:
         """
 
 
-rule exclude_outliers:
+rule get_strains:
     input:
-        sequences="builds/{build_name}/sequences_raw.fasta",
-        exclude="profiles/exclude.txt",
+        sequences=build_dir + "/{build_name}/sequences.fasta",
     output:
-        sampled_sequences="builds/{build_name}/sequences.fasta",
-        sampled_strains="builds/{build_name}/subsample.txt",
-    log:
-        "logs/exclude_outliers_{build_name}.txt",
+        strains=build_dir + "/{build_name}/strains.txt",
     shell:
         """
-        augur filter \
-            --sequences {input.sequences} \
-            --exclude {input.exclude} \
-            --output {output.sampled_sequences} \
-            --output-strains {output.sampled_strains} \
-        2>&1 | tee {log}
+        seqkit seq -n {input.sequences} >{output.strains}
         """

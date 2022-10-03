@@ -11,6 +11,8 @@ localrules:
     download_metadata,
     download_exclude,
     download_clades,
+    download_clades_nextstrain,
+    download_clades_who,
     preprocess,
     download_color_ordering,
     download_designations,
@@ -62,7 +64,7 @@ rule fix_metadata:
     shell:
         """
         zstdcat {input} | \
-        awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' {input} | \
+        awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' | \
         zstd -o {output}
         """
 
@@ -74,6 +76,28 @@ rule download_clades:
         "builds/clades.tsv",
     params:
         source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv",
+    shell:
+        "curl {params.source} -o {output}"
+
+
+rule download_clades_nextstrain:
+    message:
+        "Downloading clade definitions from {params.source} -> {output}"
+    output:
+        "builds/clades_nextstrain.tsv",
+    params:
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades_nextstrain.tsv",
+    shell:
+        "curl {params.source} -o {output}"
+
+
+rule download_clades_who:
+    message:
+        "Downloading clade definitions from {params.source} -> {output}"
+    output:
+        "builds/clades_who.tsv",
+    params:
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades_who.tsv",
     shell:
         "curl {params.source} -o {output}"
 
@@ -231,7 +255,7 @@ rule get_designated_metadata:
     shell:
         """
         zstdcat {input.metadata} | \
-        tsv-join -H --filter-file {input.strains} --key-fields 1 {input.metadata} 2>&1 | \
+        tsv-join -H --filter-file {input.strains} --key-fields 1 2>&1 | \
         zstd -o {output.metadata}
         """
 
@@ -255,7 +279,7 @@ rule join_meta_nextclade:
         "pre-processed/full_sequence_details.tsv.zst",
     shell:
         """
-        zstcat {input} | \
+        zstdcat {input} | \
         tsv-select -H -f strain,pango_designated,deletions,insertions,substitutions > meta_muts.tsv
 
         aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.gz - \

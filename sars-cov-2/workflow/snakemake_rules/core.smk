@@ -48,7 +48,7 @@ rule align:
         outdir=lambda w: build_dir
         + f"/{w.build_name}/"
         + "translations/aligned.gene.{gene}.fasta",
-        genes=",".join(config.get("genes", ["S"])),
+        genes="ORF1a,ORF1b,S,ORF3a,M,N",
         basename="aligned",
     log:
         "logs/align_{build_name}.txt",
@@ -98,7 +98,7 @@ rule mask:
 
 rule identify_recombinants:
     input:
-        strains=rules.exclude_outliers.output.sampled_strains,
+        strains=build_dir + "/{build_name}/strains.txt",
     output:
         recombinants=build_dir + "/{build_name}/recombinants.txt",
     shell:
@@ -134,9 +134,7 @@ rule tree:
     output:
         tree=build_dir + "/{build_name}/tree_raw.nwk",
     params:
-        args=lambda w: config["tree"].get("tree-builder-args", "")
-        if "tree" in config
-        else "",
+        args="'-czb -g defaults/constraint.nwk'",
     log:
         "logs/tree_{build_name}.txt",
     benchmark:
@@ -158,6 +156,8 @@ rule tree:
         """
 
 
+# TODO: Need to add recombinants in the appropriate tree structure
+# E.g. XBB.1 should attach to XBB not recombinant root
 rule add_recombinants_to_tree:
     message:
         "Adding recombinant singlets to root of raw tree"
@@ -320,7 +320,7 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades=config["files"]["clades"],
+        clades="builds/clades.tsv",
     output:
         node_data=build_dir + "/{build_name}/clades_raw.json",
     log:
@@ -335,23 +335,73 @@ rule clades:
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data {output.node_data} 2>&1 | tee {log}
+            --output-node-data clades_raw.tmp 2>&1 | tee {log}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades clades_raw.tmp \
+            --output {output.node_data}
+        rm clades_raw.tmp
         """
 
 
-rule overwrite_recombinant_clades:
+rule clades_nextstrain:
+    message:
+        "Adding internal clade labels"
     input:
-        clades_json=rules.clades.output.node_data,
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/clades_nextstrain.tsv",
     output:
-        node_data=build_dir + "/{build_name}/clades.json",
+        node_data=build_dir + "/{build_name}/clades_nextstrain.json",
     log:
-        "logs/overwrite_recombinant_clades_{build_name}.txt",
+        "logs/clades_{build_name}.txt",
+    benchmark:
+        "benchmarks/clades_{build_name}.txt"
+    resources:
+        # Memory use scales primarily with size of the node data.
+        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
     shell:
         """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data clades_nextstrain.tmp 2>&1 | tee {log}
         python scripts/overwrite_recombinant_clades.py \
-            --clades {input.clades_json} \
-            --output {output.node_data} \
-        2>&1 | tee {log}
+            --clades clades_nextstrain.tmp \
+            --output {output.node_data}
+        rm clades_nextstrain.tmp
+        sed -i '' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
+        """
+
+
+rule clades_who:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/clades_who.tsv",
+    output:
+        node_data=build_dir + "/{build_name}/clades_who.json",
+    log:
+        "logs/clades_{build_name}.txt",
+    benchmark:
+        "benchmarks/clades_{build_name}.txt"
+    resources:
+        # Memory use scales primarily with size of the node data.
+        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data clades_who.tmp 2>&1 | tee {log}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades clades_who.tmp \
+            --output {output.node_data}
+        rm clades_who.tmp
+        sed -i '' 's/clade_membership/clade_who/gi' {output.node_data}
         """
 
 
@@ -374,6 +424,32 @@ rule internal_pango:
             --designations {input.designations} \
             --output {output.node_data} \
             --field-name Nextclade_pango 2>&1 | tee {log}
+        """
+
+
+rule download_designation_dates:
+    output:
+        designation_dates="builds/{build_name}/designation_dates.tsv",
+    shell:
+        """
+        curl https://raw.githubusercontent.com/corneliusroemer/pango-designation-dates/main/data/lineage_designation_date.csv \
+            | csv2tsv > {output}
+        """
+
+
+rule add_designation_date_to_meta:
+    input:
+        metadata="builds/{build_name}/metadata.tsv",
+        designation_dates=rules.download_designation_dates.output.designation_dates,
+    output:
+        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
+    shell:
+        """
+        tsv-join -H --filter-file {input.designation_dates} \
+            --key-fields 1 \
+            --append-fields 2 \
+            {input.metadata} \
+        > {output}
         """
 
 
@@ -413,12 +489,12 @@ def _get_node_data_by_wildcards(wildcards):
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
-        rules.overwrite_recombinant_clades.output.node_data,
+        rules.clades.output.node_data,
+        rules.clades_nextstrain.output.node_data,
+        rules.clades_who.output.node_data,
         rules.aa_muts_explicit.output.node_data,
         rules.internal_pango.output.node_data,
     ]
-    if "distances" in config:
-        inputs.append(rules.distances.output.node_data)
 
     # Convert input files from wildcard strings to real file names.
     inputs = [input_file.format(**wildcards_dict) for input_file in inputs]
@@ -430,7 +506,7 @@ rule export:
         "Exporting data files for auspice"
     input:
         tree=rules.refine.output.tree,
-        metadata="builds/{build_name}/metadata.tsv",
+        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
         node_data=_get_node_data_by_wildcards,
         auspice_config=lambda w: config["builds"][w.build_name]["auspice_config"]
         if "auspice_config" in config["builds"][w.build_name]

@@ -6,6 +6,7 @@
 # --output {output.tree} 2>&1 | tee {log}
 
 import typer
+import ipdb
 
 
 def main(
@@ -29,11 +30,54 @@ def main(
     # Add common ancestor for all recombinants to prevent massive polytomy
     clade_cls = type(tree.root)
     rec_parent = clade_cls(name="rec_parent", branch_length=1.0)
+
+    def lookup_by_names(tree):
+        names = {}
+        for clade in tree.find_clades():
+            if clade.name:
+                if clade.name in names:
+                    raise ValueError("Duplicate key: %s" % clade.name)
+                names[clade.name] = clade
+        return names
     
+    # Create recombinant tree based on pango structure, start with top level, then add first level etc.
+    # Attach each clade to parent, parent can be calculated by removing one `.`
+    def parent(child: str) -> str:
+        split = child.split(".")
+        if len(split) == 1:
+            return None
+        return ".".join(split[:-1])
+    
+    def attach(tip: str):
+        # Check if tip already in tree
+        for clade in rec_parent.root.find_clades():
+            if clade.name == tip:
+                return
+        
+        if parent(tip) is None:
+            rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=10.0))
+        else:
+            # ipdb.set_trace()
+            # check if internal parent node exists
+            # if exists, attach there
+            # if doesn't exist, create
+            # before attaching, check if internal node with this name exists
+
+            # check if parent internal node exists
+            if f"internal_{parent(tip)}" not in lookup_by_names(rec_parent):
+                # check if parent tip exists
+                if parent(tip) not in lookup_by_names(rec_parent):
+                    attach(parent(tip))
+                    # rename parent tip to internal node, and attach parent tip to internal node
+                lookup_by_names(rec_parent)[parent(tip)].name = f"internal_{parent(tip)}"
+                lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=parent(tip), branch_length=0))
+            lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=1/30000))
+
     # Add each recombinant to root node
     for recombinant in recombinants:
-        # Need large branch length to make sure recombinants ignored for ancestral reconstruction
-        rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=10.0))
+        # Call attach child to parent recursively 
+        attach(recombinant)
+        
     tree.root.clades.append(rec_parent)
 
     # Write tree to output
