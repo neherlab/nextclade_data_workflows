@@ -12,13 +12,13 @@
           "name": "Nextclade_pango",
           "displayName": "Pango lineage (Nextclade)",
           "description": "Pango lineage as inferred by Nextclade from the nearest neighbour in the reference tree. 98% accurate for recent sequences, for higher accuracy use dedicated pangolin software in UShER or pangoLEARN mode. Recombinants may get (wrongly) assigned to a designated recombinant lineage if they have similar breakpoints.",
-          "hideInWeb:": false
+          "hideInWeb": false
         },
         {
           "name": "partiallyAliased",
           "displayName": "Unaliased",
           "description": "Partially aliased reconstructed Pango lineage",
-          "hideInWeb:": true
+          "hideInWeb": true
         }
       ]
     }
