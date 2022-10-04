@@ -322,7 +322,8 @@ rule clades:
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/clades.tsv",
     output:
-        node_data=build_dir + "/{build_name}/clades_raw.json",
+        node_data=build_dir + "/{build_name}/clades.json",
+        node_data_historic=build_dir + "/{build_name}/clades_historic.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -340,6 +341,8 @@ rule clades:
             --clades clades_raw.tmp \
             --output {output.node_data}
         rm clades_raw.tmp
+        cp {output.node_data} {output.node_data_historic}
+        sed -i '' 's/clade_membership/clade_historic/gi' {output.node_data_historic}
         """
 
 
@@ -490,6 +493,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
         rules.clades.output.node_data,
+        rules.clades.output.node_data_historic,
         rules.clades_nextstrain.output.node_data,
         rules.clades_who.output.node_data,
         rules.aa_muts_explicit.output.node_data,

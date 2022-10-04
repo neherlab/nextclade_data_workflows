@@ -31,6 +31,12 @@
           "displayName": "WHO name",
           "description": "Greek letter WHO name",
           "hideInWeb": true
+        },
+        {
+          "name": "clade_historic",
+          "displayName": "Backwards compatible Nextstrain name",
+          "description": "Combination of Nextstrain clade, WHO name and other names like EU1 for backwards compatibility",
+          "hideInWeb": true
         }
       ]
     }
