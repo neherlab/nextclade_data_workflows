@@ -19,6 +19,18 @@
           "displayName": "Unaliased",
           "description": "Partially aliased reconstructed Pango lineage",
           "hideInWeb": true
+        },
+        {
+          "name": "clade_nextstrain",
+          "displayName": "Nextstrain Clade",
+          "description": "Nextstrain Clade",
+          "hideInWeb": true
+        },
+        {
+          "name": "clade_who",
+          "displayName": "WHO name",
+          "description": "Greek letter WHO name",
+          "hideInWeb": true
         }
       ]
     }
