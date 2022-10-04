@@ -155,13 +155,19 @@ def main(designations, tree, alias, synthetic, output, field_name):
             seq_to_lineage_list(rec.seq)
         )
     #%%
-    meta["realiased"] = meta["reconstructed"].apply(aliasor.compress)
+    # ipdb.set_trace()
+    meta[field_name] = (
+        meta["reconstructed"].apply(aliasor.compress).rename(field_name)
+    )
+    meta["partiallyAliased"] = meta["reconstructed"].apply(
+        lambda x: aliasor.partial_compress(x, up_to=1)
+    )
+    export_df = meta[[field_name, "partiallyAliased"]]
     #%%
     augur.utils.write_json(
         {
-            "nodes": meta["realiased"]
-            .rename(field_name)
-            .to_frame()  # Necessary to prevent slash escape
+            "nodes": export_df
+            # .to_frame()  # Necessary to prevent slash escape
             .to_dict(orient="index")
         },
         output,
