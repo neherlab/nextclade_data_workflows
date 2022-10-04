@@ -160,7 +160,7 @@ def main(designations, tree, alias, synthetic, output, field_name):
         meta["reconstructed"].apply(aliasor.compress).rename(field_name)
     )
     meta["partiallyAliased"] = meta["reconstructed"].apply(
-        lambda x: aliasor.partial_compress(x, up_to=1)
+        lambda x: aliasor.partial_compress(x, accepted_aliases=["BA"])
     )
     export_df = meta[[field_name, "partiallyAliased"]]
     #%%
