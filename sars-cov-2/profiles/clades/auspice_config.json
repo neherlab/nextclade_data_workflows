@@ -33,7 +33,7 @@
           "hideInWeb": true
         },
         {
-          "name": "clade_historic",
+          "name": "clade_legacy",
           "displayName": "Backwards compatible Nextstrain name",
           "description": "Combination of Nextstrain clade, WHO name and other names like EU1 for backwards compatibility",
           "hideInWeb": true

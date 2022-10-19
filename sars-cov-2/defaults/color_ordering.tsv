@@ -18,6 +18,7 @@ clade_membership	22A (Omicron)
 clade_membership	22B (Omicron)
 clade_membership	22C (Omicron)
 clade_membership	22D (Omicron)
+clade_membership	22E (Omicron)
 
 clade_nextstrain	19A
 clade_nextstrain	19B
@@ -48,6 +49,7 @@ clade_nextstrain	22A
 clade_nextstrain	22B
 clade_nextstrain	22C
 clade_nextstrain	22D
+clade_nextstrain	22E
 
 clade_who	Alpha
 clade_who	Beta
@@ -673,3 +675,24 @@ designation_date	2022-10-01
 designation_date	2022-10-02
 designation_date	2022-10-03
 designation_date	2022-10-04
+designation_date	2022-10-05
+designation_date	2022-10-06
+designation_date	2022-10-05
+designation_date	2022-10-06
+designation_date	2022-10-07
+designation_date	2022-10-08
+designation_date	2022-10-09
+designation_date	2022-10-10
+designation_date	2022-10-11
+designation_date	2022-10-12
+designation_date	2022-10-13
+designation_date	2022-10-14
+designation_date	2022-10-15
+designation_date	2022-10-16
+designation_date	2022-10-17
+designation_date	2022-10-20
+designation_date	2022-10-21
+designation_date	2022-10-22
+designation_date	2022-10-23
+designation_date	2022-10-24
+designation_date	2022-10-25

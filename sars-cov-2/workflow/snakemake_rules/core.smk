@@ -323,7 +323,7 @@ rule clades:
         clades="builds/clades.tsv",
     output:
         node_data=build_dir + "/{build_name}/clades.json",
-        node_data_historic=build_dir + "/{build_name}/clades_historic.json",
+        node_data_legacy=build_dir + "/{build_name}/clades_legacy.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -341,8 +341,8 @@ rule clades:
             --clades clades_raw.tmp \
             --output {output.node_data}
         rm clades_raw.tmp
-        cp {output.node_data} {output.node_data_historic}
-        sed -i '' 's/clade_membership/clade_historic/gi' {output.node_data_historic}
+        cp {output.node_data} {output.node_data_legacy}
+        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data_legacy}
         """
 
 
@@ -373,7 +373,7 @@ rule clades_nextstrain:
             --clades clades_nextstrain.tmp \
             --output {output.node_data}
         rm clades_nextstrain.tmp
-        sed -i '' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
+        sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
         """
 
 
@@ -404,7 +404,7 @@ rule clades_who:
             --clades clades_who.tmp \
             --output {output.node_data}
         rm clades_who.tmp
-        sed -i '' 's/clade_membership/clade_who/gi' {output.node_data}
+        sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
         """
 
 
@@ -493,7 +493,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
         rules.clades.output.node_data,
-        rules.clades.output.node_data_historic,
+        rules.clades.output.node_data_legacy,
         rules.clades_nextstrain.output.node_data,
         rules.clades_who.output.node_data,
         rules.aa_muts_explicit.output.node_data,
