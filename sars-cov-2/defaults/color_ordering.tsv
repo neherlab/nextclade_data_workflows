@@ -20,6 +20,50 @@ clade_membership	22C (Omicron)
 clade_membership	22D (Omicron)
 clade_membership	22E (Omicron)
 
+clade	20H (Beta, V2)
+clade	20I (Alpha, V1)
+clade	20J (Gamma, V3)
+clade	21A (Delta)
+clade	21I (Delta)
+clade	21J (Delta)
+clade	21B (Kappa)
+clade	21C (Epsilon)
+clade	21D (Eta)
+clade	21E (Theta)
+clade	21F (Iota)
+clade	21G (Lambda)
+clade	21H (Mu)
+clade	21K (Omicron)
+clade	21L (Omicron)
+clade	21M (Omicron)
+clade	22A (Omicron)
+clade	22B (Omicron)
+clade	22C (Omicron)
+clade	22D (Omicron)
+clade	22E (Omicron)
+
+clade_legacy	20H (Beta, V2)
+clade_legacy	20I (Alpha, V1)
+clade_legacy	20J (Gamma, V3)
+clade_legacy	21A (Delta)
+clade_legacy	21I (Delta)
+clade_legacy	21J (Delta)
+clade_legacy	21B (Kappa)
+clade_legacy	21C (Epsilon)
+clade_legacy	21D (Eta)
+clade_legacy	21E (Theta)
+clade_legacy	21F (Iota)
+clade_legacy	21G (Lambda)
+clade_legacy	21H (Mu)
+clade_legacy	21K (Omicron)
+clade_legacy	21L (Omicron)
+clade_legacy	21M (Omicron)
+clade_legacy	22A (Omicron)
+clade_legacy	22B (Omicron)
+clade_legacy	22C (Omicron)
+clade_legacy	22D (Omicron)
+clade_legacy	22E (Omicron)
+
 clade_nextstrain	19A
 clade_nextstrain	19B
 clade_nextstrain	20A
@@ -690,6 +734,8 @@ designation_date	2022-10-14
 designation_date	2022-10-15
 designation_date	2022-10-16
 designation_date	2022-10-17
+designation_date	2022-10-18
+designation_date	2022-10-19
 designation_date	2022-10-20
 designation_date	2022-10-21
 designation_date	2022-10-22
