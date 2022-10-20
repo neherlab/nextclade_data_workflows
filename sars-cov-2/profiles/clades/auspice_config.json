@@ -71,6 +71,11 @@
       "key": "clade_who",
       "title": "WHO name",
       "type": "categorical"
+    },
+    {
+      "key": "clade_legacy",
+      "title": "Legacy clade name",
+      "type": "categorical"
     }
   ],
   "display_defaults": {

@@ -313,101 +313,6 @@ rule aa_muts_explicit:
         """
 
 
-rule clades:
-    message:
-        "Adding internal clade labels"
-    input:
-        tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
-        nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/clades.tsv",
-    output:
-        node_data=build_dir + "/{build_name}/clades.json",
-        node_data_legacy=build_dir + "/{build_name}/clades_legacy.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
-    shell:
-        """
-        augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
-            --clades {input.clades} \
-            --output-node-data clades_raw.tmp 2>&1 | tee {log}
-        python scripts/overwrite_recombinant_clades.py \
-            --clades clades_raw.tmp \
-            --output {output.node_data}
-        rm clades_raw.tmp
-        cp {output.node_data} {output.node_data_legacy}
-        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data_legacy}
-        """
-
-
-rule clades_nextstrain:
-    message:
-        "Adding internal clade labels"
-    input:
-        tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
-        nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/clades_nextstrain.tsv",
-    output:
-        node_data=build_dir + "/{build_name}/clades_nextstrain.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
-    shell:
-        """
-        augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
-            --clades {input.clades} \
-            --output-node-data clades_nextstrain.tmp 2>&1 | tee {log}
-        python scripts/overwrite_recombinant_clades.py \
-            --clades clades_nextstrain.tmp \
-            --output {output.node_data}
-        rm clades_nextstrain.tmp
-        sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
-        """
-
-
-rule clades_who:
-    message:
-        "Adding internal clade labels"
-    input:
-        tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
-        nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/clades_who.tsv",
-    output:
-        node_data=build_dir + "/{build_name}/clades_who.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
-    shell:
-        """
-        augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
-            --clades {input.clades} \
-            --output-node-data clades_who.tmp 2>&1 | tee {log}
-        python scripts/overwrite_recombinant_clades.py \
-            --clades clades_who.tmp \
-            --output {output.node_data}
-        rm clades_who.tmp
-        sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
-        """
-
-
 rule internal_pango:
     input:
         tree=rules.refine.output.tree,
@@ -427,6 +332,107 @@ rule internal_pango:
             --designations {input.designations} \
             --output {output.node_data} \
             --field-name Nextclade_pango 2>&1 | tee {log}
+        """
+
+
+rule clades:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/clades.tsv",
+        internal_pango=rules.internal_pango.output.node_data,
+    output:
+        node_data=build_dir + "/{build_name}/clades.json",
+        node_data_legacy=build_dir + "/{build_name}/clades_legacy.json",
+    log:
+        "logs/clades_{build_name}.txt",
+    benchmark:
+        "benchmarks/clades_{build_name}.txt"
+    resources:
+        # Memory use scales primarily with size of the node data.
+        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data clades_raw.tmp 2>&1 | tee {log}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades clades_raw.tmp \
+            --internal-pango {input.internal_pango} \
+            --output {output.node_data}
+        rm clades_raw.tmp
+        cp {output.node_data} {output.node_data_legacy}
+        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data_legacy}
+        """
+
+
+rule clades_nextstrain:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/clades_nextstrain.tsv",
+        internal_pango=rules.internal_pango.output.node_data,
+    output:
+        node_data=build_dir + "/{build_name}/clades_nextstrain.json",
+    log:
+        "logs/clades_{build_name}.txt",
+    benchmark:
+        "benchmarks/clades_{build_name}.txt"
+    resources:
+        # Memory use scales primarily with size of the node data.
+        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data clades_nextstrain.tmp 2>&1 | tee {log}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades clades_nextstrain.tmp \
+            --internal-pango {input.internal_pango} \
+            --output {output.node_data}
+        rm clades_nextstrain.tmp
+        sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
+        """
+
+
+rule clades_who:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/clades_who.tsv",
+        internal_pango=rules.internal_pango.output.node_data,
+    output:
+        node_data=build_dir + "/{build_name}/clades_who.json",
+    log:
+        "logs/clades_{build_name}.txt",
+    benchmark:
+        "benchmarks/clades_{build_name}.txt"
+    resources:
+        # Memory use scales primarily with size of the node data.
+        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data clades_who.tmp 2>&1 | tee {log}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades clades_who.tmp \
+            --internal-pango {input.internal_pango} \
+            --output {output.node_data}
+        rm clades_who.tmp
+        sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
         """
 
 
