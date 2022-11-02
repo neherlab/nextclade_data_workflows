@@ -803,5 +803,59 @@ ON755240
 OP215207
 ON853659
 
-# Breaks up B.1.11 path
-OP055809
+FV537349	#UNKNOWN_FV537349
+FV537350	#UNKNOWN_FV537350
+FV537351	#UNKNOWN_FV537351
+FV537352	#UNKNOWN_FV537352
+KC257459	#Sudan_2005_01
+KJ642614	#UTC
+MG693725	#MPX_Nig_2017_298481
+MN346693	#MPXV_TNP_2017_North_Ponan
+ON602722	# MPXV_FRA_2022_TLS67
+ON622721	#MPXV_1_IT_Milan_2022
+ON754989	#mpx_2022_Canada_AB2
+OP012849	#MPXV/human/Taiwan/110-364682/2022
+KJ642615	#Potential recombinant between clade IIa and IIb
+OP390207	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-004b/2022
+OP390208	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-005b/2022
+OP390209	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-010b/2022
+OP390210	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-022b/2022
+OP390211	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-023b/2022
+OP390212	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-024b/2022
+OP390213	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-026b/2022
+OP390214	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-029b/2022
+OP390215	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-031b/2022
+OP390216	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-032b/2022
+OP390217	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-033b/2022
+OP390218	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-034b/2022
+OP390219	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-036b/2022
+OP390220	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-038b/2022
+OP390221	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-040b/2022
+OP390222	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-043b/2022
+OP390223	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-046b/2022
+OP390224	# Duplicate sequence, but with different ITR hMpxV/UK/LMO-047b/2022
+MT903340	# Duplicate of Rivers ref seq NC_063383
+OP526860	# Does not align well, very divergent MPXV_USA_2022_RI0001
+OP526858	# Does not align well, very divergent MPXV_USA_2022_MN0001
+OP526856 	# Does not align well, very divergent MPXV_USA_2022_FL0065
+OP526859	# Does not align well, very divergent MPXV_USA_2022_MD0005
+OP526862	# Does not align well, very divergent MPXV_USA_2022_DC0013
+OP470374	# Overdiverged and with rev to ref, MPXV_USA_2022_DC0013
+HQ857562	# Duplicate of DQ011155 
+HQ857563	# D14L knockout
+AF380138	# Duplicate of RefSeq NC_003310
+OP605555	# Slovenia overdiverged
+OP605556	# Slovenia overdiverged
+OP605557	# Slovenia overdiverged
+OP605577	# Slovenia overdiverged
+OP605588	# Slovenia overdiverged
+OP605579	# Slovenia overdiverged
+OP642362	# India A.2 overdiverged MCL-22-H-MPxV-16-5316
+OP696838	# Overdiverged MPXV/Germany/2022/RKI335
+
+OP696839	# Overdiverged
+OP696840	# Overdiverged
+OP696842	# Overdiverged
+OP526861	# Overdiverged
+OP331336	# Overdiverged
+OP450997	# Overdiverged
