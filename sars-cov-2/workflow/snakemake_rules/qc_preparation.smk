@@ -10,13 +10,6 @@ rule prepare_qc:
         "pre-processed/frameshifts.txt",
 
 
-rule download_metadata_for_qc:
-    output:
-        "data/metadata.tsv.zst",
-    shell:
-        "aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.zst {output}"
-
-
 rule select_frameshifts:
     input:
         "data/metadata.tsv.zst",
