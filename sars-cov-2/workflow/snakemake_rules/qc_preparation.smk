@@ -10,7 +10,7 @@ rule prepare_qc:
         "pre-processed/frameshifts.txt",
 
 
-rule download_metadata:
+rule download_metadata_for_qc:
     output:
         "data/metadata.tsv.zst",
     shell:
