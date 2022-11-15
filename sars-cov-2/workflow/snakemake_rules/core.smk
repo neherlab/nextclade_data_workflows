@@ -344,6 +344,7 @@ rule clades:
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/clades.tsv",
         internal_pango=rules.internal_pango.output.node_data,
+        alias=rules.download_pango_alias.output,
     output:
         node_data=build_dir + "/{build_name}/clades.json",
         node_data_legacy=build_dir + "/{build_name}/clades_legacy.json",
@@ -363,6 +364,8 @@ rule clades:
         python scripts/overwrite_recombinant_clades.py \
             --clades clades_raw.tmp \
             --internal-pango {input.internal_pango} \
+            --alias {input.alias} \
+            --clade-type clade_membership \
             --output {output.node_data}
         rm clades_raw.tmp
         cp {output.node_data} {output.node_data_legacy}
@@ -379,6 +382,7 @@ rule clades_nextstrain:
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/clades_nextstrain.tsv",
         internal_pango=rules.internal_pango.output.node_data,
+        alias=rules.download_pango_alias.output,
     output:
         node_data=build_dir + "/{build_name}/clades_nextstrain.json",
     log:
@@ -397,6 +401,8 @@ rule clades_nextstrain:
         python scripts/overwrite_recombinant_clades.py \
             --clades clades_nextstrain.tmp \
             --internal-pango {input.internal_pango} \
+            --alias {input.alias} \
+            --clade-type clade_nextstrain \
             --output {output.node_data}
         rm clades_nextstrain.tmp
         sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
@@ -412,6 +418,7 @@ rule clades_who:
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/clades_who.tsv",
         internal_pango=rules.internal_pango.output.node_data,
+        alias=rules.download_pango_alias.output,
     output:
         node_data=build_dir + "/{build_name}/clades_who.json",
     log:
@@ -430,6 +437,8 @@ rule clades_who:
         python scripts/overwrite_recombinant_clades.py \
             --clades clades_who.tmp \
             --internal-pango {input.internal_pango} \
+            --alias {input.alias} \
+            --clade-type clade_who \
             --output {output.node_data}
         rm clades_who.tmp
         sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
