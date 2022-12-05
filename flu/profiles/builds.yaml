@@ -9,17 +9,33 @@ builds:
         clade_offset: 0
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h1n1pdm.txt"
-        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_h1n1pdm.txt
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h1n1pdm.txt
         reference_EPI_ISL: EPI1583287
         reference_strain: A/California/7/2009-egg #TODO: exclude
+      MW626062:
+        filter: "--min-date 2020 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
+        clade_offset: 0
+        clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h1n1pdm_ha.tsv"
+        include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h1n1pdm.txt"
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h1n1pdm.txt
+        reference_EPI_ISL: EPI1812046
+        reference_strain: A/Wisconsin/588/2019
   h3n2:
     ha:
+      EPI1857216:
+        filter: "--min-date 2020 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
+        clade_offset: 0
+        clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
+        include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h3n2.txt"
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h3n2.txt
+        reference_EPI_ISL: EPI1857216
+        reference_strain: A/Darwin/6/2021
       CY163680:
         filter: "--min-date 2016 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
         clade_offset: 17
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_h3n2_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h3n2.txt"
-        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_h3n2.txt
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h3n2.txt
         reference_EPI_ISL: EPI545340
         reference_strain: A/Wisconsin/67/2005-egg
   vic:
@@ -29,9 +45,30 @@ builds:
         clade_offset: 22
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_vic.txt"
-        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_vic.txt
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_vic.txt
         reference_EPI_ISL: EPI696970
         reference_strain: B/Brisbane/60/2008-egg
+
+tree:
+  tree-builder-args: "'-ninit 10 -n 4 -czb'"
+
+ancestral:
+  inference: "joint"
+
+
+
+
+unused_builds:
+  vic:
+    ha:
+      EPI1926632:
+        filter: "--min-date 2020 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
+        clade_offset: 8
+        clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_vic_ha.tsv"
+        include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_vic.txt"
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_vic.txt
+        reference_EPI_ISL: EPI1926632
+        reference_strain: B/Austria/1359417/2021
   yam:
     ha:
       JN993010:
@@ -39,12 +76,6 @@ builds:
         clade_offset: -11
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/clades_yam_ha.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_yam.txt"
-        exclude_url: https://github.com/nextstrain/seasonal-flu/blob/master/config/outliers_yam.txt
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_yam.txt
         reference_EPI_ISL: EPI271545
         reference_strain: B/Wisconsin/1/2010-egg
-
-tree:
-  tree-builder-args: "'-ninit 10 -n 4 -czb'"
-
-ancestral:
-  inference: "joint"
