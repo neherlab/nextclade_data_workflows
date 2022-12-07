@@ -210,10 +210,28 @@ rule tree:
             > /dev/null
         """
 
+rule root:
+    input:
+        tree=rules.tree.output.tree,
+        metadata = rules.parse.output.metadata,
+    output:
+        tree="build/{strain}/{segment_name}/{reference}/tree_rooted.nwk",
+    params:
+        outdir = "build/{strain}/{segment_name}/{reference}/tt_out"
+    shell:
+        """
+        treetime clock \
+            --tree {input.tree} \
+            --sequence-length 1500 \
+            --dates {input.metadata} \
+            --clock-filter 4 \
+            --outdir {params.outdir}
+        cp {params.outdir}/rerooted.newick {output.tree}
+        """
 
 rule refine:
     input:
-        tree=rules.tree.output.tree,
+        tree=rules.root.output.tree,
         alignment=rules.align.output.alignment,
         enriched_metadata=rules.parse.output.metadata,
     output:
@@ -228,7 +246,7 @@ rule refine:
             --metadata {input.enriched_metadata} \
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
-            --root {wildcards.reference} \
+            --keep-root \
             --divergence-unit mutations-per-site
         """
 
@@ -309,13 +327,49 @@ rule clades:
             > /dev/null
         """
 
+rule attach_root_mutations:
+    input:
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        translations = rules.align.output.alignment,
+        tree = rules.refine.output.tree
+    output:
+        aa_muts="build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json",
+        nuc_muts="build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json"
+    params:
+        genes = ["SigPep", "HA1", "HA2"],
+        translations=lambda w: expand(
+            "build/{strain}/{segment_name}/{reference}/aligned.gene.{genes}.fasta",
+            strain=w.strain,
+            segment_name=w.segment_name,
+            genes=["SigPep", "HA1", "HA2"],
+            reference=w.reference,
+        ),
+        reference = lambda w: w.reference
+    shell:
+        """
+        python3 scripts/attach_root_mutations.py \
+            --tree {input.tree} \
+            --translations {params.translations:q} \
+            --reference {params.reference} \
+            --genes {params.genes} \
+            --aa-mutations {input.aa_muts} \
+            --nuc-mutations {input.nuc_muts} \
+            --output-aa-mutations {output.aa_muts} \
+            --output-nuc-mutations {output.nuc_muts}
+        """
 
-def node_data(w):
-    nodes = ["ancestral", "refine", "aa_muts_explicit"]
+
+def get_node_data(w):
+    node_data = [
+        rules.refine.output.node_data,
+        "build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json".format(**w),
+        "build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json".format(**w),
+    ]
 
     if w.segment_name == "ha":
-        nodes.extend(["clades"])
-    return nodes
+        node_data.append("build/{strain}/{segment_name}/{reference}/clades.json".format(**w))
+    return node_data
 
 
 rule export:
@@ -324,9 +378,7 @@ rule export:
     input:
         tree=rules.refine.output.tree,
         metadata=rules.parse.output.metadata,
-        node_data=lambda w: [
-            rules.__dict__[rule].output.node_data for rule in node_data(w)
-        ],
+        node_data = get_node_data,
         auspice_config=lambda w: config["files"]["auspice_config"],
     output:
         auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
