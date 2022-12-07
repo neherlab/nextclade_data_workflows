@@ -19,9 +19,11 @@ if __name__=="__main__":
     parser.add_argument('--output-aa-mutations', type=str, metavar="JSON", required=True, help="output Auspice JSON")
     args = parser.parse_args()
 
+    # make sure we have a list of genes and translations
     genes = args.genes if type(args.genes)==list else [args.genes]
     translations = args.translations if type(args.translations)==list else [args.translations]
 
+    # parse tree, get root name
     T = Phylo.read(args.tree, 'newick')
     root_name = T.root.name
 
@@ -29,10 +31,15 @@ if __name__=="__main__":
     references ={}
     root_mutations = {'nuc':[], 'aa':{}}
     aa_references = {}
+
+    with open(args.nuc_mutations, 'r') as fh:
+        nuc_muts = json.load(fh)
     with open(args.aa_mutations, 'r') as fh:
         aa_muts = json.load(fh)
+
     root_seqs = aa_muts["nodes"][root_name]["aa_sequences"]
 
+    # for each gene, get the root sequence and compare to reference
     for gene, translation in zip(genes, translations):
         seqs = {}
         for s in SeqIO.parse(translation, 'fasta'):
@@ -44,18 +51,18 @@ if __name__=="__main__":
             if ref!=root:
                 root_mutations['aa'][gene].append(f"{ref}{pos+1}{root}")
 
-    with open(args.nuc_mutations, 'r') as fh:
-        nuc_muts = json.load(fh)
-
+    # repeat for nucleotide mutations
     for pos, (ref, root) in enumerate(zip(nuc_muts['nodes'][args.reference]['sequence'], nuc_muts['nodes'][root_name]['sequence'])):
         if ref!=root:
             root_mutations['nuc'].append(f"{ref}{pos+1}{root}")
 
+    # attach differences as mutations to node data entry for root
     nuc_muts['nodes'][root_name]['muts'] = root_mutations['nuc']
-
     aa_muts['nodes'][root_name]['aa_muts'] = root_mutations['aa']
+    # update the reference sequence of the root (which really is the parent of the root)
     aa_muts['reference'] = aa_references
 
+    # output files
     with open(args.output_nuc_mutations, 'w') as fh:
         json.dump(nuc_muts, fh, indent=2)
 

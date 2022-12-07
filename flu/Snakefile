@@ -210,6 +210,7 @@ rule tree:
             > /dev/null
         """
 
+# root using dates in treetime, use 1500 as sequence length (good enough, doesn't matter)
 rule root:
     input:
         tree=rules.tree.output.tree,
@@ -229,6 +230,7 @@ rule root:
         cp {params.outdir}/rerooted.newick {output.tree}
         """
 
+# refine while keeping the root
 rule refine:
     input:
         tree=rules.root.output.tree,
@@ -327,6 +329,7 @@ rule clades:
             > /dev/null
         """
 
+# make sure all differences between the alignment reference and the root are attached as mutations to the root
 rule attach_root_mutations:
     input:
         aa_muts=rules.aa_muts_explicit.output.node_data,
