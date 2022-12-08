@@ -75,7 +75,7 @@ rule parse:
         metadata="data/{strain}_{segment_name}_metadata.tsv",
         sequences="data/{strain}_{segment_name}_sequences.fasta",
     params:
-        fields="strainName virus segment EPI_ISL date submission_date region country division location collecting_lab submitting_lab age sex",
+        fields="strainName virus segment EPI_ISL date submission_date region country division location passage collecting_lab submitting_lab age sex",
     shell:
         """
         augur parse \
@@ -428,7 +428,7 @@ rule generate_sample_sequences:
             --metadata {input.metadata} \
             --min-date 2020 --group-by year --subsample-max-sequences 50  \
             --exclude-ambiguous-dates-by year \
-            --exclude-where 'country!=USA' \
+            --exclude-where 'country!=USA' 'submitting_lab!=centers_for_disease_control_and_prevention' \
             --probabilistic-sampling \
             --output {output.sequences}
         """
