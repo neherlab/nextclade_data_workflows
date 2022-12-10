@@ -70,12 +70,12 @@ rule download_excludes:
 
 rule parse:
     input:
-        sequences="data/{strain}_{segment_name}.fasta",
+        sequences="data/{strain}/raw_{segment_name}.fasta",
     output:
         metadata="data/{strain}_{segment_name}_metadata.tsv",
         sequences="data/{strain}_{segment_name}_sequences.fasta",
     params:
-        fields="strainName virus EPI_ISL date region country division location passage collecting_lab submitting_lab age sex",
+        fields="strainName virus segment EPI_ISL date submission_date region country division location passage collecting_lab submitting_lab age sex",
     shell:
         """
         augur parse \
@@ -210,10 +210,30 @@ rule tree:
             > /dev/null
         """
 
-
-rule refine:
+# root using dates in treetime, use 1500 as sequence length (good enough, doesn't matter)
+rule root:
     input:
         tree=rules.tree.output.tree,
+        metadata = rules.parse.output.metadata,
+    output:
+        tree="build/{strain}/{segment_name}/{reference}/tree_rooted.nwk",
+    params:
+        outdir = "build/{strain}/{segment_name}/{reference}/tt_out"
+    shell:
+        """
+        treetime clock \
+            --tree {input.tree} \
+            --sequence-length 1500 \
+            --dates {input.metadata} \
+            --clock-filter 4 \
+            --outdir {params.outdir}
+        cp {params.outdir}/rerooted.newick {output.tree}
+        """
+
+# refine while keeping the root
+rule refine:
+    input:
+        tree=rules.root.output.tree,
         alignment=rules.align.output.alignment,
         enriched_metadata=rules.parse.output.metadata,
     output:
@@ -228,7 +248,7 @@ rule refine:
             --metadata {input.enriched_metadata} \
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
-            --root {wildcards.reference} \
+            --keep-root \
             --divergence-unit mutations-per-site
         """
 
@@ -309,13 +329,50 @@ rule clades:
             > /dev/null
         """
 
+# make sure all differences between the alignment reference and the root are attached as mutations to the root
+rule attach_root_mutations:
+    input:
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        translations = rules.align.output.alignment,
+        tree = rules.refine.output.tree
+    output:
+        aa_muts="build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json",
+        nuc_muts="build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json"
+    params:
+        genes = ["SigPep", "HA1", "HA2"],
+        translations=lambda w: expand(
+            "build/{strain}/{segment_name}/{reference}/aligned.gene.{genes}.fasta",
+            strain=w.strain,
+            segment_name=w.segment_name,
+            genes=["SigPep", "HA1", "HA2"],
+            reference=w.reference,
+        ),
+        reference = lambda w: w.reference
+    shell:
+        """
+        python3 scripts/attach_root_mutations.py \
+            --tree {input.tree} \
+            --translations {params.translations:q} \
+            --reference {params.reference} \
+            --genes {params.genes} \
+            --aa-mutations {input.aa_muts} \
+            --nuc-mutations {input.nuc_muts} \
+            --output-aa-mutations {output.aa_muts} \
+            --output-nuc-mutations {output.nuc_muts}
+        """
 
-def node_data(w):
-    nodes = ["ancestral", "refine", "aa_muts_explicit"]
+
+def get_node_data(w):
+    node_data = [
+        rules.refine.output.node_data,
+        "build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json".format(**w),
+        "build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json".format(**w),
+    ]
 
     if w.segment_name == "ha":
-        nodes.extend(["clades"])
-    return nodes
+        node_data.append("build/{strain}/{segment_name}/{reference}/clades.json".format(**w))
+    return node_data
 
 
 rule export:
@@ -324,9 +381,7 @@ rule export:
     input:
         tree=rules.refine.output.tree,
         metadata=rules.parse.output.metadata,
-        node_data=lambda w: [
-            rules.__dict__[rule].output.node_data for rule in node_data(w)
-        ],
+        node_data = get_node_data,
         auspice_config=lambda w: config["files"]["auspice_config"],
     output:
         auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
@@ -373,6 +428,7 @@ rule generate_sample_sequences:
             --metadata {input.metadata} \
             --min-date 2020 --group-by year --subsample-max-sequences 50  \
             --exclude-ambiguous-dates-by year \
+            --exclude-where 'country!=USA' 'submitting_lab!=centers_for_disease_control_and_prevention' \
             --probabilistic-sampling \
             --output {output.sequences}
         """
@@ -382,6 +438,7 @@ rule assemble_folder:
     input:
         genemap="references/{strain}/{segment_name}/{reference}/genemap.gff",
         reference="references/{strain}/{segment_name}/{reference}/reference.fasta",
+        virus_properties="references/{strain}/{segment_name}/{reference}/virus_properties.json",
         sample_sequences="build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
         tree="auspice/{strain}/{segment_name}/{reference}/auspice.json",
         qc="profiles/qc.json",
@@ -390,6 +447,7 @@ rule assemble_folder:
     output:
         genemap="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/genemap.gff",
         primers="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/primers.csv",
+        virus_properties="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/virus_properties.json",
         qc="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/qc.json",
         reference="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/reference.fasta",
         sample_sequences="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/sequences.fasta",
@@ -402,6 +460,7 @@ rule assemble_folder:
         cp {input.genemap} {output.genemap};
         cp {input.reference} {output.reference};
         cp {input.primers} {output.primers};
+        cp {input.virus_properties} {output.virus_properties};
         cp {input.qc} {output.qc};
         cp {input.sample_sequences} {output.sample_sequences};
         cp {input.tree} {output.tree};
@@ -427,14 +486,10 @@ rule test_nextclade:
         outdir="test/{strain}/{segment_name}/{reference}",
     shell:
         """
-        /Users/cr/code/nextclade/.out/bin/nextclade-MacOS-x86_64 \
-         --input-fasta={params.indir}/sequences.fasta\
-         --input-root-seq={params.indir}/reference.fasta\
-         --genes=SigPep,HA1,HA2\
-         --input-qc-config={params.indir}/qc.json\
-         --input-gene-map={params.indir}/genemap.gff\
-         --input-tree={params.indir}/tree.json\
-         --output-dir={params.outdir}\
+        nextclade run \
+         {params.indir}/sequences.fasta\
+         --input-dataset={params.indir} \
+         --output-all={params.outdir}\
          --output-tsv={params.outdir}/nextclade.tsv\
          --output-tree={params.outdir}/nextclade.auspice.json\
          --output-basename=nextclade 2>&1
