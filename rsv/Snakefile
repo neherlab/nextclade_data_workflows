@@ -1,0 +1,263 @@
+build_dir = "builds"
+
+rule download:
+    output:
+        sequences = "data/{a_or_b}/sequences.fasta.xz",
+        metadata = "data/{a_or_b}/metadata.tsv.gz"
+    params:
+        metadata_url = "http://data.nextstrain.org/files/workflows/rsv/{a_or_b}/metadata.tsv.gz",
+        sequence_url = "http://data.nextstrain.org/files/workflows/rsv/{a_or_b}/sequences.fasta.xz"
+    shell:
+        """
+        curl -fsSL --compressed {params.metadata_url:q} --output {output.metadata}
+        curl -fsSL --compressed {params.sequence_url:q} --output {output.sequences}
+        """
+
+
+rule decompress:
+    message: "decompressing metadata"
+    input:
+        metadata = "data/{a_or_b}/metadata.tsv.gz"
+    output:
+        metadata = "data/{a_or_b}/metadata.tsv"
+    shell:
+        """
+        gzip --decompress --keep {input.metadata}
+        """
+
+
+rule download_excludes:
+    output:
+        build_dir + "/{a_or_b}/{reference}/exclude.txt",
+    params:
+        source=lambda w: config["builds"][w.a_or_b][w.reference]["exclude_url"],
+    shell:
+        "curl {params.source} >{output}"
+
+
+rule wrangle_metadata:
+    input:
+        metadata="data/{a_or_b}/metadata.tsv",
+    output:
+        metadata="data/{a_or_b}/metadata_by_accession.tsv",
+    params:
+        strain_id=lambda w: config.get("strain_id_field", "strain"),
+    shell:
+        """
+        python3 scripts/wrangle_metadata.py --metadata {input.metadata} \
+                    --strain-id {params.strain_id} \
+                    --output {output.metadata}
+        """
+
+rule filter:
+    message:
+        """
+        filtering sequences
+        """
+    input:
+        sequences = "data/{a_or_b}/sequences.fasta.xz",
+        reference = "references/{a_or_b}/{reference}/reference.gbk",
+        metadata = "data/{a_or_b}/metadata_by_accession.tsv",
+        exclude = build_dir + "/{a_or_b}/{reference}/exclude.txt"
+    output:
+    	sequences = build_dir + "/{a_or_b}/{reference}/filtered.fasta"
+    params:
+        filter_arguments = lambda wildcards: config["builds"][wildcards.a_or_b][wildcards.reference]["filter"],
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --exclude {input.exclude} \
+            --output {output.sequences} \
+            {params.filter_arguments}
+        """
+
+rule align:
+    message:
+        """
+        Aligning sequences to {input.reference}
+        """
+    input:
+        sequences = rules.filter.output.sequences,
+        reference = "references/{a_or_b}/{reference}/reference.fasta",
+        genemap = "references/{a_or_b}/{reference}/genemap.gff"
+    output:
+        alignment = build_dir + "/{a_or_b}/{reference}/sequences.aligned.fasta"
+    threads: 4
+    shell:
+        """
+        nextalign run -j {threads}\
+            --reference {input.reference} \
+            --output-fasta {output.alignment} \
+            --genemap {input.genemap} \
+            {input.sequences}
+        """
+
+rule tree:
+    message: "Building tree"
+    input:
+        alignment = rules.align.output.alignment
+    output:
+        tree = build_dir + "/{a_or_b}/{reference}/tree_raw.nwk"
+    threads: 4
+    shell:
+        """
+        augur tree \
+            --alignment {input.alignment} \
+            --output {output.tree} \
+            --nthreads {threads}
+        """
+
+
+# root using dates in treetime, use 1500 as sequence length (good enough, doesn't matter)
+rule root:
+    input:
+        tree=rules.tree.output.tree,
+        metadata = rules.decompress.output.metadata,
+    output:
+        tree=build_dir + "/{a_or_b}/{reference}/tree_rooted.nwk",
+    params:
+        outdir = build_dir + "/{a_or_b}/{reference}/tt_out"
+    shell:
+        """
+        treetime clock \
+            --tree {input.tree} \
+            --sequence-length 1500 \
+            --dates {input.metadata} \
+            --clock-filter 4 \
+            --outdir {params.outdir}
+        cp {params.outdir}/rerooted.newick {output.tree}
+        """
+
+# refine while keeping the root
+rule refine:
+    input:
+        tree=rules.root.output.tree,
+        alignment=rules.align.output.alignment,
+        metadata=rules.decompress.output.metadata,
+    output:
+        tree=build_dir + "/{a_or_b}/{reference}/tree.nwk",
+        node_data=build_dir + "/{a_or_b}/{reference}/branch_lengths.json",
+    threads: 1
+    shell:
+        """
+        augur refine \
+            --tree {input.tree} \
+            --alignment {input.alignment} \
+            --metadata {input.metadata} \
+            --output-tree {output.tree} \
+            --output-node-data {output.node_data} \
+            --keep-root \
+            --divergence-unit mutations-per-site
+        """
+
+
+rule ancestral:
+    message:
+        """
+        Reconstructing ancestral sequences and mutations
+          - inferring ambiguous mutations
+        """
+    input:
+        tree=rules.refine.output.tree,
+        alignment=rules.align.output.alignment,
+    output:
+        node_data=build_dir + "/{a_or_b}/{reference}/nt_muts.json",
+    params:
+        inference="joint",
+    shell:
+        """
+        augur ancestral \
+            --tree {input.tree} \
+            --alignment {input.alignment} \
+            --output-node-data {output.node_data} \
+            --inference {params.inference} \
+            --infer-ambiguous \
+            > /dev/null
+        """
+
+
+rule aa_muts_explicit:
+    message:
+        "Translating amino acid sequences"
+    input:
+        translations=rules.align.output.alignment,
+        tree=rules.refine.output.tree,
+        genemap="references/{a_or_b}/{reference}/genemap.gff",
+        reference="references/{a_or_b}/{reference}/reference.fasta",
+    output:
+        node_data=build_dir + "/{a_or_b}/aa_muts_explicit.json",
+    params:
+        genes=["SigPep", "HA1", "HA2"],
+        translations=lambda w: expand(
+            build_dir + "/{a_or_b}/aligned.gene.{genes}.fasta",
+            strain=w.strain,
+            segment_name=w.segment_name,
+            genes=["SigPep", "HA1", "HA2"],
+            reference=w.reference,
+        ),
+    shell:
+        """
+        python3 scripts/explicit_translation.py \
+            --tree {input.tree} \
+            --annotation {input.genemap} \
+            --reference {input.reference} \
+            --translations {params.translations:q} \
+            --genes {params.genes} \
+            --output {output.node_data} \
+            > /dev/null
+        """
+
+
+rule clades:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="references/{a_or_b}/{reference}/clades.tsv",
+    output:
+        node_data=build_dir + "/{a_or_b}/{reference}/clades.json",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {output.node_data} \
+            > /dev/null
+        """
+
+# make sure all differences between the alignment reference and the root are attached as mutations to the root
+rule attach_root_mutations:
+    input:
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        translations = rules.align.output.alignment,
+        tree = rules.refine.output.tree
+    output:
+        aa_muts=build_dir + "/{a_or_b}/{reference}/aa_muts_adapted.json",
+        nuc_muts=build_dir + "/{a_or_b}/{reference}/nuc_muts_adapted.json"
+    params:
+        genes = ["SigPep", "HA1", "HA2"],
+        translations=lambda w: expand(
+            build_dir + "/{a_or_b}/{reference}/aligned.gene.{genes}.fasta",
+            strain=w.strain,
+            segment_name=w.segment_name,
+            genes=["SigPep", "HA1", "HA2"],
+            reference=w.reference,
+        ),
+        reference = lambda w: w.reference
+    shell:
+        """
+        python3 scripts/attach_root_mutations.py \
+            --tree {input.tree} \
+            --translations {params.translations:q} \
+            --reference {params.reference} \
+            --genes {params.genes} \
+            --aa-mutations {input.aa_muts} \
+            --nuc-mutations {input.nuc_muts} \
+            --output-aa-mutations {output.aa_muts} \
+            --output-nuc-mutations {output.nuc_muts}
+        """
