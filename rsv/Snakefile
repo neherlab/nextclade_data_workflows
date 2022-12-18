@@ -1,5 +1,36 @@
 build_dir = "builds"
 
+if 'timestamp' not in config:
+    import datetime
+    timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
+else:
+    timestamp = config['timestamp']
+
+
+rule all:
+    input:
+        [
+            f"test/{a_or_b}/{reference}/nextclade.aligned.fasta"
+            for a_or_b in config["builds"]
+            for reference in config["builds"][a_or_b]
+        ],
+
+
+rule clean:
+    shell:
+        """
+        rm -rf output test data/clades* data/include*
+        """
+
+
+rule clean_all:
+    shell:
+        """
+        rm -rf output test auspice builds data
+        """
+
+
+
 rule download:
     output:
         sequences = "data/{a_or_b}/sequences.fasta.xz",
@@ -84,12 +115,15 @@ rule align:
         genemap = "references/{a_or_b}/{reference}/genemap.gff"
     output:
         alignment = build_dir + "/{a_or_b}/{reference}/sequences.aligned.fasta"
+    params:
+        translations = lambda w: build_dir + f"/{w.a_or_b}/{w.reference}/aligned.gene.{{gene}}.fasta"
     threads: 4
     shell:
         """
         nextalign run -j {threads}\
             --reference {input.reference} \
             --output-fasta {output.alignment} \
+            --output-translations {params.translations} \
             --genemap {input.genemap} \
             {input.sequences}
         """
@@ -114,7 +148,7 @@ rule tree:
 rule root:
     input:
         tree=rules.tree.output.tree,
-        metadata = rules.decompress.output.metadata,
+        metadata = rules.wrangle_metadata.output.metadata,
     output:
         tree=build_dir + "/{a_or_b}/{reference}/tree_rooted.nwk",
     params:
@@ -135,7 +169,7 @@ rule refine:
     input:
         tree=rules.root.output.tree,
         alignment=rules.align.output.alignment,
-        metadata=rules.decompress.output.metadata,
+        metadata=rules.wrangle_metadata.output.metadata,
     output:
         tree=build_dir + "/{a_or_b}/{reference}/tree.nwk",
         node_data=build_dir + "/{a_or_b}/{reference}/branch_lengths.json",
@@ -187,19 +221,18 @@ rule aa_muts_explicit:
         genemap="references/{a_or_b}/{reference}/genemap.gff",
         reference="references/{a_or_b}/{reference}/reference.fasta",
     output:
-        node_data=build_dir + "/{a_or_b}/aa_muts_explicit.json",
+        node_data=build_dir + "/{a_or_b}/{reference}/aa_muts_explicit.json",
     params:
-        genes=["SigPep", "HA1", "HA2"],
+        genes=config['genes'],
         translations=lambda w: expand(
-            build_dir + "/{a_or_b}/aligned.gene.{genes}.fasta",
-            strain=w.strain,
-            segment_name=w.segment_name,
-            genes=["SigPep", "HA1", "HA2"],
+            build_dir + "/{a_or_b}/{reference}/aligned.gene.{genes}.fasta",
+            a_or_b=w.a_or_b,
             reference=w.reference,
+            genes=config['genes']
         ),
     shell:
         """
-        python3 scripts/explicit_translation.py \
+        python3 ../common_scripts/explicit_translation.py \
             --tree {input.tree} \
             --annotation {input.genemap} \
             --reference {input.reference} \
@@ -217,17 +250,22 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="references/{a_or_b}/{reference}/clades.tsv",
+        clades=lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['def'],
     output:
-        node_data=build_dir + "/{a_or_b}/{reference}/clades.json",
+        node_data=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json",
+    params:
+        tmp_clade = build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.tmp.json",
+        key = lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['key'],
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data {output.node_data} \
+            --output-node-data {params.tmp_clade} \
             > /dev/null
+            sed 's/clade_membership/{params.key}/' {params.tmp_clade} > {output.node_data}
         """
+
 
 # make sure all differences between the alignment reference and the root are attached as mutations to the root
 rule attach_root_mutations:
@@ -240,18 +278,17 @@ rule attach_root_mutations:
         aa_muts=build_dir + "/{a_or_b}/{reference}/aa_muts_adapted.json",
         nuc_muts=build_dir + "/{a_or_b}/{reference}/nuc_muts_adapted.json"
     params:
-        genes = ["SigPep", "HA1", "HA2"],
+        genes = config['genes'],
         translations=lambda w: expand(
             build_dir + "/{a_or_b}/{reference}/aligned.gene.{genes}.fasta",
-            strain=w.strain,
-            segment_name=w.segment_name,
-            genes=["SigPep", "HA1", "HA2"],
+            a_or_b=w.a_or_b,
+            genes=config['genes'],
             reference=w.reference,
         ),
         reference = lambda w: w.reference
     shell:
         """
-        python3 scripts/attach_root_mutations.py \
+        python3 ../common_scripts/attach_root_mutations.py \
             --tree {input.tree} \
             --translations {params.translations:q} \
             --reference {params.reference} \
@@ -260,4 +297,136 @@ rule attach_root_mutations:
             --nuc-mutations {input.nuc_muts} \
             --output-aa-mutations {output.aa_muts} \
             --output-nuc-mutations {output.nuc_muts}
+        """
+
+def get_node_data(w):
+    node_data = [
+        rules.refine.output.node_data,
+        build_dir + "/{a_or_b}/{reference}/aa_muts_adapted.json".format(**w),
+        build_dir + "/{a_or_b}/{reference}/nuc_muts_adapted.json".format(**w),
+    ]
+    for clade_system in config['builds'][w.a_or_b][w.reference]['clades']:
+        node_data.append(build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json".format(**w, clade_system=clade_system))
+    return node_data
+
+
+rule export:
+    message:
+        "Exporting data files for auspice"
+    input:
+        tree=rules.refine.output.tree,
+        metadata=rules.wrangle_metadata.output.metadata,
+        node_data = get_node_data,
+        auspice_config=lambda w: config["auspice_config"],
+    output:
+        auspice_json= build_dir + "/{a_or_b}/{reference}/auspice_raw.json",
+    params:
+        fields="region strain country date",
+        type=lambda w: "A" if w.a_or_b == "a" else "B",
+    shell:
+        """
+        AUGUR_RECURSION_LIMIT=10000 \
+        augur export v2 \
+            --tree {input.tree} \
+            --metadata {input.metadata} \
+            --node-data {input.node_data}\
+            --auspice-config {input.auspice_config} \
+            --color-by-metadata {params.fields} \
+            --title "Nextclade reference tree for RSV-{params.type} with root {wildcards.reference}" \
+            --output {output.auspice_json} 2>&1;
+        """
+
+
+rule final_strain_name:
+    input:
+        auspice_json = rules.export.output.auspice_json,
+        metadata = rules.wrangle_metadata.output.metadata
+    output:
+        auspice_json = "auspice/{a_or_b}/{reference}/tree.json"
+    params:
+        display_strain_name = "strain_original"
+    shell:
+        """
+        python3 ../common_scripts/set_final_strain_name.py \
+            --metadata {input.metadata} \
+            --input-auspice-json {input.auspice_json} \
+            --display-strain-name {params.display_strain_name} \
+            --output {output.auspice_json}
+        """
+
+
+
+rule generate_sample_sequences:
+    input:
+        sequences="data/{a_or_b}/sequences.fasta.xz",
+        metadata=rules.wrangle_metadata.output.metadata
+    output:
+        sequences=build_dir + "/{a_or_b}/{reference}/sample_sequences.fasta",
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --min-date 2020 --group-by year --subsample-max-sequences 50  \
+            --exclude-ambiguous-dates-by year \
+            --probabilistic-sampling \
+            --output {output.sequences}
+        """
+
+
+rule assemble_folder:
+    input:
+        genemap="references/{a_or_b}/{reference}/genemap.gff",
+        reference="references/{a_or_b}/{reference}/reference.fasta",
+        virus_properties="profiles/virus_properties.json",
+        sample_sequences=build_dir + "/{a_or_b}/{reference}/sample_sequences.fasta",
+        tree="auspice/{a_or_b}/{reference}/tree.json",
+        qc="profiles/qc.json",
+        tag="profiles/tag.json",
+        primers="profiles/primers.csv",
+    output:
+        genemap="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/genemap.gff",
+        primers="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/primers.csv",
+        virus_properties="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/virus_properties.json",
+        qc="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/qc.json",
+        reference="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/reference.fasta",
+        sample_sequences="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/sequences.fasta",
+        tree="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/tree.json",
+        tag="output/rsv_{a_or_b}/references/{reference}/versions/{timestamp}/files/tag.json",
+    shell:
+        """
+        jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
+        cp {input.genemap} {output.genemap};
+        cp {input.reference} {output.reference};
+        cp {input.primers} {output.primers};
+        cp {input.virus_properties} {output.virus_properties};
+        cp {input.qc} {output.qc};
+        cp {input.sample_sequences} {output.sample_sequences};
+        cp {input.tree} {output.tree};
+        """
+
+
+rule test_nextclade:
+    input:
+        expand(
+            "output/rsv_{{a_or_b}}/references/{{reference}}/versions/{timestamp}/files/tree.json",
+            timestamp=timestamp,
+        ),
+    output:
+        "test/{a_or_b}/{reference}/nextclade.aligned.fasta",
+    params:
+        indir=expand(
+            "output/rsv_{{a_or_b}}/references/{{reference}}/versions/{timestamp}/files",
+            timestamp=timestamp,
+        ),
+        outdir="test/{a_or_b}/{reference}",
+    shell:
+        """
+        nextclade run \
+         {params.indir}/sequences.fasta\
+         --input-dataset={params.indir} \
+         --output-all={params.outdir}\
+         --output-tsv={params.outdir}/nextclade.tsv\
+         --output-tree={params.outdir}/nextclade.auspice.json\
+         --output-basename=nextclade 2>&1
         """
