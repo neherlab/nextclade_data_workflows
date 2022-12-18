@@ -104,7 +104,7 @@ rule filter:
             {params.filter_arguments}
         """
 
-rule align:
+rule nextalign:
     message:
         """
         Aligning sequences to {input.reference}
@@ -127,6 +127,26 @@ rule align:
             --genemap {input.genemap} \
             {input.sequences}
         """
+
+rule align:
+    message:
+        """
+        Aligning sequences to {input.reference}
+        """
+    input:
+        sequences = rules.filter.output.sequences,
+        reference = "references/{a_or_b}/{reference}/reference.fasta",
+    output:
+        alignment = build_dir + "/{a_or_b}/{reference}/mafft_aligned.fasta"
+    threads: 4
+    shell:
+        """
+        augur align --nthreads {threads} \
+            --sequences {input.sequences} \
+            --reference-name {wildcards.reference} \
+            --output {output.alignment}
+        """
+
 
 rule tree:
     message: "Building tree"
@@ -216,7 +236,7 @@ rule aa_muts_explicit:
     message:
         "Translating amino acid sequences"
     input:
-        translations=rules.align.output.alignment,
+        translations=rules.nextalign.output.alignment,
         tree=rules.refine.output.tree,
         genemap="references/{a_or_b}/{reference}/genemap.gff",
         reference="references/{a_or_b}/{reference}/reference.fasta",
@@ -272,7 +292,7 @@ rule attach_root_mutations:
     input:
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        translations = rules.align.output.alignment,
+        translations = rules.nextalign.output.alignment,
         tree = rules.refine.output.tree
     output:
         aa_muts=build_dir + "/{a_or_b}/{reference}/aa_muts_adapted.json",
