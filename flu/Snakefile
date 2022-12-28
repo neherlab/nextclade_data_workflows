@@ -316,7 +316,7 @@ rule aa_muts_explicit:
         ),
     shell:
         """
-        python3 scripts/explicit_translation.py \
+        python3 ../common_scripts/explicit_translation.py \
             --tree {input.tree} \
             --annotation {input.genemap} \
             --reference {input.reference} \
@@ -388,7 +388,7 @@ rule attach_root_mutations:
         reference = lambda w: w.reference
     shell:
         """
-        python3 scripts/attach_root_mutations.py \
+        python3 ../common_scripts/attach_root_mutations.py \
             --tree {input.tree} \
             --translations {params.translations:q} \
             --reference {params.reference} \
@@ -504,8 +504,10 @@ rule assemble_folder:
         cp {input.tree} {output.tree};
         """
 
-
-timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
+if 'timestame' not in config:
+    timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
+else:
+    timestamp = config['timestamp']
 
 
 rule test_nextclade:

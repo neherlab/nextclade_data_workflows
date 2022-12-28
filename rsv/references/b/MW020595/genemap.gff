@@ -1,0 +1,18 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region MW020595.1 1 15223
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=208895
+MW020595.1	Genbank	region	1	15223	.	+	.	ID=MW020595.1:1..15223;Dbxref=taxon:208895;collection-date=29-Apr-2018;country=Australia;gbkey=Src;genome=genomic;isolate=11617;isolation-source=nasal-pharyngeal swab;mol_type=viral cRNA;nat-host=Homo sapiens;strain=hRSV/B/Australia.Vic/VIDRL003/2018
+MW020595.1	Genbank	gene	52	471	.	+	0	ID=cds-QPB74302.1;Parent=gene-NS1;Dbxref=NCBI_GP:QPB74302.1;Name=QPB74302.1;gbkey=CDS;gene_name=NS1;product=nonstructural protein 1;protein_id=QPB74302.1
+MW020595.1	Genbank	gene	579	953	.	+	0	ID=cds-QPB74303.1;Parent=gene-NS2;Dbxref=NCBI_GP:QPB74303.1;Name=QPB74303.1;gbkey=CDS;gene_name=NS2;product=nonstructural protein 2;protein_id=QPB74303.1
+MW020595.1	Genbank	gene	1092	2267	.	+	0	ID=cds-QPB74304.1;Parent=gene-N;Dbxref=NCBI_GP:QPB74304.1;Name=QPB74304.1;gbkey=CDS;gene_name=N;product=nucleocapsid protein;protein_id=QPB74304.1
+MW020595.1	Genbank	gene	2300	3025	.	+	0	ID=cds-QPB74305.1;Parent=gene-P;Dbxref=NCBI_GP:QPB74305.1;Name=QPB74305.1;gbkey=CDS;gene_name=P;product=phosphoprotein;protein_id=QPB74305.1
+MW020595.1	Genbank	gene	3215	3985	.	+	0	ID=cds-QPB74306.1;Parent=gene-M;Dbxref=NCBI_GP:QPB74306.1;Name=QPB74306.1;gbkey=CDS;gene_name=M;product=matrix protein;protein_id=QPB74306.1
+MW020595.1	Genbank	gene	4254	4451	.	+	0	ID=cds-QPB74307.1;Parent=gene-SH;Dbxref=NCBI_GP:QPB74307.1;Name=QPB74307.1;gbkey=CDS;gene_name=SH;product=small hydrophobic protein;protein_id=QPB74307.1
+MW020595.1	Genbank	gene	4640	5572	.	+	0	ID=cds-QPB74308.1;Parent=gene-G;Dbxref=NCBI_GP:QPB74308.1;Name=QPB74308.1;gbkey=CDS;gene_name=G;product=attachment glycoprotein;protein_id=QPB74308.1
+MW020595.1	Genbank	gene	5670	7394	.	+	0	ID=cds-QPB74309.1;Parent=gene-F;Dbxref=NCBI_GP:QPB74309.1;Name=QPB74309.1;gbkey=CDS;gene_name=F;product=fusion glycoprotein;protein_id=QPB74309.1
+MW020595.1	Genbank	gene	7621	8208	.	+	0	ID=cds-QPB74310.1;Parent=gene-M2-1;Dbxref=NCBI_GP:QPB74310.1;Name=QPB74310.1;gbkey=CDS;gene_name=M2-1;product=transcription elongation factor M2-1;protein_id=QPB74310.1
+MW020595.1	Genbank	gene	8174	8446	.	+	0	ID=cds-QPB74311.1;Parent=gene-M2-2;Dbxref=NCBI_GP:QPB74311.1;Name=QPB74311.1;gbkey=CDS;gene_name=M2-2;product=transcription elongation factor M2-2;protein_id=QPB74311.1
+MW020595.1	Genbank	gene	8512	15012	.	+	0	ID=cds-QPB74312.1;Parent=gene-L;Dbxref=NCBI_GP:QPB74312.1;Name=QPB74312.1;gbkey=CDS;gene_name=L;product=RNA-directed RNA polymerase L;protein_id=QPB74312.1
+
