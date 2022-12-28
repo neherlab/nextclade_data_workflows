@@ -45,6 +45,23 @@ rule offset_clades:
             >{output}
         """
 
+rule offset_clades_short:
+    input:
+        "data/clades-short_{strain}_{segment_name}_{reference}_raw.tsv",
+    output:
+        "data/clades-short_{strain}_{segment_name}_{reference}.tsv",
+    params:
+        offset=lambda w: config["builds"][w.strain][w.segment_name][w.reference][
+            "clade_offset"
+        ],
+    shell:
+        """
+        perl -F'\\t' -ne \
+            '$F[2]+={params.offset} if $F[1] =~ "nuc"; \
+            print join "\\t", @F' \
+            {input} \
+            >{output}
+        """
 
 rule download_includes:
     output:
@@ -329,6 +346,26 @@ rule clades:
             > /dev/null
         """
 
+rule clades_short:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades = "data/clades-short_{strain}_{segment_name}_{reference}.tsv"
+    output:
+        node_data="build/{strain}/{segment_name}/{reference}/clades-short.json",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {output.node_data} \
+            > /dev/null
+            sed -i 's/clade_membership/short_clade/' {output.node_data}
+        """
+
 # make sure all differences between the alignment reference and the root are attached as mutations to the root
 rule attach_root_mutations:
     input:
@@ -372,6 +409,7 @@ def get_node_data(w):
 
     if w.segment_name == "ha":
         node_data.append("build/{strain}/{segment_name}/{reference}/clades.json".format(**w))
+        node_data.append("build/{strain}/{segment_name}/{reference}/clades-short.json".format(**w))
     return node_data
 
 
