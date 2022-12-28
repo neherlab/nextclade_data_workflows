@@ -1,0 +1,18 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region LR699737.1 1 15274
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=208893
+LR699737.1	EMBL	region	1	15274	.	+	.	ID=LR699737.1:1..15274;Dbxref=taxon:208893;collection-date=2017-12-19;country=United Kingdom;gbkey=Src;mol_type=viral cRNA;nat-host=Homo sapiens;note=Region: Oxford%3B~Host age: 184 days%3B~Host sex: female%3B~Genotype: ON1;strain=GB06/OX02_8948_V1
+LR699737.1	EMBL	gene	96	515	.	+	0	ID=cds-VVF34488.1;Parent=gene-RESCEU_01;Dbxref=NCBI_GP:VVF34488.1;Name=VVF34488.1;gbkey=CDS;gene_name=NS1;locus_tag=RESCEU_01;product=nonstructural protein 1;protein_id=VVF34488.1
+LR699737.1	EMBL	gene	625	999	.	+	0	ID=cds-VVF34491.1;Parent=gene-RESCEU_02;Dbxref=NCBI_GP:VVF34491.1;Name=VVF34491.1;gbkey=CDS;gene_name=NS2;locus_tag=RESCEU_02;product=nonstructural protein 2;protein_id=VVF34491.1
+LR699737.1	EMBL	gene	1137	2312	.	+	0	ID=cds-VVF34494.1;Parent=gene-RESCEU_03;Dbxref=NCBI_GP:VVF34494.1;Name=VVF34494.1;gbkey=CDS;gene_name=N;locus_tag=RESCEU_03;product=nucleoprotein;protein_id=VVF34494.1
+LR699737.1	EMBL	gene	2344	3069	.	+	0	ID=cds-VVF34497.1;Parent=gene-RESCEU_04;Dbxref=NCBI_GP:VVF34497.1;Name=VVF34497.1;gbkey=CDS;gene_name=P;locus_tag=RESCEU_04;product=phosphoprotein;protein_id=VVF34497.1
+LR699737.1	EMBL	gene	3252	4022	.	+	0	ID=cds-VVF34500.1;Parent=gene-RESCEU_05;Dbxref=NCBI_GP:VVF34500.1;Name=VVF34500.1;gbkey=CDS;gene_name=M;locus_tag=RESCEU_05;product=matrix protein;protein_id=VVF34500.1
+LR699737.1	EMBL	gene	4292	4486	.	+	0	ID=cds-VVF34503.1;Parent=gene-RESCEU_06;Dbxref=NCBI_GP:VVF34503.1;Name=VVF34503.1;gbkey=CDS;gene_name=SH;locus_tag=RESCEU_06;product=small hydrophobic protein;protein_id=VVF34503.1
+LR699737.1	EMBL	gene	4678	5643	.	+	0	ID=cds-VVF34506.1;Parent=gene-RESCEU_07;Dbxref=NCBI_GP:VVF34506.1;Name=VVF34506.1;gbkey=CDS;gene_name=G;locus_tag=RESCEU_07;product=attachment glycoprotein;protein_id=VVF34506.1
+LR699737.1	EMBL	gene	5723	7447	.	+	0	ID=cds-VVF34509.1;Parent=gene-RESCEU_08;Dbxref=NCBI_GP:VVF34509.1;Name=VVF34509.1;gbkey=CDS;gene_name=F;locus_tag=RESCEU_08;product=fusion glycoprotein;protein_id=VVF34509.1
+LR699737.1	EMBL	gene	7666	8250	.	+	0	ID=cds-VVF34512.1;Dbxref=NCBI_GP:VVF34512.1;Name=VVF34512.1;gbkey=CDS;gene_name=M2-1;locus_tag=RESCEU_09;product=M2-1 protein;protein_id=VVF34512.1
+LR699737.1	EMBL	gene	8219	8491	.	+	0	ID=cds-VVF34515.1;Dbxref=NCBI_GP:VVF34515.1;Name=VVF34515.1;gbkey=CDS;gene_name=M2-2;locus_tag=RESCEU_09;partial=true;product=M2-2 protein;protein_id=VVF34515.1;start_range=.,8219
+LR699737.1	EMBL	gene	8549	15055	.	+	0	ID=cds-VVF34518.1;Parent=gene-RESCEU_10;Dbxref=NCBI_GP:VVF34518.1;Name=VVF34518.1;gbkey=CDS;gene_name=L;locus_tag=RESCEU_10;partial=true;product=polymerase protein;protein_id=VVF34518.1;start_range=.,8549
+

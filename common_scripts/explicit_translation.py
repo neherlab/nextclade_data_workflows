@@ -16,10 +16,13 @@ def read_gff(fname):
     with open(fname, encoding='utf-8') as in_handle:
         for rec in GFF.parse(in_handle):
             for feat in rec.features:
+                print(feat)
                 if "gene_name" in feat.qualifiers:
-                    fname = feat.qualifiers["gene_name"][0]
-                if fname:
-                    features[fname] = feat
+                    feat_name = feat.qualifiers["gene_name"][0]
+                else:
+                    feat_name = None
+                if feat_name:
+                    features[feat_name] = feat
 
     return features
 
@@ -58,7 +61,7 @@ if __name__ == '__main__':
     ref = SeqIO.read(args.reference, format='fasta')
 
     if not set(features.keys())==set(args.genes):
-        print("ERROR: supplied genes don't match the annotation")
+        print("ERROR: supplied genes don't match the annotation. got ", set(features.keys()), " expected ", set(args.genes))
         exit(1)
 
     T = Phylo.read(args.tree, 'newick')

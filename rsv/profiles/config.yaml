@@ -1,0 +1,7 @@
+configfile: profiles/builds.yaml
+
+printshellcmds: True
+keep-going: True
+reason: True
+
+cores: 12
