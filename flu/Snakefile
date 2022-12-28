@@ -14,6 +14,17 @@ def segment_number(segment_name):
     return "4"
 
 
+rule all:
+    input:
+        [
+            f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta"
+            for strain in config["builds"]
+            for segment_name in config["builds"][strain]
+            for reference in config["builds"][strain][segment_name]
+        ],
+
+
+
 rule download_clades:
     message:
         "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
@@ -535,15 +546,6 @@ rule test_nextclade:
          --output-basename=nextclade 2>&1
         """
 
-
-rule all:
-    input:
-        [
-            f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta"
-            for strain in config["builds"]
-            for segment_name in config["builds"][strain]
-            for reference in config["builds"][strain][segment_name]
-        ],
 
 
 rule clean:
