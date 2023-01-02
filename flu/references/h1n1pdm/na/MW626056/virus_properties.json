@@ -1,0 +1,29 @@
+{
+    "schemaVersion": "1.10.0",
+    "nucMutLabelMap": {},
+    "nucMutLabelMapReverse": {},
+    "phenotypeData":[
+        {
+          "name": "res",
+          "nameFriendly": "Oseltamivir resistance",
+          "description": "Mutation score at positions associated with Oseltamivir resistance",
+          "gene": "NA",
+          "aaRange": {
+            "begin": 100,
+            "end": 300
+          },
+          "ignore": {
+            "clades": ["outgroup"]
+          },
+          "data": [
+            {
+              "name": "differences",
+              "weight": 1,
+              "locations": {
+                "275": {"default":0.5, "Y":2}
+              }
+            }
+          ]
+        }
+      ]
+}

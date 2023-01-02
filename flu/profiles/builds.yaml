@@ -22,6 +22,13 @@ builds:
         reference_EPI_ISL: EPI1812046
         reference_strain: A/Wisconsin/588/2019
         clade_contractions: [{"orig":"6B.1A.5a", "short":"5a"}]
+    na:
+      MW626056:
+        filter: "--min-date 2020 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
+        include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/references_h1n1pdm.txt"
+        exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h1n1pdm.txt
+        reference_EPI_ISL: EPI1812046
+        reference_strain: A/Wisconsin/588/2019
   h3n2:
     ha:
       EPI1857216:
