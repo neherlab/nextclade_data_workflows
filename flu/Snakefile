@@ -56,24 +56,6 @@ rule offset_clades:
             >{output}
         """
 
-rule offset_clades_short:
-    input:
-        "data/clades-short_{strain}_{segment_name}_{reference}_raw.tsv",
-    output:
-        "data/clades-short_{strain}_{segment_name}_{reference}.tsv",
-    params:
-        offset=lambda w: config["builds"][w.strain][w.segment_name][w.reference][
-            "clade_offset"
-        ],
-    shell:
-        """
-        perl -F'\\t' -ne \
-            '$F[2]+={params.offset} if $F[1] =~ "nuc"; \
-            print join "\\t", @F' \
-            {input} \
-            >{output}
-        """
-
 rule download_includes:
     output:
         "data/includes_{strain}_{segment_name}_{reference}.tsv",
@@ -357,6 +339,23 @@ rule clades:
             > /dev/null
         """
 
+rule make_short_clades:
+    input:
+        clades=rules.offset_clades.output,
+    output:
+        clades = "data/clades-short_{strain}_{segment_name}_{reference}.tsv"
+    run:
+        with open(str(input.clades)) as fh:
+            clades = fh.readlines()
+
+        for contraction in config["builds"][wildcards.strain][wildcards.segment_name][wildcards.reference].get("clade_contractions", []):
+            clades = [x.replace(contraction['orig'], contraction['short']) for x in clades]
+
+        with open(str(output.clades), 'w') as fh:
+            for line in clades:
+                fh.write(line)
+
+
 rule clades_short:
     message:
         "Adding internal clade labels"
@@ -420,7 +419,10 @@ def get_node_data(w):
 
     if w.segment_name == "ha":
         node_data.append("build/{strain}/{segment_name}/{reference}/clades.json".format(**w))
+
+    if "clade_contractions" in config["builds"][w.strain][w.segment_name][w.reference]:
         node_data.append("build/{strain}/{segment_name}/{reference}/clades-short.json".format(**w))
+
     return node_data
 
 

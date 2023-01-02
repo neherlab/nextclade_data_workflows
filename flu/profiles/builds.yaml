@@ -12,6 +12,7 @@ builds:
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h1n1pdm.txt
         reference_EPI_ISL: EPI1583287
         reference_strain: A/California/7/2009-egg #TODO: exclude
+        clade_contractions: [{"orig":"6B.1A.5a", "short":"5a"}]
       MW626062:
         filter: "--min-date 2020 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
         clade_offset: 0
@@ -20,6 +21,7 @@ builds:
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h1n1pdm.txt
         reference_EPI_ISL: EPI1812046
         reference_strain: A/Wisconsin/588/2019
+        clade_contractions: [{"orig":"6B.1A.5a", "short":"5a"}]
   h3n2:
     ha:
       EPI1857216:
@@ -30,6 +32,7 @@ builds:
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h3n2.txt
         reference_EPI_ISL: EPI1857216
         reference_strain: A/Darwin/6/2021
+        clade_contractions: [{"orig":"3C.2a1b.2a.1", "short":"1"},{"orig":"3C.2a1b.2a.2", "short":"2"}]
       CY163680:
         filter: "--min-date 2016 --probabilistic-sampling --group-by year --subsample-max-sequences 1500"
         clade_offset: 17
@@ -38,6 +41,7 @@ builds:
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/outliers_h3n2.txt
         reference_EPI_ISL: EPI545340
         reference_strain: A/Wisconsin/67/2005-egg
+        clade_contractions: [{"orig":"3C.2a1b.2a.1", "short":"1"},{"orig":"3C.2a1b.2a.2", "short":"2"}]
   vic:
     ha:
       KX058884:
