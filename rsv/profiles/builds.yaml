@@ -15,11 +15,22 @@ builds:
         G:
           key: G_clade
           def: "references/a/LR699737/clades_G.tsv"
+    EPI_ISL_412866:
+      filter: "--min-date 1995 --probabilistic-sampling --group-by year --subsample-max-sequences 1500 --query 'genome_coverage>0.95'"
+      exclude_url: https://raw.githubusercontent.com/nextstrain/rsv/master/config/outliers.txt
+      reference_strain: hRSV/A/England/397/2017
+      clades:
+        genome:
+          key: clade_membership
+          def: "references/a/EPI_ISL_412866/clades_genome.tsv"
+        G:
+          key: G_clade
+          def: "references/a/EPI_ISL_412866/clades_G.tsv"
   b:
     MW020595:
       filter: "--min-date 1995 --probabilistic-sampling --group-by year --subsample-max-sequences 1500 --query 'genome_coverage>0.95'"
       exclude_url: https://raw.githubusercontent.com/nextstrain/rsv/master/config/outliers.txt
-      reference_strain: hRSV/B/Australia/VIC-RCH056/2019
+      reference_strain: substitute_for_hRSV/B/Australia/VIC-RCH056/2019
       clades:
         genome:
           key: clade_membership
@@ -27,3 +38,14 @@ builds:
         G:
           key: G_clade
           def: "references/b/MW020595/clades_G.tsv"
+    EPI_ISL_1653999:
+      filter: "--min-date 1995 --probabilistic-sampling --group-by year --subsample-max-sequences 1500 --query 'genome_coverage>0.95'"
+      exclude_url: https://raw.githubusercontent.com/nextstrain/rsv/master/config/outliers.txt
+      reference_strain: hRSV/B/Australia/VIC-RCH056/2019
+      clades:
+        genome:
+          key: clade_membership
+          def: "references/b/EPI_ISL_1653999/clades_genome.tsv"
+        G:
+          key: G_clade
+          def: "references/b/EPI_ISL_1653999/clades_G.tsv"
