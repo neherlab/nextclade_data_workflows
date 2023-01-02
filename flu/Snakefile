@@ -96,7 +96,9 @@ rule parse:
         """
 
 
-genes = ["SigPep", "HA1", "HA2"]
+def genes(w):
+    if w.segment_name=='ha': return ["SigPep", "HA1", "HA2"]
+    if w.segment_name=='na': return ["NA"]
 
 
 rule subsample:
@@ -299,12 +301,12 @@ rule aa_muts_explicit:
     output:
         node_data="build/{strain}/{segment_name}/{reference}/aa_muts_explicit.json",
     params:
-        genes=["SigPep", "HA1", "HA2"],
+        genes=genes,
         translations=lambda w: expand(
             "build/{strain}/{segment_name}/{reference}/aligned.gene.{genes}.fasta",
             strain=w.strain,
             segment_name=w.segment_name,
-            genes=["SigPep", "HA1", "HA2"],
+            genes=genes(w),
             reference=w.reference,
         ),
     shell:
@@ -387,12 +389,12 @@ rule attach_root_mutations:
         aa_muts="build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json",
         nuc_muts="build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json"
     params:
-        genes = ["SigPep", "HA1", "HA2"],
+        genes = genes,
         translations=lambda w: expand(
             "build/{strain}/{segment_name}/{reference}/aligned.gene.{genes}.fasta",
             strain=w.strain,
             segment_name=w.segment_name,
-            genes=["SigPep", "HA1", "HA2"],
+            genes=genes(w),
             reference=w.reference,
         ),
         reference = lambda w: w.reference
@@ -458,11 +460,13 @@ rule swap_strain_accession:
         auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
     output:
         auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice.json",
+    params:
+        fake_clade = lambda w: '--add-fake-clade none' if w.segment_name != 'ha' else ''
     shell:
         """
         python3 scripts/swap_strain_accession.py \
             --tree-input-path {input.auspice_json} \
-            --tree-output-path {output.auspice_json}
+            --tree-output-path {output.auspice_json} {params.fake_clade}
         """
 
 
