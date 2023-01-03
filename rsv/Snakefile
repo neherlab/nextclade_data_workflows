@@ -17,9 +17,11 @@ rule all:
 
 
 rule clean:
+    params:
+        builds = build_dir
     shell:
         """
-        rm -rf output test data/clades* data/include*
+        rm -rf output test data/clades* data/include* {params.builds}
         """
 
 
@@ -104,13 +106,28 @@ rule filter:
             {params.filter_arguments}
         """
 
+rule add_reference:
+    input:
+        sample=rules.filter.output.sequences,
+        reference="references/{a_or_b}/{reference}/reference.fasta",
+    output:
+        sequences = build_dir+"/{a_or_b}/{reference}/filtered_ref.fasta",
+    params:
+        first_line=lambda w: f">{w.reference}",
+    shell:
+        """
+        tail -n +2 {input.reference} | \
+        cat <(echo {params.first_line:q}) - {input.sample} >{output.sequences}
+        """
+
+
 rule nextalign:
     message:
         """
         Aligning sequences to {input.reference}
         """
     input:
-        sequences = rules.filter.output.sequences,
+        sequences = rules.add_reference.output.sequences,
         reference = "references/{a_or_b}/{reference}/reference.fasta",
         genemap = "references/{a_or_b}/{reference}/genemap.gff"
     output:
@@ -134,7 +151,7 @@ rule align:
         Aligning sequences to {input.reference}
         """
     input:
-        sequences = rules.filter.output.sequences,
+        sequences = rules.add_reference.output.sequences,
         reference = "references/{a_or_b}/{reference}/reference.fasta",
     output:
         alignment = build_dir + "/{a_or_b}/{reference}/mafft_aligned.fasta"
