@@ -415,7 +415,7 @@ rule assemble_folder:
     input:
         genemap="references/{a_or_b}/{reference}/genemap.gff",
         reference="references/{a_or_b}/{reference}/reference.fasta",
-        virus_properties="profiles/virus_properties.json",
+        virus_properties="references/{a_or_b}/{reference}/virus_properties.json",
         sample_sequences=build_dir + "/{a_or_b}/{reference}/sample_sequences.fasta",
         tree="auspice/{a_or_b}/{reference}/tree.json",
         qc="profiles/qc.json",
