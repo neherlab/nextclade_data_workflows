@@ -521,7 +521,7 @@ rule assemble_folder:
         cp {input.tree} {output.tree};
         """
 
-if 'timestame' not in config:
+if 'timestamp' not in config:
     timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
 else:
     timestamp = config['timestamp']
