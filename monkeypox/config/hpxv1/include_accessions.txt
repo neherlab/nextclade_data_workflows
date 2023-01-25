@@ -1,1 +1,2 @@
 KJ642617 #outgroup
+NC_063383 #reference

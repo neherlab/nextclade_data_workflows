@@ -34,7 +34,9 @@ rule filter:
         metadata=build_dir + "/{build_name}/metadata.tsv",
         exclude=config["exclude"],
         specific_exclude="config/{build_name}/exclude_accessions.txt",
-        include="config/{build_name}/include_accessions.txt",
+        deduplicate_exclude="data/duplicates.txt",
+        specific_include="config/{build_name}/include_accessions.txt",
+        include="config/include_accessions.txt",
     output:
         sequences=build_dir + "/{build_name}/filtered.fasta",
         log=build_dir + "/{build_name}/filtered.log",
@@ -48,10 +50,10 @@ rule filter:
             --sequences {input.sequences} \
             --metadata {input.metadata} \
             --metadata-id-columns strain \
-            --exclude {input.exclude} {input.specific_exclude} \
+            --exclude {input.exclude} {input.specific_exclude} {input.deduplicate_exclude} \
             {params.exclude_where} \
             {params.min_date} \
-            --include {input.include} \
+            --include {input.include} {input.specific_include} \
             --output {output.sequences} \
             --min-length {params.min_length} \
             --output-log {output.log}
@@ -105,9 +107,9 @@ rule mask:
     shell:
         """
         augur mask \
-          --sequences {input.sequences} \
-          --mask {input.mask} \
-          --output {output}
+            --sequences {input.sequences} \
+            --mask {input.mask} \
+            --output {output}
         """
 
 
