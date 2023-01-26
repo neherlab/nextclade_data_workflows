@@ -14,13 +14,36 @@ View results with:
 nextstrain view auspice/
 ```
 
-### Copy trees over to nextclade_data
+## Maintenance
 
-```bash
-cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_b1.json ~/code/nextclade_data/data/datasets/hMPXV_B1/references/pseudo_ON563414/versions/{timestamp}
-cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_MPXV.json ~/code/nextclade_data/data/datasets/MPXV/references/ancestral/versions/{timestamp}
-cp ~/code/nextclade_data_workflows/monkeypox/auspice/nextclade_monkeypox_hpxv1.json ~/code/nextclade_data/data/datasets/hMPXV/references/NC_063383.1/versions/{timestamp}
+### Updating for new clades
+
+- [ ] Update each `config/{build}/clades.tsv` with new clades
+- [ ] Add new clades to color ordering
+- [ ] Check that clades look good, exclude problematic sequences as necessary
+
+### Creating a new dataset version
+
+```sh
+#!/bin/bash
+OLD="2022-11-03T12:00:00Z"
+NEW="2023-01-26T12:00:00Z"
+
+B1="hMPXV_B1/references/pseudo_ON563414"
+MPXV="MPXV/references/ancestral"
+HPXV="hMPXV/references/NC_063383.1"
+
+declare -A EXTENSION=( ["$B1"]="b1" ["$MPXV"]="MPXV" ["$HPXV"]="hpxv1" ) 
+
+for d in $B1 $MPXV $HPXV; do
+  rm -rf ~/code/nextclade_data/data/datasets/$d/versions/$NEW
+  cp -pr ~/code/nextclade_data/data/datasets/$d/versions/$OLD ~/code/nextclade_data/data/datasets/$d/versions/$NEW
+  sed -i "s/$OLD/$NEW/g" ~/code/nextclade_data/data/datasets/$d/versions/$NEW/files/tag.json
+  aws s3 cp s3://nextstrain-staging/nextclade_monkeypox_${EXTENSION[$d]}.json - | gzcat >~/code/nextclade_data/data/datasets/$d/versions/$NEW/files/tree.json 
+done
 ```
+
+Edit CHANGELOG.md
 
 ## Configuration
 
@@ -44,10 +67,3 @@ uncertain.
 
 Follow the [standard installation instructions](https://docs.nextstrain.org/en/latest/install.html) for Nextstrain's suite of software tools.
 Please choose the installation method for your operating system which uses Docker, as currently a pre-release version of Nextalign is required which we've baked into the `--image` argument to `nextstrain build` above.
-
-### Nextstrain build vs Snakemake
-
-The above commands use the Nextstrain CLI and `nextstrain build` along with Docker to run using Nextalign v2. Alternatively, if you install Nextalign v2 locally. You can run pipeline with:
-```
-snakemake -j 1 -p --configfile config/config.yaml
-```

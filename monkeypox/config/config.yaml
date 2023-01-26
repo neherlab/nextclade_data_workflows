@@ -24,7 +24,7 @@ MPXV:
 b1:
   root: "ref_in_coord"
   min_date: "--min-date 2022"
-  exclude_where: "--exclude-where outbreak!=hMPXV-1 lineage=A.2 lineage=A.2.1 lineage=A lineage=A.1 lineage=A.3"
+  exclude_where: "--exclude-where outbreak!=hMPXV-1 lineage=A.2 lineage=A.2.1 lineage=A.2.2 lineage=A.2.3 lineage=A lineage=A.1 lineage=A.3"
 
 ## filter
 min_length: 150000
@@ -39,4 +39,3 @@ timetree: false
 mask:
   from_beginning: 1500
   from_end: 6422
-  maskfile: "config/mask.bed"
