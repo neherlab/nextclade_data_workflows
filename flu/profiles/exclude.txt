@@ -76,3 +76,6 @@ A/India/NIV-ARI28/2022
 A/Oregon/46/2022
 A/SouthAfrica/R03635/2022
 A/Uruguay/6881/2021
+A/Baltimore/JH-0492/2022
+CY163680
+A/Mali/54/2019

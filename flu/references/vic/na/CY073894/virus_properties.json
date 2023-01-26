@@ -11,7 +11,7 @@
         "includeGenes": [
           {
             "gene":"NA",
-            "ranges":[{"begin":33, "end":470}]
+            "ranges":[{"begin":33, "end":466}]
           }
         ],
         "motifs": [
