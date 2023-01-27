@@ -7,6 +7,13 @@
   ],
   "extensions": {
     "nextclade": {
+      "clade_node_attrs": [
+        {
+          "name": "short_clade",
+          "displayName": "Abbreviated clade name",
+          "description": "For recent subclades with long names, the prefix describing their history is omitted."
+        }
+      ]
     }
   },
   "data_provenance": [

@@ -3,35 +3,37 @@ import datetime
 
 wildcard_constraints:
     flu_type="[A-Za-z0-9]+",
-    segment="\d",
     year="\d\d\d\d",
     strain="[^_/]+",
-    segment_name="[^_/]+",
+    segment="[^_/]+",
     reference="[^_/]+",
 
-
-def segment_number(segment_name):
-    return "4"
 
 
 rule all:
     input:
         [
-            f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta"
+            f"test/{strain}/{segment}/{reference}/nextclade.aligned.fasta"
             for strain in config["builds"]
-            for segment_name in config["builds"][strain]
-            for reference in config["builds"][strain][segment_name]
+            for segment in config["builds"][strain]
+            for reference in config["builds"][strain][segment]
         ],
 
-
+rule fetch_data:
+    output:
+        raw_sequences="data/{strain}/raw_{segment}.fasta"
+    shell:
+        """
+        scp -r neher@transfer.scicore.unibas.ch:/scicore/home/neher/neher/nextstrain/seasonal-flu/data/{wildcards.strain}/raw_{wildcards.segment}.fasta {output.raw_sequences}
+        """
 
 rule download_clades:
     message:
         "Downloading clade definitions for {wildcards.strain} from {params.source} -> {output}"
     output:
-        "data/clades_{strain}_{segment_name}_{reference}_raw.tsv",
+        "data/clades_{strain}_{segment}_{reference}_raw.tsv",
     params:
-        source=lambda w: config["builds"][w.strain][w.segment_name][w.reference][
+        source=lambda w: config["builds"][w.strain][w.segment][w.reference][
             "clade_url"
         ],
     shell:
@@ -42,9 +44,9 @@ rule offset_clades:
     input:
         rules.download_clades.output,
     output:
-        "data/clades_{strain}_{segment_name}_{reference}.tsv",
+        "data/clades_{strain}_{segment}_{reference}.tsv",
     params:
-        offset=lambda w: config["builds"][w.strain][w.segment_name][w.reference][
+        offset=lambda w: config["builds"][w.strain][w.segment][w.reference][
             "clade_offset"
         ],
     shell:
@@ -58,9 +60,9 @@ rule offset_clades:
 
 rule download_includes:
     output:
-        "data/includes_{strain}_{segment_name}_{reference}.tsv",
+        "data/includes_{strain}_{segment}_{reference}.tsv",
     params:
-        source=lambda w: config["builds"][w.strain][w.segment_name][w.reference][
+        source=lambda w: config["builds"][w.strain][w.segment][w.reference][
             "include_url"
         ],
     shell:
@@ -69,9 +71,9 @@ rule download_includes:
 
 rule download_excludes:
     output:
-        "data/excludes_{strain}_{segment_name}_{reference}.txt",
+        "data/excludes_{strain}_{segment}_{reference}.txt",
     params:
-        source=lambda w: config["builds"][w.strain][w.segment_name][w.reference][
+        source=lambda w: config["builds"][w.strain][w.segment][w.reference][
             "exclude_url"
         ],
     shell:
@@ -80,10 +82,10 @@ rule download_excludes:
 
 rule parse:
     input:
-        sequences="data/{strain}/raw_{segment_name}.fasta",
+        sequences="data/{strain}/raw_{segment}.fasta",
     output:
-        metadata="data/{strain}_{segment_name}_metadata.tsv",
-        sequences="data/{strain}_{segment_name}_sequences.fasta",
+        metadata="data/{strain}_{segment}_metadata.tsv",
+        sequences="data/{strain}_{segment}_sequences.fasta",
     params:
         fields="strainName virus segment EPI_ISL date submission_date region country division location passage collecting_lab submitting_lab age sex",
     shell:
@@ -97,31 +99,32 @@ rule parse:
 
 
 def genes(w):
-    if w.segment_name=='ha': return ["SigPep", "HA1", "HA2"]
-    if w.segment_name=='na': return ["NA"]
+    if w.segment=='ha': return ["SigPep", "HA1", "HA2"]
+    if w.segment=='na': return ["NA"]
 
 
 rule subsample:
     input:
         aligned_sequences=rules.parse.output.sequences,
         enriched_metadata=rules.parse.output.metadata,
-        include_accessions="data/includes_{strain}_{segment_name}_{reference}.tsv",
+        include_accessions="data/includes_{strain}_{segment}_{reference}.tsv",
     output:
-        sampled_sequences="build/{strain}/{segment_name}/{reference}/subsample_raw.fasta",
-        sampled_strains="build/{strain}/{segment_name}/{reference}/subsample_raw.txt",
+        sampled_sequences="build/{strain}/{segment}/{reference}/subsample_raw.fasta",
+        sampled_strains="build/{strain}/{segment}/{reference}/subsample_raw.txt",
     params:
-        filter_arguments=lambda w: config["builds"][w.strain][w.segment_name][
+        filter_arguments=lambda w: config["builds"][w.strain][w.segment][
             w.reference
         ]["filter"],
-        reference_EPI_ISL=lambda w: config["builds"][w.strain][w.segment_name][
+        reference_EPI_ISL=lambda w: config["builds"][w.strain][w.segment][
             w.reference
         ]["reference_EPI_ISL"],
+        other_include = lambda w:config["builds"][w.strain][w.segment][w.reference].get("include_file","")
     shell:
         """
         augur filter \
             --sequences {input.aligned_sequences} \
             --metadata {input.enriched_metadata} \
-            --include {input.include_accessions} \
+            --include {input.include_accessions} {params.other_include} \
             --include-where EPI_ISL={params.reference_EPI_ISL} \
             {params.filter_arguments} \
             --output {output.sampled_sequences} \
@@ -133,7 +136,7 @@ rule remove_duplicates:
     input:
         rules.subsample.output.sampled_sequences,
     output:
-        sequences="build/{strain}/{segment_name}/{reference}/subsample_ex_duplicates.fasta",
+        sequences="build/{strain}/{segment}/{reference}/subsample_ex_duplicates.fasta",
     shell:
         """
         seqkit grep -ivr -p '-egg' {input} | \
@@ -148,8 +151,8 @@ rule exclude_outliers:
         exclude="profiles/exclude.txt",
         exclude_specific=rules.download_excludes.output,
     output:
-        sampled_sequences="build/{strain}/{segment_name}/{reference}/subsample_ex_ref.fasta",
-        sampled_strains="build/{strain}/{segment_name}/{reference}/subsample_ex_ref.txt",
+        sampled_sequences="build/{strain}/{segment}/{reference}/subsample_ex_ref.fasta",
+        sampled_strains="build/{strain}/{segment}/{reference}/subsample_ex_ref.txt",
     shell:
         """
         augur filter \
@@ -165,9 +168,9 @@ rule exclude_outliers:
 rule add_reference:
     input:
         sample=rules.exclude_outliers.output.sampled_sequences,
-        reference="references/{strain}/{segment_name}/{reference}/reference.fasta",
+        reference="references/{strain}/{segment}/{reference}/reference.fasta",
     output:
-        "build/{strain}/{segment_name}/{reference}/subsample.fasta",
+        "build/{strain}/{segment}/{reference}/subsample.fasta",
     params:
         first_line=lambda w: f">{w.reference}",
     shell:
@@ -180,13 +183,13 @@ rule add_reference:
 rule align:
     input:
         sequences=rules.add_reference.output,
-        genemap="references/{strain}/{segment_name}/{reference}/genemap.gff",
-        reference="references/{strain}/{segment_name}/{reference}/reference.fasta",
+        genemap="references/{strain}/{segment}/{reference}/genemap.gff",
+        reference="references/{strain}/{segment}/{reference}/reference.fasta",
     output:
-        alignment="build/{strain}/{segment_name}/{reference}/align.aligned.fasta",
-        insertions="build/{strain}/{segment_name}/{reference}/align.insertions.csv",
+        alignment="build/{strain}/{segment}/{reference}/align.aligned.fasta",
+        insertions="build/{strain}/{segment}/{reference}/align.insertions.csv",
     params:
-        outdir=lambda w: f"build/{w.strain}/{w.segment_name}/{w.reference}/aligned.gene.{{gene}}.fasta",
+        outdir=lambda w: f"build/{w.strain}/{w.segment}/{w.reference}/aligned.gene.{{gene}}.fasta",
     threads: 3
     shell:
         """
@@ -206,7 +209,7 @@ rule tree:
     input:
         alignment=rules.align.output.alignment,
     output:
-        tree="build/{strain}/{segment_name}/{reference}/tree_raw.nwk",
+        tree="build/{strain}/{segment}/{reference}/tree_raw.nwk",
     params:
         args=lambda w: config["tree"].get("tree-builder-args", "")
         if "tree" in config
@@ -228,9 +231,9 @@ rule root:
         tree=rules.tree.output.tree,
         metadata = rules.parse.output.metadata,
     output:
-        tree="build/{strain}/{segment_name}/{reference}/tree_rooted.nwk",
+        tree="build/{strain}/{segment}/{reference}/tree_rooted.nwk",
     params:
-        outdir = "build/{strain}/{segment_name}/{reference}/tt_out"
+        outdir = "build/{strain}/{segment}/{reference}/tt_out"
     shell:
         """
         treetime clock \
@@ -249,8 +252,8 @@ rule refine:
         alignment=rules.align.output.alignment,
         enriched_metadata=rules.parse.output.metadata,
     output:
-        tree="build/{strain}/{segment_name}/{reference}/tree.nwk",
-        node_data="build/{strain}/{segment_name}/{reference}/branch_lengths.json",
+        tree="build/{strain}/{segment}/{reference}/tree.nwk",
+        node_data="build/{strain}/{segment}/{reference}/branch_lengths.json",
     threads: 1
     shell:
         """
@@ -275,7 +278,7 @@ rule ancestral:
         tree=rules.refine.output.tree,
         alignment=rules.align.output.alignment,
     output:
-        node_data="build/{strain}/{segment_name}/{reference}/nt_muts.json",
+        node_data="build/{strain}/{segment}/{reference}/nt_muts.json",
     params:
         inference="joint",
     shell:
@@ -296,16 +299,16 @@ rule aa_muts_explicit:
     input:
         translations=rules.align.output.alignment,
         tree=rules.refine.output.tree,
-        genemap="references/{strain}/{segment_name}/{reference}/genemap.gff",
-        reference="references/{strain}/{segment_name}/{reference}/reference.fasta",
+        genemap="references/{strain}/{segment}/{reference}/genemap.gff",
+        reference="references/{strain}/{segment}/{reference}/reference.fasta",
     output:
-        node_data="build/{strain}/{segment_name}/{reference}/aa_muts_explicit.json",
+        node_data="build/{strain}/{segment}/{reference}/aa_muts_explicit.json",
     params:
         genes=genes,
         translations=lambda w: expand(
-            "build/{strain}/{segment_name}/{reference}/aligned.gene.{genes}.fasta",
+            "build/{strain}/{segment}/{reference}/aligned.gene.{genes}.fasta",
             strain=w.strain,
-            segment_name=w.segment_name,
+            segment=w.segment,
             genes=genes(w),
             reference=w.reference,
         ),
@@ -331,7 +334,7 @@ rule clades:
         nuc_muts=rules.ancestral.output.node_data,
         clades=rules.offset_clades.output,
     output:
-        node_data="build/{strain}/{segment_name}/{reference}/clades.json",
+        node_data="build/{strain}/{segment}/{reference}/clades.json",
     shell:
         """
         augur clades --tree {input.tree} \
@@ -347,12 +350,12 @@ rule make_short_clades:
     input:
         clades=rules.offset_clades.output,
     output:
-        clades = "data/clades-short_{strain}_{segment_name}_{reference}.tsv"
+        clades = "data/clades-short_{strain}_{segment}_{reference}.tsv"
     run:
         with open(str(input.clades)) as fh:
             clades = fh.readlines()
 
-        for contraction in config["builds"][wildcards.strain][wildcards.segment_name][wildcards.reference].get("clade_contractions", []):
+        for contraction in config["builds"][wildcards.strain][wildcards.segment][wildcards.reference].get("clade_contractions", []):
             clades = [x.replace(contraction['orig'], contraction['short']) for x in clades]
 
         with open(str(output.clades), 'w') as fh:
@@ -367,9 +370,9 @@ rule clades_short:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades = "data/clades-short_{strain}_{segment_name}_{reference}.tsv"
+        clades = "data/clades-short_{strain}_{segment}_{reference}.tsv"
     output:
-        node_data="build/{strain}/{segment_name}/{reference}/clades-short.json",
+        node_data="build/{strain}/{segment}/{reference}/clades-short.json",
     shell:
         """
         augur clades --tree {input.tree} \
@@ -388,14 +391,14 @@ rule attach_root_mutations:
         translations = rules.align.output.alignment,
         tree = rules.refine.output.tree
     output:
-        aa_muts="build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json",
-        nuc_muts="build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json"
+        aa_muts="build/{strain}/{segment}/{reference}/aa_muts_adapted.json",
+        nuc_muts="build/{strain}/{segment}/{reference}/nuc_muts_adapted.json"
     params:
         genes = genes,
         translations=lambda w: expand(
-            "build/{strain}/{segment_name}/{reference}/aligned.gene.{genes}.fasta",
+            "build/{strain}/{segment}/{reference}/aligned.gene.{genes}.fasta",
             strain=w.strain,
-            segment_name=w.segment_name,
+            segment=w.segment,
             genes=genes(w),
             reference=w.reference,
         ),
@@ -417,15 +420,15 @@ rule attach_root_mutations:
 def get_node_data(w):
     node_data = [
         rules.refine.output.node_data,
-        "build/{strain}/{segment_name}/{reference}/aa_muts_adapted.json".format(**w),
-        "build/{strain}/{segment_name}/{reference}/nuc_muts_adapted.json".format(**w),
+        "build/{strain}/{segment}/{reference}/aa_muts_adapted.json".format(**w),
+        "build/{strain}/{segment}/{reference}/nuc_muts_adapted.json".format(**w),
     ]
 
-    if w.segment_name == "ha":
-        node_data.append("build/{strain}/{segment_name}/{reference}/clades.json".format(**w))
+    if w.segment == "ha":
+        node_data.append("build/{strain}/{segment}/{reference}/clades.json".format(**w))
 
-    if "clade_contractions" in config["builds"][w.strain][w.segment_name][w.reference]:
-        node_data.append("build/{strain}/{segment_name}/{reference}/clades-short.json".format(**w))
+    if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference]:
+        node_data.append("build/{strain}/{segment}/{reference}/clades-short.json".format(**w))
 
     return node_data
 
@@ -437,9 +440,9 @@ rule export:
         tree=rules.refine.output.tree,
         metadata=rules.parse.output.metadata,
         node_data = get_node_data,
-        auspice_config=lambda w: config["files"]["auspice_config"],
+        auspice_config=lambda w: config["files"]["auspice_config_shortclade"] if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference] else config["files"]["auspice_config"],
     output:
-        auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
+        auspice_json="auspice/{strain}/{segment}/{reference}/auspice_raw.json",
     params:
         fields="region strainName country date EPI_ISL",
         date=datetime.datetime.utcnow().strftime("%Y-%m-%d"),
@@ -452,18 +455,18 @@ rule export:
             --node-data {input.node_data}\
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
-            --title "Nextclade reference tree for Influenza type:{wildcards.strain} segment:{wildcards.segment_name} with root {wildcards.reference} built on {params.date}" \
+            --title "Nextclade reference tree for Influenza type:{wildcards.strain} segment:{wildcards.segment} with root {wildcards.reference} built on {params.date}" \
             --output {output.auspice_json} 2>&1;
         """
 
 
 rule swap_strain_accession:
     input:
-        auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice_raw.json",
+        auspice_json="auspice/{strain}/{segment}/{reference}/auspice_raw.json",
     output:
-        auspice_json="auspice/{strain}/{segment_name}/{reference}/auspice.json",
+        auspice_json="auspice/{strain}/{segment}/{reference}/auspice.json",
     params:
-        fake_clade = lambda w: '--add-fake-clade none' if w.segment_name != 'ha' else ''
+        fake_clade = lambda w: '--add-fake-clade none' if w.segment != 'ha' else ''
     shell:
         """
         python3 scripts/swap_strain_accession.py \
@@ -474,10 +477,10 @@ rule swap_strain_accession:
 
 rule generate_sample_sequences:
     input:
-        sequences="data/{strain}_{segment_name}_sequences.fasta",
+        sequences="data/{strain}_{segment}_sequences.fasta",
         metadata=rules.parse.output.metadata,
     output:
-        sequences="build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
+        sequences="build/{strain}/{segment}/{reference}/sample_sequences.fasta",
     shell:
         """
         augur filter \
@@ -493,26 +496,26 @@ rule generate_sample_sequences:
 
 rule assemble_folder:
     input:
-        genemap="references/{strain}/{segment_name}/{reference}/genemap.gff",
-        reference="references/{strain}/{segment_name}/{reference}/reference.fasta",
-        virus_properties="references/{strain}/{segment_name}/{reference}/virus_properties.json",
-        sample_sequences="build/{strain}/{segment_name}/{reference}/sample_sequences.fasta",
-        tree="auspice/{strain}/{segment_name}/{reference}/auspice.json",
+        genemap="references/{strain}/{segment}/{reference}/genemap.gff",
+        reference="references/{strain}/{segment}/{reference}/reference.fasta",
+        virus_properties="references/{strain}/{segment}/{reference}/virus_properties.json",
+        sample_sequences="build/{strain}/{segment}/{reference}/sample_sequences.fasta",
+        tree="auspice/{strain}/{segment}/{reference}/auspice.json",
         qc="profiles/qc.json",
         tag="profiles/tag.json",
         primers="profiles/primers.csv",
     output:
-        genemap="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/genemap.gff",
-        primers="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/primers.csv",
-        virus_properties="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/virus_properties.json",
-        qc="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/qc.json",
-        reference="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/reference.fasta",
-        sample_sequences="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/sequences.fasta",
-        tree="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/tree.json",
-        tag="output/flu_{strain}_{segment_name}/references/{reference}/versions/{timestamp}/files/tag.json",
+        genemap="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/genemap.gff",
+        primers="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/primers.csv",
+        virus_properties="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/virus_properties.json",
+        qc="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/qc.json",
+        reference="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/reference.fasta",
+        sample_sequences="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/sequences.fasta",
+        tree="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/tree.json",
+        tag="output/flu_{strain}_{segment}/references/{reference}/versions/{timestamp}/files/tag.json",
     shell:
         """
-        mkdir -p output/flu_{wildcards.strain}_{wildcards.segment_name}/references/{wildcards.reference}/versions/{wildcards.timestamp}/files/;
+        mkdir -p output/flu_{wildcards.strain}_{wildcards.segment}/references/{wildcards.reference}/versions/{wildcards.timestamp}/files/;
         jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
         cp {input.genemap} {output.genemap};
         cp {input.reference} {output.reference};
@@ -532,17 +535,17 @@ else:
 rule test_nextclade:
     input:
         expand(
-            "output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files/tree.json",
+            "output/flu_{{strain}}_{{segment}}/references/{{reference}}/versions/{timestamp}/files/tree.json",
             timestamp=timestamp,
         ),
     output:
-        "test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta",
+        "test/{strain}/{segment}/{reference}/nextclade.aligned.fasta",
     params:
         indir=expand(
-            "output/flu_{{strain}}_{{segment_name}}/references/{{reference}}/versions/{timestamp}/files",
+            "output/flu_{{strain}}_{{segment}}/references/{{reference}}/versions/{timestamp}/files",
             timestamp=timestamp,
         ),
-        outdir="test/{strain}/{segment_name}/{reference}",
+        outdir="test/{strain}/{segment}/{reference}",
     shell:
         """
         nextclade run \
@@ -559,12 +562,12 @@ rule test_nextclade:
 rule clean:
     shell:
         """
-        rm -rf output test data/clades* data/include*
+        rm -rf output test data/clades* data/include* auspice/*
         """
 
 
 rule clean_all:
     shell:
         """
-        rm -rf output test auspice build pre-processed data
+        rm -rf output test auspice build data
         """

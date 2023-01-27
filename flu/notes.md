@@ -5,7 +5,7 @@ Todo: extend to other segments
 
 Refine: What should be run
 
-QC: How to get rid of far away 
+QC: How to get rid of far away
 
 
 Sanitize script: tree and cut off long terminals
@@ -53,3 +53,32 @@ Confused about sampling
 Ambiguous dates excluded by default with min date?
 Cannot specify which column to use?
 Pandas filter does not work
+
+
+
+scratch:
+  "phenotypeData":[
+      {
+        "name": "res",
+        "nameFriendly": "Oseltamivir resistance",
+        "description": "Mutation score at positions associated with Oseltamivir resistance",
+        "gene": "NA",
+        "aaRange": {
+          "begin": 100,
+          "end": 300
+        },
+        "ignore": {
+          "clades": ["outgroup"]
+        },
+        "data": [
+          {
+            "name": "differences",
+            "weight": 1,
+            "locations": {
+              "275": {"default":0.5, "Y":2}
+            }
+          }
+        ]
+      }
+    ]
+
