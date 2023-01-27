@@ -1,5 +1,6 @@
 files:
   auspice_config: "profiles/auspice_config.json"
+  auspice_config_shortclade: "profiles/auspice_config_wshort_clade.json"
 
 timestamp: "2023-01-27T12:00:00Z"
 

@@ -440,7 +440,7 @@ rule export:
         tree=rules.refine.output.tree,
         metadata=rules.parse.output.metadata,
         node_data = get_node_data,
-        auspice_config=lambda w: config["files"]["auspice_config"],
+        auspice_config=lambda w: config["files"]["auspice_config_shortclade"] if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference] else config["files"]["auspice_config"],
     output:
         auspice_json="auspice/{strain}/{segment}/{reference}/auspice_raw.json",
     params:
