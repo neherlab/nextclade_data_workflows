@@ -335,7 +335,7 @@ rule internal_pango:
         """
 
 
-rule clades:
+rule clades_legacy:
     message:
         "Adding internal clade labels"
     input:
@@ -346,8 +346,7 @@ rule clades:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data=build_dir + "/{build_name}/clades.json",
-        node_data_legacy=build_dir + "/{build_name}/clades_legacy.json",
+        node_data=build_dir + "/{build_name}/clades_legacy.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -368,12 +367,11 @@ rule clades:
             --clade-type clade_membership \
             --output {output.node_data}
         rm clades_raw.tmp
-        cp {output.node_data} {output.node_data_legacy}
-        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data_legacy}
+        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data}
         """
 
 
-rule clades_nextstrain:
+rule clades:
     message:
         "Adding internal clade labels"
     input:
@@ -384,7 +382,8 @@ rule clades_nextstrain:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data=build_dir + "/{build_name}/clades_nextstrain.json",
+        node_data=build_dir + "/{build_name}/clades.json",
+        node_data_nextstrain=build_dir + "/{build_name}/clades_nextstrain.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -405,7 +404,8 @@ rule clades_nextstrain:
             --clade-type clade_nextstrain \
             --output {output.node_data}
         rm clades_nextstrain.tmp
-        sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data}
+        cp {output.node_data} {output.node_data_nextstrain}
+        sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data_nextstrain}
         """
 
 
@@ -507,9 +507,9 @@ def _get_node_data_by_wildcards(wildcards):
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
+        rules.clades_legacy.output.node_data,
         rules.clades.output.node_data,
-        rules.clades.output.node_data_legacy,
-        rules.clades_nextstrain.output.node_data,
+        rules.clades.output.node_data_nextstrain,
         rules.clades_who.output.node_data,
         rules.aa_muts_explicit.output.node_data,
         rules.internal_pango.output.node_data,
