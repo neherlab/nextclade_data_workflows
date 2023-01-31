@@ -68,6 +68,11 @@
       "type": "categorical"
     },
     {
+      "key": "clade_nextstrain",
+      "title": "Nextstrain clade name",
+      "type": "categorical"
+    },
+    {
       "key": "clade_legacy",
       "title": "Legacy clade name",
       "type": "categorical"

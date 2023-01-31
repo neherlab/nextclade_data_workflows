@@ -364,7 +364,7 @@ rule clades_legacy:
             --clades clades_raw.tmp \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
-            --clade-type clade_membership \
+            --clade-type clade_legacy \
             --output {output.node_data}
         rm clades_raw.tmp
         sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data}

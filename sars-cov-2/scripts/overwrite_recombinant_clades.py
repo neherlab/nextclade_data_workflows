@@ -39,7 +39,7 @@ def main(
             elif clade_type == "clade_who":
                 value["clade_membership"] = "Omicron"
         
-        if clade_type != "clade_membership":
+        if clade_type != "clade_nextstrain": # use clade_nextstrain for branch labels
             value.pop("clade_annotation", None)
 
     # Write clades.json
