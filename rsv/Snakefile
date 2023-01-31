@@ -91,7 +91,8 @@ rule filter:
         sequences = "data/{a_or_b}/sequences.fasta.xz",
         reference = "references/{a_or_b}/{reference}/reference.gbk",
         metadata = "data/{a_or_b}/metadata_by_accession.tsv",
-        exclude = build_dir + "/{a_or_b}/{reference}/exclude.txt"
+        exclude = build_dir + "/{a_or_b}/{reference}/exclude.txt",
+        exclude_global = config["exclude"]
     output:
     	sequences = build_dir + "/{a_or_b}/{reference}/filtered.fasta"
     params:
@@ -101,7 +102,7 @@ rule filter:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --exclude {input.exclude} \
+            --exclude {input.exclude} {input.exclude_global}\
             --output {output.sequences} \
             {params.filter_arguments}
         """
@@ -293,6 +294,7 @@ rule clades:
     params:
         tmp_clade = build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.tmp.json",
         key = lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['key'],
+        label_key = lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['label_key'],
     shell:
         """
         augur clades --tree {input.tree} \
@@ -300,7 +302,8 @@ rule clades:
             --clades {input.clades} \
             --output-node-data {params.tmp_clade} \
             > /dev/null
-            sed 's/clade_membership/{params.key}/' {params.tmp_clade} > {output.node_data}
+            sed 's/clade_membership/{params.key}/' {params.tmp_clade} |
+            sed -e 's/clade_annotation/{params.label_key}/g' > {output.node_data}
         """
 
 
@@ -373,10 +376,27 @@ rule export:
             --output {output.auspice_json} 2>&1;
         """
 
+def get_labels(w):
+    return [x['label_key'] for x in config['builds'][w.a_or_b][w.reference]['clades'].values() if x['label_key']!='clade_annotation']
+
+rule fix_clade_labels:
+    input:
+        auspice_json=rules.export.output.auspice_json
+    output:
+        auspice_json= build_dir + "/{a_or_b}/{reference}/auspice_relabeled.json",
+    params:
+        label_keys = get_labels
+    shell:
+        """
+        python3 scripts/fix_clade_labels.py --input-auspice-json {input.auspice_json}\
+            --label-keys {params.label_keys} --output {output.auspice_json}
+        """
+
+
 
 rule final_strain_name:
     input:
-        auspice_json = rules.export.output.auspice_json,
+        auspice_json = rules.fix_clade_labels.output.auspice_json,
         metadata = rules.wrangle_metadata.output.metadata
     output:
         auspice_json = "auspice/{a_or_b}/{reference}/tree.json"
