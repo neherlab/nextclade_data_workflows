@@ -63,11 +63,6 @@
       "type": "categorical"
     },
     {
-      "key": "clade_nextstrain",
-      "title": "Nextstrain Clade",
-      "type": "categorical"
-    },
-    {
       "key": "clade_who",
       "title": "WHO name",
       "type": "categorical"
@@ -90,8 +85,8 @@
     "clade_membership",
     "Nextclade_pango",
     "partiallyAliased",
-    "clade_nextstrain",
     "clade_who",
+    "clade_legacy",
     "designation_date"
   ],
   "panels": ["tree", "entropy"]

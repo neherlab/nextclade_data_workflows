@@ -1,48 +1,50 @@
-clade_membership	20H (Beta, V2)
-clade_membership	20I (Alpha, V1)
-clade_membership	20J (Gamma, V3)
-clade_membership	21A (Delta)
-clade_membership	21I (Delta)
-clade_membership	21J (Delta)
-clade_membership	21B (Kappa)
-clade_membership	21C (Epsilon)
-clade_membership	21D (Eta)
-clade_membership	21E (Theta)
-clade_membership	21F (Iota)
-clade_membership	21G (Lambda)
-clade_membership	21H (Mu)
-clade_membership	21K (Omicron)
-clade_membership	21L (Omicron)
-clade_membership	21M (Omicron)
-clade_membership	22A (Omicron)
-clade_membership	22B (Omicron)
-clade_membership	22C (Omicron)
-clade_membership	22D (Omicron)
-clade_membership	22E (Omicron)
-clade_membership	22F (Omicron)
+clade_membership	20H
+clade_membership	20I
+clade_membership	20J
+clade_membership	21A
+clade_membership	21I
+clade_membership	21J
+clade_membership	21B
+clade_membership	21C
+clade_membership	21D
+clade_membership	21E
+clade_membership	21F
+clade_membership	21G
+clade_membership	21H
+clade_membership	21K
+clade_membership	21L
+clade_membership	21M
+clade_membership	22A
+clade_membership	22B
+clade_membership	22C
+clade_membership	22D
+clade_membership	22E
+clade_membership	22F
+clade_membership	23A
 
-clade	20H (Beta, V2)
-clade	20I (Alpha, V1)
-clade	20J (Gamma, V3)
-clade	21A (Delta)
-clade	21I (Delta)
-clade	21J (Delta)
-clade	21B (Kappa)
-clade	21C (Epsilon)
-clade	21D (Eta)
-clade	21E (Theta)
-clade	21F (Iota)
-clade	21G (Lambda)
-clade	21H (Mu)
-clade	21K (Omicron)
-clade	21L (Omicron)
-clade	21M (Omicron)
-clade	22A (Omicron)
-clade	22B (Omicron)
-clade	22C (Omicron)
-clade	22D (Omicron)
-clade	22E (Omicron)
-clade	22F (Omicron)
+clade	20H
+clade	20I
+clade	20J
+clade	21A
+clade	21I
+clade	21J
+clade	21B
+clade	21C
+clade	21D
+clade	21E
+clade	21F
+clade	21G
+clade	21H
+clade	21K
+clade	21L
+clade	21M
+clade	22A
+clade	22B
+clade	22C
+clade	22D
+clade	22E
+clade	22F
+clade	23A
 
 clade_legacy	20H (Beta, V2)
 clade_legacy	20I (Alpha, V1)
@@ -66,6 +68,7 @@ clade_legacy	22C (Omicron)
 clade_legacy	22D (Omicron)
 clade_legacy	22E (Omicron)
 clade_legacy	22F (Omicron)
+clade_legacy	23A (Omicron)
 
 clade_nextstrain	19A
 clade_nextstrain	19B
@@ -98,6 +101,7 @@ clade_nextstrain	22C
 clade_nextstrain	22D
 clade_nextstrain	22E
 clade_nextstrain	22F
+clade_nextstrain	23A
 
 clade_who	Alpha
 clade_who	Beta
@@ -834,3 +838,103 @@ designation_date	2023-01-18
 designation_date	2023-01-19
 designation_date	2023-01-20
 designation_date	2023-01-21
+designation_date	2023-01-22
+designation_date	2023-01-23
+designation_date	2023-01-24
+designation_date	2023-01-25
+designation_date	2023-01-26
+designation_date	2023-01-27
+designation_date	2023-01-28
+designation_date	2023-01-29
+designation_date	2023-01-30
+designation_date	2023-01-31
+designation_date	2023-02-01
+designation_date	2023-02-02
+designation_date	2023-02-03
+designation_date	2023-02-04
+designation_date	2023-02-05
+designation_date	2023-02-06
+designation_date	2023-02-07
+designation_date	2023-02-08
+designation_date	2023-02-09
+designation_date	2023-02-10
+designation_date	2023-02-11
+designation_date	2023-02-12
+designation_date	2023-02-13
+designation_date	2023-02-14
+designation_date	2023-02-15
+designation_date	2023-02-16
+designation_date	2023-02-17
+designation_date	2023-02-18
+designation_date	2023-02-19
+designation_date	2023-02-20
+designation_date	2023-02-21
+designation_date	2023-02-22
+designation_date	2023-02-23
+designation_date	2023-02-24
+designation_date	2023-02-25
+designation_date	2023-02-26
+designation_date	2023-02-27
+designation_date	2023-02-28
+designation_date	2023-03-01
+designation_date	2023-03-02
+designation_date	2023-03-03
+designation_date	2023-03-04
+designation_date	2023-03-05
+designation_date	2023-03-06
+designation_date	2023-03-07
+designation_date	2023-03-08
+designation_date	2023-03-09
+designation_date	2023-03-10
+designation_date	2023-03-11
+designation_date	2023-03-12
+designation_date	2023-03-13
+designation_date	2023-03-14
+designation_date	2023-03-15
+designation_date	2023-03-16
+designation_date	2023-03-17
+designation_date	2023-03-18
+designation_date	2023-03-19
+designation_date	2023-03-20
+designation_date	2023-03-21
+designation_date	2023-03-22
+designation_date	2023-03-23
+designation_date	2023-03-24
+designation_date	2023-03-25
+designation_date	2023-03-26
+designation_date	2023-03-27
+designation_date	2023-03-28
+designation_date	2023-03-29
+designation_date	2023-03-30
+designation_date	2023-03-31
+designation_date	2023-04-01
+designation_date	2023-04-02
+designation_date	2023-04-03
+designation_date	2023-04-04
+designation_date	2023-04-05
+designation_date	2023-04-06
+designation_date	2023-04-07
+designation_date	2023-04-08
+designation_date	2023-04-09
+designation_date	2023-04-10
+designation_date	2023-04-11
+designation_date	2023-04-12
+designation_date	2023-04-13
+designation_date	2023-04-14
+designation_date	2023-04-15
+designation_date	2023-04-16
+designation_date	2023-04-17
+designation_date	2023-04-18
+designation_date	2023-04-19
+designation_date	2023-04-20
+designation_date	2023-04-21
+designation_date	2023-04-22
+designation_date	2023-04-23
+designation_date	2023-04-24
+designation_date	2023-04-25
+designation_date	2023-04-26
+designation_date	2023-04-27
+designation_date	2023-04-28
+designation_date	2023-04-29
+designation_date	2023-04-30
+designation_date	2023-05-01
