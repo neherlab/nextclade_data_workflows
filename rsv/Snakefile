@@ -31,6 +31,21 @@ rule clean_all:
         rm -rf output test auspice builds data
         """
 
+rule download_clades:
+    output:
+        G_clades = "data/{a_or_b}/{reference}/clades_G_raw.tsv",
+        genome_clades = "data/{a_or_b}/{reference}/clades_genome_raw.tsv",
+        clade_ref = "data/{a_or_b}/{reference}/clade_reference.gbk"
+    params:
+        G_clade =  "https://raw.githubusercontent.com/nextstrain/rsv/master/config/clades_G_{a_or_b}.tsv",
+        genome_clade = "https://raw.githubusercontent.com/nextstrain/rsv/master/config/clades_genome_{a_or_b}.tsv",
+        ref = "https://raw.githubusercontent.com/nextstrain/rsv/master/config/{a_or_b}reference.gbk"
+    shell:
+        """
+        curl {params.G_clade} > {output.G_clades}
+        curl {params.genome_clade} > {output.genome_clades}
+        curl {params.ref} > {output.clade_ref}
+        """
 
 
 rule download:
@@ -46,6 +61,21 @@ rule download:
         curl -fsSL --compressed {params.sequence_url:q} --output {output.sequences}
         """
 
+rule lift_clades_to_reference:
+    input:
+        clade_file = "data/{a_or_b}/{reference}/clades_{clade_type}_raw.tsv",
+        reference = "references/{a_or_b}/{reference}/reference.gbk",
+        orig_reference = "data/{a_or_b}/{reference}/clade_reference.gbk"
+    output:
+        clade_file = "data/{a_or_b}/{reference}/clades_{clade_type}.tsv",
+    shell:
+        """
+        python3 ../common_scripts/clade_translator.py \
+            --clades {input.clade_file} \
+            --original-reference {input.orig_reference} \
+            --new-reference {input.reference} \
+            --output-clades {output.clade_file}
+        """
 
 rule decompress:
     message: "decompressing metadata"
@@ -91,7 +121,8 @@ rule filter:
         sequences = "data/{a_or_b}/sequences.fasta.xz",
         reference = "references/{a_or_b}/{reference}/reference.gbk",
         metadata = "data/{a_or_b}/metadata_by_accession.tsv",
-        exclude = build_dir + "/{a_or_b}/{reference}/exclude.txt"
+        exclude = build_dir + "/{a_or_b}/{reference}/exclude.txt",
+        exclude_global = config["exclude"]
     output:
     	sequences = build_dir + "/{a_or_b}/{reference}/filtered.fasta"
     params:
@@ -101,7 +132,7 @@ rule filter:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
-            --exclude {input.exclude} \
+            --exclude {input.exclude} {input.exclude_global}\
             --output {output.sequences} \
             {params.filter_arguments}
         """
@@ -287,12 +318,13 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades=lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['def'],
+        clades= "data/{a_or_b}/{reference}/clades_{clade_system}.tsv",
     output:
         node_data=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json",
     params:
         tmp_clade = build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.tmp.json",
         key = lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['key'],
+        label_key = lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['label_key'],
     shell:
         """
         augur clades --tree {input.tree} \
@@ -300,7 +332,8 @@ rule clades:
             --clades {input.clades} \
             --output-node-data {params.tmp_clade} \
             > /dev/null
-            sed 's/clade_membership/{params.key}/' {params.tmp_clade} > {output.node_data}
+            sed 's/clade_membership/{params.key}/' {params.tmp_clade} |
+            sed -e 's/clade_annotation/{params.label_key}/g' > {output.node_data}
         """
 
 
@@ -373,10 +406,27 @@ rule export:
             --output {output.auspice_json} 2>&1;
         """
 
+def get_labels(w):
+    return [x['label_key'] for x in config['builds'][w.a_or_b][w.reference]['clades'].values() if x['label_key']!='clade_annotation']
+
+rule fix_clade_labels:
+    input:
+        auspice_json=rules.export.output.auspice_json
+    output:
+        auspice_json= build_dir + "/{a_or_b}/{reference}/auspice_relabeled.json",
+    params:
+        label_keys = get_labels
+    shell:
+        """
+        python3 scripts/fix_clade_labels.py --input-auspice-json {input.auspice_json}\
+            --label-keys {params.label_keys} --output {output.auspice_json}
+        """
+
+
 
 rule final_strain_name:
     input:
-        auspice_json = rules.export.output.auspice_json,
+        auspice_json = rules.fix_clade_labels.output.auspice_json,
         metadata = rules.wrangle_metadata.output.metadata
     output:
         auspice_json = "auspice/{a_or_b}/{reference}/tree.json"
@@ -415,7 +465,7 @@ rule assemble_folder:
     input:
         genemap="references/{a_or_b}/{reference}/genemap.gff",
         reference="references/{a_or_b}/{reference}/reference.fasta",
-        virus_properties="profiles/virus_properties.json",
+        virus_properties="references/{a_or_b}/{reference}/virus_properties.json",
         sample_sequences=build_dir + "/{a_or_b}/{reference}/sample_sequences.fasta",
         tree="auspice/{a_or_b}/{reference}/tree.json",
         qc="profiles/qc.json",
