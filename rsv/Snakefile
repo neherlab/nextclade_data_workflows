@@ -31,6 +31,21 @@ rule clean_all:
         rm -rf output test auspice builds data
         """
 
+rule download_clades:
+    output:
+        G_clades = "data/{a_or_b}/{reference}/clades_G_raw.tsv",
+        genome_clades = "data/{a_or_b}/{reference}/clades_genome_raw.tsv",
+        clade_ref = "data/{a_or_b}/{reference}/clade_reference.gbk"
+    params:
+        G_clade =  "https://raw.githubusercontent.com/nextstrain/rsv/master/config/clades_G_{a_or_b}.tsv",
+        genome_clade = "https://raw.githubusercontent.com/nextstrain/rsv/master/config/clades_genome_{a_or_b}.tsv",
+        ref = "https://raw.githubusercontent.com/nextstrain/rsv/master/config/{a_or_b}reference.gbk"
+    shell:
+        """
+        curl {params.G_clade} > {output.G_clades}
+        curl {params.genome_clade} > {output.genome_clades}
+        curl {params.ref} > {output.clade_ref}
+        """
 
 
 rule download:
@@ -46,6 +61,21 @@ rule download:
         curl -fsSL --compressed {params.sequence_url:q} --output {output.sequences}
         """
 
+rule lift_clades_to_reference:
+    input:
+        clade_file = "data/{a_or_b}/{reference}/clades_{clade_type}_raw.tsv",
+        reference = "references/{a_or_b}/{reference}/reference.gbk",
+        orig_reference = "data/{a_or_b}/{reference}/clade_reference.gbk"
+    output:
+        clade_file = "data/{a_or_b}/{reference}/clades_{clade_type}.tsv",
+    shell:
+        """
+        python3 ../common_scripts/clade_translator.py \
+            --clades {input.clade_file} \
+            --original-reference {input.orig_reference} \
+            --new-reference {input.reference} \
+            --output-clades {output.clade_file}
+        """
 
 rule decompress:
     message: "decompressing metadata"
@@ -288,7 +318,7 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades=lambda w: config['builds'][w.a_or_b][w.reference]['clades'][w.clade_system]['def'],
+        clades= "data/{a_or_b}/{reference}/clades_{clade_system}.tsv",
     output:
         node_data=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json",
     params:
