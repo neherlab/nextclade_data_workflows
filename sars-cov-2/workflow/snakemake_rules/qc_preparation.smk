@@ -12,7 +12,7 @@ rule prepare_qc:
 
 rule select_frameshifts:
     input:
-        "data/metadata.tsv.zst",
+        rules.download_metadata.output.metadata,
     output:
         "pre-processed/frameshifts.tsv",
     shell:
@@ -24,7 +24,7 @@ rule select_frameshifts:
 
 rule select_stops:
     input:
-        "data/metadata.tsv.zst",
+        rules.download_metadata.output.metadata,
     output:
         "pre-processed/aa_substitutions.tsv",
     shell:

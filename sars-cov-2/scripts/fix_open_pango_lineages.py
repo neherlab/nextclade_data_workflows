@@ -9,7 +9,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
 
-    metadata = pd.read_csv(args.metadata, sep="\t",low_memory=False)
+    metadata = pd.read_csv(args.metadata, sep="\t")
     designations = pd.read_csv(args.designations, sep=",", index_col=0, names=["strain", "designation"],header=0)
 
     metadata["pango_designated"] = metadata.join(designations, on="strain")["designation"]

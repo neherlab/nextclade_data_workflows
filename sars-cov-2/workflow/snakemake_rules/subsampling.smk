@@ -15,6 +15,15 @@ build_dir = "builds"
 
 
 rule synthetic_pick:
+    """
+    Just requires the following metadata columns:
+    "strain",
+    "date",
+    "region",
+    "Nextstrain_clade",
+    "pango_lineage",
+    "clock_deviation",
+    """
     input:
         counts="defaults/nr.tsv",
         metadata="pre-processed/open_pango_metadata.tsv.zst",

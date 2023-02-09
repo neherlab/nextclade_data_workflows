@@ -186,24 +186,6 @@ rule pango_strain_rename:
         """
 
 
-rule fix_pango_lineages:
-    message:
-        "Add new column to open_pango_metadata_raw.tsv by joining designations.csv on field strain name"
-    input:
-        metadata="data/metadata_raw2.tsv.zst",
-        pango_designations="pre-processed/pango_designations_nextstrain_names.csv",
-    output:
-        metadata="data/metadata.tsv.zst",
-    shell:
-        """
-        zstdcat {input.metadata} | \
-        python3 scripts/fix_open_pango_lineages.py \
-        --metadata /dev/stdin \
-        --designations {input.pango_designations} \
-        --output data/metadata.tsv \
-        2>&1
-        zstd data/metadata.tsv
-        """
 
 
 rule get_designated_sequences:
@@ -243,19 +225,48 @@ rule get_designated_strains:
 
 
 rule get_designated_metadata:
+    """
+    Just need to output following columns
+    "strain",
+    "date",
+    "region",
+    "Nextstrain_clade",
+    "pango_lineage",
+    "clock_deviation",
+    And only for strains in open_pango_strains.txt
+    Hence can be done before "fix_open_pango_lineages.py"
+    """
     input:
         strains="pre-processed/open_pango_strains.txt",
-        metadata="data/metadata.tsv.zst",
+        metadata="data/metadata_raw2.tsv.zst",
     output:
-        metadata="pre-processed/open_pango_metadata.tsv.zst",
-    log:
-        "logs/get_designated_metadata.txt",
+        metadata="data/metadata.tsv.zst",
     benchmark:
         "benchmarks/get_designated_metadata.txt"
     shell:
         """
         zstdcat {input.metadata} | \
-        tsv-join -H --filter-file {input.strains} --key-fields 1 2>&1 | \
+        tsv-select -H -f "strain,date,region,Nextstrain_clade,pango_lineage,clock_deviation" | \
+        tsv-join -H --filter-file {input.strains} --key-fields 1 | \
+        zstd -o {output.metadata}
+        """
+
+rule fix_pango_lineages:
+    """
+    Add new column to open_pango_metadata_raw.tsv by joining designations.csv on field strain name
+    """
+    input:
+        pango_designations="pre-processed/pango_designations_nextstrain_names.csv",
+        metadata="data/metadata.tsv.zst",
+    output:
+        metadata="pre-processed/open_pango_metadata.tsv.zst",
+    shell:
+        """
+        zstdcat {input.metadata} | \
+        python3 scripts/fix_open_pango_lineages.py \
+        --metadata /dev/stdin \
+        --designations {input.pango_designations} \
+        --output /dev/stdout | \
         zstd -o {output.metadata}
         """
 
@@ -274,18 +285,18 @@ rule strains:
 
 rule join_meta_nextclade:
     input:
-        open_pango_metadata=rules.get_designated_metadata.output.metadata,
+        open_pango_metadata="pre-processed/open_pango_metadata.tsv.zst",
     output:
         "pre-processed/full_sequence_details.tsv.zst",
     shell:
         """
         zstdcat {input} | \
-        tsv-select -H -f strain,pango_designated,deletions,insertions,substitutions > meta_muts.tsv
+        tsv-select -H -f strain,pango_designated > meta_muts.tsv
 
-        aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.gz - \
-            | zcat -d \
-            | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd \
-            | tsv-join -H -f meta_muts.tsv -k 1 -a 2-5 \
+        aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.zst - \
+            | zstdcat \
+            | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd,deletions,insertions,substitutions \
+            | tsv-join -H -f meta_muts.tsv -k 1 -a 2 \
             | zstd -o {output}
         rm meta_muts.tsv
         """
