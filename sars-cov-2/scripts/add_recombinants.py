@@ -29,7 +29,9 @@ def main(
     
     # Add common ancestor for all recombinants to prevent massive polytomy
     clade_cls = type(tree.root)
-    rec_parent = clade_cls(name="rec_parent", branch_length=1.0)
+    rec_parent = clade_cls(name="rec_parent", branch_length=0.1)
+    # Maybe also need to attach another reference here with 0 branch length
+    # To prevent flip flopping
 
     def lookup_by_names(tree):
         names = {}
