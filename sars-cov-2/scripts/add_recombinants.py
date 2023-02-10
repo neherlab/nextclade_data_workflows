@@ -13,6 +13,7 @@ def main(
     tree: str = "builds/nextclade/tree_raw.nwk",
     recombinants: str = "builds/nextclade/recombinants.txt",
     root: str = "Wuhan/Hu-1/2019",
+    recombinant_trees: str = "",
     output: str = "builds/nextclade/tree_with_recombinants.nwk",
 ):
     from Bio import Phylo 
@@ -74,6 +75,12 @@ def main(
                 lookup_by_names(rec_parent)[parent(tip)].name = f"internal_{parent(tip)}"
                 lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=parent(tip), branch_length=0))
             lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=1/30000))
+    
+    # Attach recombinant trees
+    for recombinant_tree in recombinant_trees.split(" "):
+        recombinant_tree = Phylo.read(recombinant_tree, "newick")
+        rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=f"internal_{recombinant_tree.name}", branch_length=10))
+        lookup_by_names(rec_parent)[f"internal_{recombinant_tree.name}"].clades.append(recombinant_tree.root)
 
     # Add each recombinant to root node
     for recombinant in recombinants:

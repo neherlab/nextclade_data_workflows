@@ -29,31 +29,20 @@ auspice_prefix = config.get("auspice_prefix", "ncov")
 
 
 rule align:
-    message:
-        """
-        Aligning sequences to {input.reference}
-            - gaps relative to reference are considered real
-        """
     input:
-        sequences=build_dir + "/{build_name}/sequences.fasta",
+        sequences="builds/nextclade/sequences.fasta",
         genemap=config["files"]["annotation"],
         reference=config["files"]["alignment_reference"],
     output:
-        alignment=build_dir + "/{build_name}/aligned.fasta",
+        alignment="builds/nextclade/aligned.fasta",
         translations=expand(
-            build_dir + "/{{build_name}}/translations/aligned.gene.{gene}.fasta",
+            "builds/nextclade/translations/aligned.gene.{gene}.fasta",
             gene=config.get("genes", ["S"]),
         ),
     params:
-        outdir=lambda w: build_dir
-        + f"/{w.build_name}/"
-        + "translations/aligned.gene.{gene}.fasta",
+        outdir=lambda w: "builds/nextclade/translations/aligned.gene.{gene}.fasta",
         genes="ORF1a,ORF1b,S,ORF3a,M,N",
         basename="aligned",
-    log:
-        "logs/align_{build_name}.txt",
-    benchmark:
-        "benchmarks/align_{build_name}.txt"
     threads: 4
     resources:
         mem_mb=3000,
@@ -67,24 +56,15 @@ rule align:
             {input.sequences} \
             --output-translations {params.outdir} \
             --output-fasta {output.alignment} \
-            > {log} 2>&1
+            2>&1
         """
 
 
 rule mask:
-    message:
-        """
-        Mask bases in alignment {input.alignment}
-          - masking {params.mask_arguments}
-        """
     input:
         alignment=rules.align.output.alignment,
     output:
-        alignment=build_dir + "/{build_name}/masked.fasta",
-    log:
-        "logs/mask_{build_name}.txt",
-    benchmark:
-        "benchmarks/mask_{build_name}.txt"
+        alignment="builds/nextclade/masked.fasta",
     params:
         mask_arguments=lambda w: config.get("mask", ""),
     shell:
@@ -92,59 +72,44 @@ rule mask:
         python3 scripts/mask-alignment.py \
             --alignment {input.alignment} \
             {params.mask_arguments} \
-            --output {output.alignment} 2>&1 | tee {log}
+            --output {output.alignment} 2>&1
         """
 
 
-rule identify_recombinants:
-    input:
-        strains=build_dir + "/{build_name}/strains.txt",
-    output:
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
-    shell:
-        """
-        grep '^X' {input.strains} > {output.recombinants}
-        """
-
-
-rule remove_recombinants_from_alignment:
+rule separate_recombinants:
     input:
         alignment=rules.mask.output.alignment,
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
+        alias_json=rules.download_pango_alias.output,
     output:
-        alignment=build_dir + "/{build_name}/masked_without_recombinants.fasta",
-    log:
-        "logs/remove_recombinants_{build_name}.txt",
-    benchmark:
-        "benchmarks/remove_recombinants_{build_name}.txt"
+        without_recombinants="builds/nextclade/masked_without_recombinants.fasta",
+        recombinant_alignments=expand(
+            "builds/nextclade/masked_recombinant_{tree_recombinants}.fasta",
+            tree_recombinants=config["tree-recombinants"],
+        ),
+        recombinants="builds/nextclade/recombinants.txt",
+    params:
+        tree_recombinants=",".join(config["tree-recombinants"]),
     shell:
         """
-        seqkit grep -v -f {input.recombinants} {input.alignment} > {output.alignment}
-        2>&1 | tee {log}
+        python3 scripts/separate_recombinants.py \
+            --alignment {input.alignment} \
+            --output-without-recombinants {output.without_recombinants} \
+            --alias-json {input.alias_json} \
+            --tree-recombinants {params.tree_recombinants} \
+            --recombinants {output.recombinants}
         """
 
 
 rule tree:
-    message:
-        "Building tree"
     input:
-        alignment=rules.remove_recombinants_from_alignment.output.alignment,
+        alignment="builds/nextclade/masked_without_recombinants.fasta",
         constraint_tree=config["files"]["constraint_tree"],
         exclude_sites=config["files"]["exclude_sites"],
     output:
-        tree=build_dir + "/{build_name}/tree_raw.nwk",
+        tree="builds/nextclade/tree_raw.nwk",
     params:
         args="'-czb -g defaults/constraint.nwk'",
-    log:
-        "logs/tree_{build_name}.txt",
-    benchmark:
-        "benchmarks/tree_{build_name}.txt"
     threads: 8
-    resources:
-        # Multiple sequence alignments can use up to 40 times their disk size in
-        # memory, especially for larger alignments.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 40 * int(input.size / 1024 / 1024),
     shell:
         """
         augur tree \
@@ -152,24 +117,40 @@ rule tree:
             --exclude-sites {input.exclude_sites} \
             --tree-builder-args {params.args} \
             --output {output.tree} \
-            --nthreads {threads} 2>&1 | tee {log}
+            --nthreads {threads} 2>&1
+        """
+
+
+rule recombinant_tree:
+    input:
+        alignment="builds/nextclade/masked_recombinant_{recombinant}.fasta",
+    output:
+        tree="builds/nextclade/tree_raw_recombinant_{recombinant}.nwk",
+    shell:
+        """
+        augur tree \
+            --alignment {input.alignment} \
+            --tree-builder-args "'-czb'" \
+            --output {output.tree} \
+            2>&1
         """
 
 
 # TODO: Need to add recombinants in the appropriate tree structure
 # E.g. XBB.1 should attach to XBB not recombinant root
 rule add_recombinants_to_tree:
-    message:
-        "Adding recombinant singlets to root of raw tree"
+    """
+    Adding recombinants to root of raw tree
+    """
     input:
         tree=rules.tree.output.tree,
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
+        recombinants="builds/nextclade/recombinants.txt",
+        recombinant_trees=expand(
+            "builds/nextclade/tree_raw_recombinant_{recombinant}.nwk",
+            recombinant=config["tree-recombinants"],
+        ),
     output:
-        tree=build_dir + "/{build_name}/tree_with_recombinants.nwk",
-    log:
-        "logs/add_recombinants_{build_name}.txt",
-    benchmark:
-        "benchmarks/add_recombinants_{build_name}.txt"
+        tree="builds/nextclade/tree_with_recombinants.nwk",
     params:
         root=config["refine"]["root"],
     shell:

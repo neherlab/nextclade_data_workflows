@@ -64,6 +64,11 @@ samples:
 # exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
 exclude-where-args: "Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
 
+tree-recombinants:
+  - "XAY"
+  - "XBB"
+  - "XBC"
+
 builds:
   nextclade:
     subsamples:
