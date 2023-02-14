@@ -126,11 +126,15 @@ rule recombinant_tree:
         alignment="builds/nextclade/masked_recombinant_{recombinant}.fasta",
     output:
         tree="builds/nextclade/tree_raw_recombinant_{recombinant}.nwk",
+    params:
+        constraint=lambda w: f"-g profiles/clades/constraint_{w.recombinant}.nwk"
+        if os.path.exists(f"profiles/clades/constraint_{w.recombinant}.nwk")
+        else "",
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
-            --tree-builder-args "'-czb'" \
+            --tree-builder-args "-czb {params.constraint}" \
             --output {output.tree} \
             2>&1
         """
