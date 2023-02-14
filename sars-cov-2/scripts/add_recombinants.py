@@ -77,15 +77,26 @@ def main(
             lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=1/30000))
     
     # Attach recombinant trees
-    for recombinant_tree in recombinant_trees.split(" "):
+    for recombinant_tree in recombinant_trees.split(","):
+        # import ipdb; ipdb.set_trace()
+        # Get recombinant name (top parent)
         recombinant_tree = Phylo.read(recombinant_tree, "newick")
-        rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=f"internal_{recombinant_tree.name}", branch_length=10))
-        lookup_by_names(rec_parent)[f"internal_{recombinant_tree.name}"].clades.append(recombinant_tree.root)
+        rec_name = [r.name for r in recombinant_tree.get_terminals()][0]
+        while parent(rec_name) is not None:
+            rec_name = parent(rec_name)
+        print(rec_name)
+        recombinant_tree.root_with_outgroup(rec_name)
+        recombinant_tree.root.name = f"internal_{rec_name}"
+        recombinant_tree.root.branch_length=10.0
+        rec_parent.root.clades.append(recombinant_tree.root)
+        # lookup_by_names(rec_parent)[f"internal_{rec_name}"].clades.append(recombinant_tree.root)
 
     # Add each recombinant to root node
     for recombinant in recombinants:
         # Call attach child to parent recursively 
         attach(recombinant)
+
+    # Phylo.draw_ascii(rec_parent)
         
     tree.root.clades.append(rec_parent)
 

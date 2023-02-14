@@ -153,11 +153,15 @@ rule add_recombinants_to_tree:
         tree="builds/nextclade/tree_with_recombinants.nwk",
     params:
         root=config["refine"]["root"],
+        joined_trees=lambda w: ",".join(
+            rules.add_recombinants_to_tree.input.recombinant_trees
+        ),
     shell:
         """
         python scripts/add_recombinants.py \
             --tree {input.tree} \
             --recombinants {input.recombinants} \
+            --recombinant-trees {params.joined_trees} \
             --root {params.root} \
             --output {output.tree} 2>&1 | tee {log}
         """
