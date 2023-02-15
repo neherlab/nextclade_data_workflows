@@ -1,18 +1,3 @@
-"""
-This part of the workflow starts from files
-
-  - builds/{build_name}/sequences.fasta
-  - builds/{build_name}/metadata.tsv
-
-and produces files
-
-  - auspice/ncov_{build_name}.json
-  - auspice/ncov_{build_name}-tip-frequencies.json
-  - auspice/ncov_{build_name}-root-sequence.json
-
-"""
-
-
 localrules:
     add_branch_labels,
     colors,
@@ -44,8 +29,6 @@ rule align:
         genes="ORF1a,ORF1b,S,ORF3a,M,N",
         basename="aligned",
     threads: 4
-    resources:
-        mem_mb=3000,
     shell:
         """
         nextalign run \
@@ -140,8 +123,6 @@ rule recombinant_tree:
         """
 
 
-# TODO: Need to add recombinants in the appropriate tree structure
-# E.g. XBB.1 should attach to XBB not recombinant root
 rule add_recombinants_to_tree:
     """
     Adding recombinants to root of raw tree
@@ -172,10 +153,6 @@ rule add_recombinants_to_tree:
 
 
 rule refine:
-    message:
-        """
-        Refining tree
-        """
     input:
         tree=rules.add_recombinants_to_tree.output.tree,
         alignment=rules.align.output.alignment,
@@ -187,12 +164,6 @@ rule refine:
         "logs/refine_{build_name}.txt",
     benchmark:
         "benchmarks/refine_{build_name}.txt"
-    threads: 1
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024),
     params:
         root=config["refine"]["root"],
         divergence_unit=config["refine"].get("divergence_unit", "mutations"),
@@ -210,11 +181,6 @@ rule refine:
 
 
 rule ancestral:
-    message:
-        """
-        Reconstructing ancestral sequences and mutations
-          - inferring ambiguous mutations
-        """
     input:
         tree=rules.refine.output.tree,
         alignment=rules.align.output.alignment,
@@ -226,11 +192,6 @@ rule ancestral:
         "benchmarks/ancestral_{build_name}.txt"
     params:
         inference="joint",
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024),
     shell:
         """
         augur ancestral \
@@ -243,8 +204,6 @@ rule ancestral:
 
 
 rule translate:
-    message:
-        "Translating amino acid sequences"
     input:
         tree=rules.refine.output.tree,
         node_data=rules.ancestral.output.node_data,
@@ -255,9 +214,6 @@ rule translate:
         "logs/translate_{build_name}.txt",
     benchmark:
         "benchmarks/translate_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.node_data.size / 1024 / 1024),
     shell:
         """
         augur translate \
@@ -269,8 +225,6 @@ rule translate:
 
 
 rule aa_muts_explicit:
-    message:
-        "Translating amino acid sequences"
     input:
         tree=rules.refine.output.tree,
         translations=lambda w: rules.align.output.translations,
@@ -287,11 +241,6 @@ rule aa_muts_explicit:
         "logs/aamuts_{build_name}.txt",
     benchmark:
         "benchmarks/aamuts_{build_name}.txt"
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024),
     shell:
         """
         python3 scripts/explicit_translation.py \
@@ -325,8 +274,6 @@ rule internal_pango:
 
 
 rule clades_legacy:
-    message:
-        "Adding internal clade labels"
     input:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
@@ -340,9 +287,6 @@ rule clades_legacy:
         "logs/clades_{build_name}.txt",
     benchmark:
         "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
     shell:
         """
         augur clades --tree {input.tree} \
@@ -361,8 +305,6 @@ rule clades_legacy:
 
 
 rule clades:
-    message:
-        "Adding internal clade labels"
     input:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
@@ -377,9 +319,6 @@ rule clades:
         "logs/clades_{build_name}.txt",
     benchmark:
         "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
     shell:
         """
         augur clades --tree {input.tree} \
@@ -399,8 +338,6 @@ rule clades:
 
 
 rule clades_who:
-    message:
-        "Adding internal clade labels"
     input:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
@@ -414,9 +351,6 @@ rule clades_who:
         "logs/clades_{build_name}.txt",
     benchmark:
         "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
     shell:
         """
         augur clades --tree {input.tree} \
@@ -461,8 +395,6 @@ rule add_designation_date_to_meta:
 
 
 rule colors:
-    message:
-        "Constructing colors file"
     input:
         ordering="defaults/color_ordering.tsv",
         color_schemes=config["files"]["color_schemes"],
@@ -473,11 +405,6 @@ rule colors:
         "logs/colors_{build_name}.txt",
     benchmark:
         "benchmarks/colors_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        # Compared to other rules, this rule loads metadata as a pandas
-        # DataFrame instead of a dictionary, so it uses much less memory.
-        mem_mb=lambda wildcards, input: 5 * int(input.metadata.size / 1024 / 1024),
     shell:
         """
         python3 scripts/assign-colors.py \
@@ -510,8 +437,6 @@ def _get_node_data_by_wildcards(wildcards):
 
 
 rule export:
-    message:
-        "Exporting data files for auspice"
     input:
         tree=rules.refine.output.tree,
         metadata="builds/{build_name}/metadata_with_designation_date.tsv",
@@ -534,9 +459,6 @@ rule export:
         title=lambda w: config["builds"][w.build_name].get(
             "title", "SARS-CoV-2 phylogeny"
         ),
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
     shell:
         """
         augur export v2 \
@@ -553,8 +475,6 @@ rule export:
 
 
 rule add_branch_labels:
-    message:
-        "Adding custom branch labels to the Auspice JSON"
     input:
         auspice_json=rules.export.output.auspice_json,
         mutations=rules.aa_muts_explicit.output.node_data,

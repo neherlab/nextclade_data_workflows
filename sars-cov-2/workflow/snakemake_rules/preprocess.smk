@@ -57,19 +57,6 @@ rule download_metadata:
         "aws s3 cp {params.address} {output:q}"
 
 
-rule fix_metadata:
-    input:
-        "data/metadata_raw.tsv.zst",
-    output:
-        "data/metadata_raw2.tsv.zst",
-    shell:
-        """
-        zstdcat {input} | \
-        awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' | \
-        zstd -T4 -2 -o {output}
-        """
-
-
 rule download_clades:
     message:
         "Downloading clade definitions from {params.source} -> {output}"
@@ -156,7 +143,7 @@ rule nextclade_strainnames:
     message:
         "Extract strain names using tsv-select"
     input:
-        "data/metadata_raw2.tsv.zst",
+        "data/metadata_raw.tsv.zst",
     output:
         "pre-processed/metadata_strainnames.tsv.zst",
     shell:
@@ -237,7 +224,7 @@ rule get_designated_metadata:
     """
     input:
         strains="pre-processed/open_pango_strains.txt",
-        metadata="data/metadata_raw2.tsv.zst",
+        metadata="data/metadata_raw.tsv.zst",
     output:
         metadata="data/metadata.tsv.zst",
     benchmark:
@@ -279,7 +266,7 @@ rule strains:
     shell:
         """
         zstdcat {input.metadata} | \
-        awk -F'\t' '{{print $1}}' > {output} 
+        tsv-select -H -f strain > {output} 
         """
 
 
