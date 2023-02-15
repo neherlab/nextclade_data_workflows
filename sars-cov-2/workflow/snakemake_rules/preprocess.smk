@@ -13,7 +13,7 @@ localrules:
     download_clades,
     download_clades_nextstrain,
     download_clades_who,
-	download_designation_dates,
+    download_designation_dates,
     preprocess,
     download_color_ordering,
     download_designations,
@@ -66,7 +66,7 @@ rule fix_metadata:
         """
         zstdcat {input} | \
         awk  -F'\t' 'BEGIN {{OFS = FS}} {{if ($NF=="?") $NF="-inf"; print}}' | \
-        zstd -o {output}
+        zstd -T4 -2 -o {output}
         """
 
 
@@ -163,7 +163,7 @@ rule nextclade_strainnames:
         """
         zstdcat {input} | \
         tsv-select -H -f strain | \
-        zstd -o {output}
+        zstd -T4 -2  -o {output}
         """
 
 
@@ -187,8 +187,6 @@ rule pango_strain_rename:
         """
 
 
-
-
 rule get_designated_sequences:
     input:
         sequences="data/sequences.fasta.zst",
@@ -204,7 +202,7 @@ rule get_designated_sequences:
         """
         zstdcat -T2 {input.sequences} | \
         seqkit grep -f {input.pango} 2>{log} | \
-        zstd -c -10 -T4  >{output.sequences}
+        zstd -c -2 -T4  >{output.sequences}
         """
 
 
@@ -249,8 +247,9 @@ rule get_designated_metadata:
         zstdcat {input.metadata} | \
         tsv-select -H -f "strain,date,region,Nextstrain_clade,pango_lineage,clock_deviation" | \
         tsv-join -H --filter-file {input.strains} --key-fields 1 | \
-        zstd -o {output.metadata}
+        zstd -T4 -2 -o {output.metadata}
         """
+
 
 rule fix_pango_lineages:
     """
@@ -268,7 +267,7 @@ rule fix_pango_lineages:
         --metadata /dev/stdin \
         --designations {input.pango_designations} \
         --output /dev/stdout | \
-        zstd -o {output.metadata}
+        zstd -T4 -2 -o {output.metadata}
         """
 
 
@@ -284,22 +283,51 @@ rule strains:
         """
 
 
+rule download_nextclade_tsv:
+    output:
+        "pre-processed/nextclade.tsv.zst",
+    shell:
+        """
+        aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.zst {output}
+        """
+
+
+rule select_relevant_nextclade_columns:
+    input:
+        "pre-processed/nextclade.tsv.zst",
+    output:
+        "pre-processed/nextclade_relevant_columns.tsv.zst",
+    shell:
+        """
+        zstdcat {input} | \
+        tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd,deletions,insertions,substitutions | \
+        zstd -T4 -2 -o {output}
+        """
+
+
+rule select_designations:
+    input:
+        "pre-processed/open_pango_metadata.tsv.zst",
+    output:
+        "pre-processed/open_pango_designations.tsv",
+    shell:
+        """
+        zstdcat {input} | \
+        tsv-select -H -f strain,pango_designated > {output}
+        """
+
+
 rule join_meta_nextclade:
     input:
-        open_pango_metadata="pre-processed/open_pango_metadata.tsv.zst",
+        open_pango_metadata=rules.select_designations.output,
+        nextclade_tsv=rules.select_relevant_nextclade_columns.output,
     output:
         "pre-processed/full_sequence_details.tsv.zst",
     shell:
         """
-        zstdcat {input} | \
-        tsv-select -H -f strain,pango_designated > meta_muts.tsv
-
-        aws s3 cp s3://nextstrain-ncov-private/nextclade.tsv.zst - \
-            | zstdcat \
-            | tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd,deletions,insertions,substitutions \
-            | tsv-join -H -f meta_muts.tsv -k 1 -a 2 \
-            | zstd -o {output}
-        rm meta_muts.tsv
+        zstdcat {input.nextclade_tsv} \
+            | tsv-join -H -f {input.open_pango_metadata} -k 1 -a 2 \
+            | zstd -T4 -2 -o {output}
         """
 
 

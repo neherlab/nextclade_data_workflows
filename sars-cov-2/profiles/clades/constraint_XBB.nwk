@@ -40,7 +40,14 @@
             (
               XBB.1.5.1,
               XBB.1.5.2,
-              XBB.1.5.3
+              XBB.1.5.3,
+              XBB.1.5.7,
+              (
+                XBB.1.5.5,
+                XBB.1.5.6,
+                XBB.1.5.8,
+                XBB.1.5.9
+              )internal_XBB_1_5_10204C
             )XBB_1_5_17124C
           )internal_XBB_1_5
         )internal_ORF8stop
