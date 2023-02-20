@@ -14,31 +14,31 @@ and produces files
 build_dir = "builds"
 
 
-rule synthetic_pick:
-    """
-    Just requires the following metadata columns:
-    "strain",
-    "date",
-    "region",
-    "Nextstrain_clade",
-    "pango_lineage",
-    "clock_deviation",
-    """
+rule designated_lineages:
     input:
-        counts="defaults/nr.tsv",
-        metadata="pre-processed/open_pango_metadata.tsv.zst",
+        sequences="pre-processed/synthetic.fasta",
     output:
-        strains=build_dir + "/{build_name}/chosen_synthetic_strains.txt",
-    log:
-        "logs/synthetic_pick_{build_name}.txt",
+        lineages=build_dir + "/{build_name}/designated_lineages.txt",
     shell:
         """
-        zstdcat {input.metadata} | \
-        python scripts/pick_synthetic.py \
-            --designations /dev/stdin \
+        seqkit seq -n {input.sequences} >{output.lineages}
+        """
+
+
+rule synthetic_pick:
+    input:
+        counts="defaults/nr.tsv",
+        lineages=rules.designated_lineages.output.lineages,
+        alias_file="pre-processed/alias.json",
+    output:
+        strains=build_dir + "/{build_name}/chosen_synthetic_strains.txt",
+    shell:
+        """
+        python scripts/synthetic_pick.py \
             --counts {input.counts} \
-            --outfile {output.strains} 2>&1 \
-        | tee {log}
+            --lineages {input.lineages} \
+            --alias-file {input.alias_file} \
+            --outfile {output.strains}
         """
 
 

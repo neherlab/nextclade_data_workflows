@@ -1,5 +1,10 @@
 # Nextclade reference tree workflow for SARS-CoV-2
 
+## Running the workflow
+
+```sh
+```
+
 ## Creating a new dataset version
 
 ```sh
@@ -18,6 +23,7 @@ for d in $SC2 $SC2nr $SC221L; do
   cp -pr ~/code/nextclade_data/data/datasets/$d/versions/$OLD ~/code/nextclade_data/data/datasets/$d/versions/$NEW
   sed -i "s/$OLD/$NEW/g" ~/code/nextclade_data/data/datasets/$d/versions/$NEW/files/tag.json
   aws s3 cp s3://nextstrain-staging/nextclade_sars-cov-2${EXTENSION[$d]}.json - | gzcat >~/code/nextclade_data/data/datasets/$d/versions/$NEW/files/tree.json 
+  aws s3 cp s3://nextstrain-staging/nextclade_sars-cov-2${EXTENSION[$d]}.json s3://nextstrain-data/nextclade_sars-cov-2${EXTENSION[$d]}.json
 done
 ```
 

@@ -7,6 +7,7 @@
 
 import typer
 import ipdb
+from pango_aliasor.aliasor import Aliasor
 
 
 def main(
@@ -14,9 +15,12 @@ def main(
     recombinants: str = "builds/nextclade/recombinants.txt",
     root: str = "Wuhan/Hu-1/2019",
     recombinant_trees: str = "",
+    alias_file: str = "pre-processed/alias.json",
     output: str = "builds/nextclade/tree_with_recombinants.nwk",
 ):
     from Bio import Phylo 
+
+    aliasor = Aliasor(alias_file)
 
     # Load tree
     tree = Phylo.read(tree, "newick")
@@ -43,21 +47,20 @@ def main(
                 names[clade.name] = clade
         return names
     
+    def top_parent(tip):
+        while aliasor.parent(tip) != "":
+            tip = aliasor.parent(tip)
+        return tip
+    
     # Create recombinant tree based on pango structure, start with top level, then add first level etc.
     # Attach each clade to parent, parent can be calculated by removing one `.`
-    def parent(child: str) -> str:
-        split = child.split(".")
-        if len(split) == 1:
-            return None
-        return ".".join(split[:-1])
-    
     def attach(tip: str):
         # Check if tip already in tree
         for clade in rec_parent.root.find_clades():
             if clade.name == tip:
                 return
         
-        if parent(tip) is None:
+        if aliasor.parent(tip) is None:
             rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=10.0))
         else:
             # ipdb.set_trace()
@@ -67,23 +70,24 @@ def main(
             # before attaching, check if internal node with this name exists
 
             # check if parent internal node exists
-            if f"internal_{parent(tip)}" not in lookup_by_names(rec_parent):
+            if f"internal_{aliasor.parent(tip)}" not in lookup_by_names(rec_parent):
                 # check if parent tip exists
-                if parent(tip) not in lookup_by_names(rec_parent):
-                    attach(parent(tip))
+                if aliasor.parent(tip) not in lookup_by_names(rec_parent):
+                    attach(aliasor.parent(tip))
                     # rename parent tip to internal node, and attach parent tip to internal node
-                lookup_by_names(rec_parent)[parent(tip)].name = f"internal_{parent(tip)}"
-                lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=parent(tip), branch_length=0))
-            lookup_by_names(rec_parent)[f"internal_{parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=1/30000))
+                lookup_by_names(rec_parent)[aliasor.parent(tip)].name = f"internal_{aliasor.parent(tip)}"
+                lookup_by_names(rec_parent)[f"internal_{aliasor.parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=aliasor.parent(tip), branch_length=0))
+            lookup_by_names(rec_parent)[f"internal_{aliasor.parent(tip)}"].clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=1/30000))
     
     # Attach recombinant trees
+    added = set()
     for recombinant_tree in recombinant_trees.split(","):
         # import ipdb; ipdb.set_trace()
         # Get recombinant name (top parent)
         recombinant_tree = Phylo.read(recombinant_tree, "newick")
         rec_name = [r.name for r in recombinant_tree.get_terminals()][0]
-        while parent(rec_name) is not None:
-            rec_name = parent(rec_name)
+        rec_name = top_parent(rec_name)
+        added.add(rec_name)
         print(rec_name)
         recombinant_tree.root_with_outgroup(rec_name)
         recombinant_tree.root.name = f"internal_{rec_name}"
@@ -94,7 +98,9 @@ def main(
     # Add each recombinant to root node
     for recombinant in recombinants:
         # Call attach child to parent recursively 
-        attach(recombinant)
+        if recombinant not in added:
+            rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=10.0))
+            added.add(recombinant)
 
     # Phylo.draw_ascii(rec_parent)
         

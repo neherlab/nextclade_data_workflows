@@ -69,6 +69,7 @@ tree-recombinants:
   - "XBB"
   - "XBC"
   - "XBF"
+  - "XBK"
 
 builds:
   nextclade:

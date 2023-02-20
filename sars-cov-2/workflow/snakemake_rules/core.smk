@@ -115,11 +115,18 @@ rule recombinant_tree:
         else "",
     shell:
         """
-        augur tree \
-            --alignment {input.alignment} \
-            --tree-builder-args "-czb {params.constraint}" \
-            --output {output.tree} \
-            2>&1
+        # Check if there are 3 or more sequences in the alignment
+        if [ $(grep -c ">" {input.alignment}) -lt 3 ]; then
+            python scripts/simple_tree.py \
+                --alignment {input.alignment} \
+                --tree {output.tree} 2>&1
+        else 
+            augur tree \
+                --alignment {input.alignment} \
+                --tree-builder-args "-czb {params.constraint}" \
+                --output {output.tree} \
+                2>&1
+        fi
         """
 
 
