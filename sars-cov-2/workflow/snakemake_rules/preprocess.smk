@@ -100,18 +100,6 @@ rule download_color_ordering:
     shell:
         "curl {params.source} -o {output}"
 
-
-rule download_lat_longs:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
-    output:
-        "builds/lat_longs.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/lat_longs.tsv",
-    shell:
-        "curl {params.source} -o {output}"
-
-
 rule download_designations:
     output:
         "pre-processed/designations.csv",

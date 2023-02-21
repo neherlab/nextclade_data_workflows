@@ -1,4 +1,4 @@
-title: "Your samples placed on a SARS-CoV-2 phylogeny"
+title: "Nextclade Reference Tree for SARS-Cov-2"
 
 files:
   reference: "defaults/reference_seq.gb"
@@ -16,53 +16,8 @@ files:
 
 refine:
   root: "B" #"Wuhan/Hu-1/2019"
-  divergence_unit: "mutations"
-  clock_filter_iqd: 4
-  no_timetree: True
-  clock_rate: 0.0007
-  clock_std_dev: 0.0003
-  coalescent: "skyline"
-  date_inference: "marginal"
 
-# Mask annotation
-#1820  - Orf1a:519
-#9430  - Orf1a:3055
-#10323 - Orf1a:3353
-#11083 - Orf1a:3606
-#13019 - Orf1a:4252
-#21575 - S:5
-#21614 - S:18
-#21846 - S:95
-#21987 - S:142
-#22917 - S:452
-#22992 - S:477
-#23012 - S:484
-#23063 - S:501
-#23593 - S:677
-#23604 - S:681
-#24410 - S:950
-#24642 - S:1027
-#26681 - M:53
-#26767 - M:82 Added because it pulls Eta into Delta causing E484K reversions
-#28461 - N:63
-#28887 - N:205
-#28975 - N:234
-#21765 S:68T Homoplasic
-#22197 S:212 Homoplasic
-#22305 S:248 Homoplasic
-#22331 S:257 Homoplasic
-#26577 M:19 Messy
 mask: " --mask-from-beginning 100 --mask-from-end 100 --mask-terminal-gaps"
-
-samples:
-  clades: "--group-by Nextstrain_clade --subsample-max-sequences 80 --exclude-where QC_snp_clusters!=good"
-  rare-bad: "--subsample-max-sequences 5 --exclude-where QC_rare_mutations!=bad"
-  cluster-mediocre: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=mediocre"
-  cluster-bad: "--subsample-max-sequences 3 --exclude-where QC_snp_clusters!=bad"
-  recent: "--group-by month --subsample-max-sequences 10 --min-date 2021-09-01"
-
-# exclude-where-args: "recombinant=True country=Turkey country=Iraq country=Egypt QC_rare_mutations!=good QC_snp_clusters!=good QC_missing_data!=good QC_mixed_sites!=good"
-exclude-where-args: "Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True country=Turkey country=Iraq country=Egypt QC_missing_data!=good QC_mixed_sites!=good"
 
 tree-recombinants:
   - "XAY"
@@ -70,11 +25,3 @@ tree-recombinants:
   - "XBC"
   - "XBF"
   - "XBK"
-
-builds:
-  nextclade:
-    subsamples:
-      clades:
-        filters: "--min-length 28500 --group-by Nextstrain_clade --subsample-max-sequences 500 --exclude-where"
-      picked-pango:
-        filters: ""

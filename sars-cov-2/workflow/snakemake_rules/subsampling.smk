@@ -11,14 +11,12 @@ and produces files
 
 """
 
-build_dir = "builds"
-
 
 rule designated_lineages:
     input:
         sequences="pre-processed/synthetic.fasta",
     output:
-        lineages=build_dir + "/{build_name}/designated_lineages.txt",
+        lineages="builds" + "/{build_name}/designated_lineages.txt",
     shell:
         """
         seqkit seq -n {input.sequences} >{output.lineages}
@@ -31,7 +29,7 @@ rule synthetic_pick:
         lineages=rules.designated_lineages.output.lineages,
         alias_file="pre-processed/alias.json",
     output:
-        strains=build_dir + "/{build_name}/chosen_synthetic_strains.txt",
+        strains="builds" + "/{build_name}/chosen_synthetic_strains.txt",
     shell:
         """
         python scripts/synthetic_pick.py \
@@ -47,7 +45,7 @@ rule synthetic_select:
         sequences="pre-processed/synthetic.fasta",
         strains=rules.synthetic_pick.output.strains,
     output:
-        sequences=build_dir + "/{build_name}/sequences.fasta",
+        sequences="builds" + "/{build_name}/sequences.fasta",
     log:
         "logs/synthetic_select_{build_name}.txt",
     shell:
@@ -61,7 +59,7 @@ rule add_synthetic_metadata:
     input:
         synthetic=rules.synthetic_pick.output.strains,
     output:
-        metadata=build_dir + "/{build_name}/metadata.tsv",
+        metadata="builds" + "/{build_name}/metadata.tsv",
     log:
         "logs/add_synthetic_metadata_{build_name}.txt",
     shell:
@@ -75,9 +73,9 @@ rule add_synthetic_metadata:
 
 rule get_strains:
     input:
-        sequences=build_dir + "/{build_name}/sequences.fasta",
+        sequences="builds" + "/{build_name}/sequences.fasta",
     output:
-        strains=build_dir + "/{build_name}/strains.txt",
+        strains="builds" + "/{build_name}/strains.txt",
     shell:
         """
         seqkit seq -n {input.sequences} >{output.strains}

@@ -8,8 +8,6 @@ localrules:
     identify_recombinants,
 
 
-build_dir = config.get("build_dir", "builds")
-auspice_dir = config.get("auspice_dir", "auspice")
 auspice_prefix = config.get("auspice_prefix", "ncov")
 
 
@@ -165,15 +163,10 @@ rule refine:
         alignment=rules.align.output.alignment,
         metadata="builds/{build_name}/metadata.tsv",
     output:
-        tree=build_dir + "/{build_name}/tree.nwk",
-        node_data=build_dir + "/{build_name}/branch_lengths.json",
-    log:
-        "logs/refine_{build_name}.txt",
-    benchmark:
-        "benchmarks/refine_{build_name}.txt"
+        tree="builds" + "/{build_name}/tree.nwk",
+        node_data="builds" + "/{build_name}/branch_lengths.json",
     params:
         root=config["refine"]["root"],
-        divergence_unit=config["refine"].get("divergence_unit", "mutations"),
     shell:
         """
         augur refine \
@@ -183,7 +176,7 @@ rule refine:
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
             --keep-root \
-            --divergence-unit {params.divergence_unit} | tee {log}
+            --divergence-unit mutations | tee {log}
         """
 
 
@@ -192,7 +185,7 @@ rule ancestral:
         tree=rules.refine.output.tree,
         alignment=rules.align.output.alignment,
     output:
-        node_data=build_dir + "/{build_name}/nt_muts.json",
+        node_data="builds" + "/{build_name}/nt_muts.json",
     log:
         "logs/ancestral_{build_name}.txt",
     benchmark:
@@ -216,7 +209,7 @@ rule translate:
         node_data=rules.ancestral.output.node_data,
         reference=config["files"]["reference"],
     output:
-        node_data=build_dir + "/{build_name}/aa_muts.json",
+        node_data="builds" + "/{build_name}/aa_muts.json",
     log:
         "logs/translate_{build_name}.txt",
     benchmark:
@@ -236,9 +229,9 @@ rule aa_muts_explicit:
         tree=rules.refine.output.tree,
         translations=lambda w: rules.align.output.translations,
     output:
-        node_data=build_dir + "/{build_name}/aa_muts_explicit.json",
+        node_data="builds" + "/{build_name}/aa_muts_explicit.json",
         translations=expand(
-            build_dir
+            "builds"
             + "/{{build_name}}/translations/aligned.gene.{gene}_withInternalNodes.fasta",
             gene=config.get("genes", ["S"]),
         ),
@@ -265,7 +258,7 @@ rule internal_pango:
         synthetic=rules.synthetic_pick.output,
         designations=rules.pango_strain_rename.output.pango_designations,
     output:
-        node_data=build_dir + "/{build_name}/internal_pango.json",
+        node_data="builds" + "/{build_name}/internal_pango.json",
     log:
         "logs/internal_pango_{build_name}.txt",
     shell:
@@ -289,7 +282,7 @@ rule clades_legacy:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data=build_dir + "/{build_name}/clades_legacy.json",
+        node_data="builds" + "/{build_name}/clades_legacy.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -320,8 +313,8 @@ rule clades:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data=build_dir + "/{build_name}/clades.json",
-        node_data_nextstrain=build_dir + "/{build_name}/clades_nextstrain.json",
+        node_data="builds" + "/{build_name}/clades.json",
+        node_data_nextstrain="builds" + "/{build_name}/clades_nextstrain.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -353,7 +346,7 @@ rule clades_who:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data=build_dir + "/{build_name}/clades_who.json",
+        node_data="builds" + "/{build_name}/clades_who.json",
     log:
         "logs/clades_{build_name}.txt",
     benchmark:
@@ -407,7 +400,7 @@ rule colors:
         color_schemes=config["files"]["color_schemes"],
         metadata="builds/{build_name}/metadata.tsv",
     output:
-        colors=build_dir + "/{build_name}/colors.tsv",
+        colors="builds" + "/{build_name}/colors.tsv",
     log:
         "logs/colors_{build_name}.txt",
     benchmark:

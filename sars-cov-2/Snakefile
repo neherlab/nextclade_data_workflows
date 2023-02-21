@@ -23,9 +23,6 @@ include: "workflow/snakemake_rules/subsampling.smk"
 include: "workflow/snakemake_rules/core.smk"
 
 
-auspice_dir = "auspice"
-build_dir = "builds"
-
 date = datetime.date.today()
 timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
 
@@ -68,8 +65,8 @@ rule clean_all:
         "log/*",
         "logs",
         "benchmarks",
-        auspice_dir,
-        build_dir,
+        "auspice",
+        "builds",
         "output",
         "examples",
         "test",
@@ -84,8 +81,8 @@ rule clean:
         "log/*",
         "logs",
         "benchmarks",
-        auspice_dir,
-        build_dir,
+        "auspice",
+        "builds",
         "test",
         "output",
         "examples",
