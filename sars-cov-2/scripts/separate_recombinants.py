@@ -18,6 +18,7 @@ from pango_aliasor.aliasor import Aliasor
 def main(
     alignment: str = typer.Option(..., help="Alignment file"),
     output_without_recombinants: str = typer.Option(..., help="Output file without recombinants"),
+    output_recombinant: str = typer.Option(..., help="Output path for recombinants"),
     alias_json: str = typer.Option(..., help="Path to JSON file with aliases"),
     tree_recombinants: str = typer.Option(..., help="Recombinants for which to produce separate alignment files"),
     recombinants: str = typer.Option(..., help="List of recombinants"),
@@ -47,7 +48,7 @@ def main(
     
     # Produce separate alignment files for tree-recombinants
     for recombinant in tree_recombinants.split(","):
-        with open(f"builds/nextclade/masked_recombinant_{recombinant}.fasta", "w") as handle:
+        with open(f"{output_recombinant}/masked_recombinant_{recombinant}.fasta", "w") as handle:
             for record in records:
                 if top_level(record.id) == recombinant:
                     SeqIO.write(record, handle, "fasta")

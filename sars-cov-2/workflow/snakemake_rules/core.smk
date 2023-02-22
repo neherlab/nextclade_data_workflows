@@ -56,12 +56,12 @@ rule separate_recombinants:
         alignment=rules.mask.output.alignment,
         alias_json=rules.download_pango_alias.output,
     output:
-        without_recombinants="builds/nextclade/masked_without_recombinants.fasta",
+        without_recombinants="builds/{build_name}/masked_without_recombinants.fasta",
         recombinant_alignments=expand(
-            "builds/nextclade/masked_recombinant_{tree_recombinants}.fasta",
+            "builds/{{build_name}}/masked_recombinant_{tree_recombinants}.fasta",
             tree_recombinants=config["tree-recombinants"],
         ),
-        recombinants="builds/nextclade/recombinants.txt",
+        recombinants="builds/{build_name}/recombinants.txt",
     params:
         tree_recombinants=",".join(config["tree-recombinants"]),
     shell:
@@ -69,6 +69,7 @@ rule separate_recombinants:
         python3 scripts/separate_recombinants.py \
             --alignment {input.alignment} \
             --output-without-recombinants {output.without_recombinants} \
+            --output-recombinant "builds/{wildcards.build_name}" \
             --alias-json {input.alias_json} \
             --tree-recombinants {params.tree_recombinants} \
             --recombinants {output.recombinants}
