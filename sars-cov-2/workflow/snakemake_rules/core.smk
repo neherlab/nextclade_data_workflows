@@ -164,7 +164,7 @@ rule add_recombinants_to_tree:
             --recombinants {input.recombinants} \
             --recombinant-trees {params.joined_trees} \
             --root {params.root} \
-            --output {output.tree} 2>&1 | tee {log}
+            --output {output.tree}
         """
 
 
@@ -212,7 +212,7 @@ rule translate:
     input:
         tree=rules.refine.output.tree,
         node_data=rules.ancestral.output.node_data,
-        reference=config["files"]["reference"],
+        reference="defaults/reference_seq.gb",
     output:
         node_data="builds/{build_name}/aa_muts.json",
     shell:
@@ -228,7 +228,7 @@ rule translate:
 rule aa_muts_explicit:
     input:
         tree=rules.refine.output.tree,
-        translations=lambda w: rules.align.output.translations,
+        translations=rules.align.output.translations,
     output:
         node_data="builds/{build_name}/aa_muts_explicit.json",
         translations="builds/{build_name}/translations/aligned.gene.S_withInternalNodes.fasta",
@@ -347,7 +347,7 @@ rule clades_who:
 
 rule download_designation_dates:
     output:
-        designation_dates="builds/{build_name}/designation_dates.tsv",
+        designation_dates="builds/designation_dates.tsv",
     shell:
         """
         curl https://raw.githubusercontent.com/corneliusroemer/pango-designation-dates/main/data/lineage_designation_date.csv \
@@ -374,7 +374,7 @@ rule add_designation_date_to_meta:
 rule colors:
     input:
         ordering="defaults/color_ordering.tsv",
-        color_schemes=config["files"]["color_schemes"],
+        color_schemes="defaults/color_schemes.tsv",
         metadata="builds/{build_name}/metadata.tsv",
     output:
         colors="builds/{build_name}/colors.tsv",
@@ -412,11 +412,11 @@ def _get_node_data_by_wildcards(wildcards):
 rule export:
     input:
         tree=rules.refine.output.tree,
-        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
+        metadata=rules.add_designation_date_to_meta.output.metadata,
         node_data=_get_node_data_by_wildcards,
+        colors=rules.colors.output.colors,
         auspice_config="profiles/clades/auspice_config.json",
         description="profiles/clades/description.md",
-        colors=rules.colors.output.colors,
     output:
         auspice_json="auspice/{build_name}/auspice_raw.json",
         root_json="auspice/{build_name}/auspice_raw_root-sequence.json",
@@ -433,7 +433,8 @@ rule export:
             --title {params.title:q} \
             --description {input.description} \
             --include-root-sequence \
-            --output {output.auspice_json} 2>&1 | tee {log};
+            --minify-json \
+            --output {output.auspice_json}
         """
 
 
@@ -467,5 +468,7 @@ rule remove_recombinants_from_auspice:
 
 rule produce_trees:
     input:
-        "auspice/nextclade/auspice.json",
-        "auspice/nextclade/auspice_without_recombinants.json",
+        "auspice/wuhan/auspice.json",
+        "auspice/wuhan/auspice_without_recombinants.json",
+        "auspice/21L/auspice.json",
+        "auspice/21L/auspice_without_recombinants.json",
