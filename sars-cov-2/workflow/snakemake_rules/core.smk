@@ -96,11 +96,11 @@ rule prune_constraint_tree:
 
 rule tree:
     input:
-        alignment="builds/nextclade/masked_without_recombinants.fasta",
-        constraint_tree="defaults/constraint.nwk",
+        alignment="builds/{build_name}/masked_without_recombinants.fasta",
+        constraint_tree="builds/{build_name}/constraint.nwk",
         exclude_sites="defaults/exclude_sites.tsv",
     output:
-        tree="builds/nextclade/tree_raw.nwk",
+        tree="builds/{build_name}/tree_raw.nwk",
     params:
         args=lambda w, input: f"'-czb -g {input.constraint_tree}'",
     threads: 8
