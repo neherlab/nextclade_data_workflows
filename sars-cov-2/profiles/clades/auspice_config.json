@@ -41,11 +41,6 @@
       ]
     }
   },
-  "data_provenance": [
-    {
-      "name": "GISAID"
-    }
-  ],
   "colorings": [
     {
       "key": "designation_date",
