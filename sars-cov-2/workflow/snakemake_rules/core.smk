@@ -117,9 +117,9 @@ rule tree:
 
 rule recombinant_tree:
     input:
-        alignment="builds/nextclade/masked_recombinant_{recombinant}.fasta",
+        alignment="builds/{build_name}/masked_recombinant_{recombinant}.fasta",
     output:
-        tree="builds/nextclade/tree_raw_recombinant_{recombinant}.nwk",
+        tree="builds/{build_name}/tree_raw_recombinant_{recombinant}.nwk",
     params:
         constraint=lambda w: f"-g profiles/clades/constraint_{w.recombinant}.nwk"
         if os.path.exists(f"profiles/clades/constraint_{w.recombinant}.nwk")
@@ -147,18 +147,16 @@ rule add_recombinants_to_tree:
     """
     input:
         tree=rules.tree.output.tree,
-        recombinants="builds/nextclade/recombinants.txt",
+        recombinants="builds/{build_name}/recombinants.txt",
         recombinant_trees=expand(
-            "builds/nextclade/tree_raw_recombinant_{recombinant}.nwk",
+            "builds/{{build_name}}/tree_raw_recombinant_{recombinant}.nwk",
             recombinant=config["tree-recombinants"],
         ),
     output:
-        tree="builds/nextclade/tree_with_recombinants.nwk",
+        tree="builds/{build_name}/tree_with_recombinants.nwk",
     params:
-        root=config["refine"]["root"],
-        joined_trees=lambda w: ",".join(
-            rules.add_recombinants_to_tree.input.recombinant_trees
-        ),
+        root=lambda w: config["root"][w.build_name],
+        joined_trees=lambda w, input: ",".join(input.recombinant_trees),
     shell:
         """
         python scripts/add_recombinants.py \
@@ -179,7 +177,7 @@ rule refine:
         tree="builds/{build_name}/tree.nwk",
         node_data="builds/{build_name}/branch_lengths.json",
     params:
-        root=config["refine"]["root"],
+        root=lambda w: config["root"][w.build_name],
     shell:
         """
         augur refine \
