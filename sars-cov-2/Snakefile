@@ -9,16 +9,8 @@ localrules:
     deploy_staging,
 
 
-if "builds" not in config:
-    config["builds"] = {}
-
-
-configfile: "defaults/parameters.yaml"
-
-
 include: "workflow/snakemake_rules/preprocess.smk"
-# include: "workflow/snakemake_rules/templated_build.smk"
-include: "workflow/snakemake_rules/qc_preparation.smk"
+# include: "workflow/snakemake_rules/qc_preparation.smk"
 include: "workflow/snakemake_rules/subsampling.smk"
 include: "workflow/snakemake_rules/core.smk"
 

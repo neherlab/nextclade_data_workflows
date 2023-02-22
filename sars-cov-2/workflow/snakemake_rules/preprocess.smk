@@ -100,6 +100,7 @@ rule download_color_ordering:
     shell:
         "curl {params.source} -o {output}"
 
+
 rule download_designations:
     output:
         "pre-processed/designations.csv",
@@ -168,15 +169,11 @@ rule get_designated_sequences:
         pango="pre-processed/pango_designated_strains_nextstrain_names.txt",
     output:
         sequences="pre-processed/open_pango.fasta.zst",
-    log:
-        "logs/get_designated_sequences.txt",
-    benchmark:
-        "benchmarks/get_designated_sequences.txt"
     threads: 7
     shell:
         """
         zstdcat -T2 {input.sequences} | \
-        seqkit grep -f {input.pango} 2>{log} | \
+        seqkit grep -f {input.pango} | \
         zstd -c -2 -T4  >{output.sequences}
         """
 
@@ -188,35 +185,20 @@ rule get_designated_strains:
         strains="pre-processed/open_pango_strains.txt",
     log:
         "logs/get_designated_strains.txt",
-    benchmark:
-        "benchmarks/get_designated_strains.txt"
     threads: 3
     shell:
         """
         zstdcat -T2 {input.sequences} | \
-        seqkit seq -in -o {output.strains} 2>{log}
+        seqkit seq -in -o {output.strains}
         """
 
 
 rule get_designated_metadata:
-    """
-    Just need to output following columns
-    "strain",
-    "date",
-    "region",
-    "Nextstrain_clade",
-    "pango_lineage",
-    "clock_deviation",
-    And only for strains in open_pango_strains.txt
-    Hence can be done before "fix_open_pango_lineages.py"
-    """
     input:
         strains="pre-processed/open_pango_strains.txt",
         metadata="data/metadata_raw.tsv.zst",
     output:
         metadata="data/metadata.tsv.zst",
-    benchmark:
-        "benchmarks/get_designated_metadata.txt"
     shell:
         """
         zstdcat {input.metadata} | \
@@ -312,16 +294,13 @@ rule lineage_stats:
         meta=rules.join_meta_nextclade.output,
     output:
         outfile="pre-processed/pango_matrix.npz",
-    log:
-        "logs/lineage_stats.txt",
     shell:
         """
         zstdcat {input.meta} | \
         python3 scripts/lineage_matrix.py \
             --ref {input.reference} \
             --meta /dev/stdin \
-            --out {output.outfile} \
-            2>&1 | tee {log} 
+            --out {output.outfile}
         """
 
 
@@ -333,8 +312,6 @@ rule make_synthetic_pangos:
         overwrites="profiles/clades/lineage_overwrite.tsv",
     output:
         outfile="pre-processed/synthetic.fasta",
-    log:
-        "logs/make_synthetic_pangos.txt",
     shell:
         """
         python3 scripts/create_synthetic.py \
@@ -342,6 +319,5 @@ rule make_synthetic_pangos:
             --matrix {input.matrix} \
             --alias {input.alias} \
             --overwrites {input.overwrites} \
-            --out {output.outfile} \
-            2>&1 | tee {log} 
+            --out {output.outfile}
         """

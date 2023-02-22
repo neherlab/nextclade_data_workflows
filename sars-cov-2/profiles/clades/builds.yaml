@@ -17,8 +17,6 @@ files:
 refine:
   root: "B" #"Wuhan/Hu-1/2019"
 
-mask: " --mask-from-beginning 100 --mask-from-end 100 --mask-terminal-gaps"
-
 tree-recombinants:
   - "XAY"
   - "XBB"

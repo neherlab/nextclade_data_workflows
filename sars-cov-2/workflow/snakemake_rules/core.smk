@@ -8,24 +8,16 @@ localrules:
     identify_recombinants,
 
 
-auspice_prefix = config.get("auspice_prefix", "ncov")
-
-
 rule align:
     input:
         sequences="builds/nextclade/sequences.fasta",
-        genemap=config["files"]["annotation"],
-        reference=config["files"]["alignment_reference"],
+        genemap="defaults/annotation.gff",
+        reference="defaults/reference_seq.fasta",
     output:
         alignment="builds/nextclade/aligned.fasta",
-        translations=expand(
-            "builds/nextclade/translations/aligned.gene.{gene}.fasta",
-            gene=config.get("genes", ["S"]),
-        ),
+        translations="builds/nextclade/translations/aligned.gene.S.fasta",
     params:
         outdir=lambda w: "builds/nextclade/translations/aligned.gene.{gene}.fasta",
-        genes="ORF1a,ORF1b,S,ORF3a,M,N",
-        basename="aligned",
     threads: 4
     shell:
         """
@@ -33,7 +25,6 @@ rule align:
             --jobs={threads} \
             --input-ref {input.reference} \
             --input-gene-map {input.genemap} \
-            --genes {params.genes} \
             {input.sequences} \
             --output-translations {params.outdir} \
             --output-fasta {output.alignment} \
@@ -46,14 +37,14 @@ rule mask:
         alignment=rules.align.output.alignment,
     output:
         alignment="builds/nextclade/masked.fasta",
-    params:
-        mask_arguments=lambda w: config.get("mask", ""),
     shell:
         """
-        python3 scripts/mask-alignment.py \
-            --alignment {input.alignment} \
-            {params.mask_arguments} \
-            --output {output.alignment} 2>&1
+        augur mask \
+            --sequences {input.alignment} \
+            --mask-from-beginning 100 \
+            --mask-from-end 100 \
+            --mask-invalid \
+            --output {output.alignment}
         """
 
 
@@ -84,12 +75,12 @@ rule separate_recombinants:
 rule tree:
     input:
         alignment="builds/nextclade/masked_without_recombinants.fasta",
-        constraint_tree=config["files"]["constraint_tree"],
-        exclude_sites=config["files"]["exclude_sites"],
+        constraint_tree="defaults/constraint.nwk",
+        exclude_sites="defaults/exclude_sites.tsv",
     output:
         tree="builds/nextclade/tree_raw.nwk",
     params:
-        args="'-czb -g defaults/constraint.nwk'",
+        args=lambda w, input: f"'-czb -g {input.constraint_tree}'",
     threads: 8
     shell:
         """
@@ -163,8 +154,8 @@ rule refine:
         alignment=rules.align.output.alignment,
         metadata="builds/{build_name}/metadata.tsv",
     output:
-        tree="builds" + "/{build_name}/tree.nwk",
-        node_data="builds" + "/{build_name}/branch_lengths.json",
+        tree="builds/{build_name}/tree.nwk",
+        node_data="builds/{build_name}/branch_lengths.json",
     params:
         root=config["refine"]["root"],
     shell:
@@ -185,21 +176,15 @@ rule ancestral:
         tree=rules.refine.output.tree,
         alignment=rules.align.output.alignment,
     output:
-        node_data="builds" + "/{build_name}/nt_muts.json",
-    log:
-        "logs/ancestral_{build_name}.txt",
-    benchmark:
-        "benchmarks/ancestral_{build_name}.txt"
-    params:
-        inference="joint",
+        node_data="builds/{build_name}/nt_muts.json",
     shell:
         """
         augur ancestral \
             --tree {input.tree} \
             --alignment {input.alignment} \
             --output-node-data {output.node_data} \
-            --inference {params.inference} \
-            --infer-ambiguous 2>&1 | tee {log}
+            --inference joint \
+            --infer-ambiguous
         """
 
 
@@ -209,18 +194,14 @@ rule translate:
         node_data=rules.ancestral.output.node_data,
         reference=config["files"]["reference"],
     output:
-        node_data="builds" + "/{build_name}/aa_muts.json",
-    log:
-        "logs/translate_{build_name}.txt",
-    benchmark:
-        "benchmarks/translate_{build_name}.txt"
+        node_data="builds/{build_name}/aa_muts.json",
     shell:
         """
         augur translate \
             --tree {input.tree} \
             --ancestral-sequences {input.node_data} \
             --reference-sequence {input.reference} \
-            --output-node-data {output.node_data} 2>&1 | tee {log}
+            --output-node-data {output.node_data}
         """
 
 
@@ -229,25 +210,15 @@ rule aa_muts_explicit:
         tree=rules.refine.output.tree,
         translations=lambda w: rules.align.output.translations,
     output:
-        node_data="builds" + "/{build_name}/aa_muts_explicit.json",
-        translations=expand(
-            "builds"
-            + "/{{build_name}}/translations/aligned.gene.{gene}_withInternalNodes.fasta",
-            gene=config.get("genes", ["S"]),
-        ),
-    params:
-        genes=config.get("genes", "S"),
-    log:
-        "logs/aamuts_{build_name}.txt",
-    benchmark:
-        "benchmarks/aamuts_{build_name}.txt"
+        node_data="builds/{build_name}/aa_muts_explicit.json",
+        translations="builds/{build_name}/translations/aligned.gene.S_withInternalNodes.fasta",
     shell:
         """
         python3 scripts/explicit_translation.py \
             --tree {input.tree} \
             --translations {input.translations:q} \
-            --genes {params.genes} \
-            --output {output.node_data} 2>&1 | tee {log}
+            --genes S \
+            --output {output.node_data}
         """
 
 
@@ -258,9 +229,7 @@ rule internal_pango:
         synthetic=rules.synthetic_pick.output,
         designations=rules.pango_strain_rename.output.pango_designations,
     output:
-        node_data="builds" + "/{build_name}/internal_pango.json",
-    log:
-        "logs/internal_pango_{build_name}.txt",
+        node_data="builds/{build_name}/internal_pango.json",
     shell:
         """
         python scripts/internal_pango.py \
@@ -269,7 +238,7 @@ rule internal_pango:
             --alias {input.alias} \
             --designations {input.designations} \
             --output {output.node_data} \
-            --field-name Nextclade_pango 2>&1 | tee {log}
+            --field-name Nextclade_pango
         """
 
 
@@ -282,17 +251,13 @@ rule clades_legacy:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data="builds" + "/{build_name}/clades_legacy.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
+        node_data="builds/{build_name}/clades_legacy.json",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data clades_raw.tmp 2>&1 | tee {log}
+            --output-node-data clades_raw.tmp
         python scripts/overwrite_recombinant_clades.py \
             --clades clades_raw.tmp \
             --internal-pango {input.internal_pango} \
@@ -313,18 +278,14 @@ rule clades:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data="builds" + "/{build_name}/clades.json",
-        node_data_nextstrain="builds" + "/{build_name}/clades_nextstrain.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
+        node_data="builds/{build_name}/clades.json",
+        node_data_nextstrain="builds/{build_name}/clades_nextstrain.json",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data clades_nextstrain.tmp 2>&1 | tee {log}
+            --output-node-data clades_nextstrain.tmp
         python scripts/overwrite_recombinant_clades.py \
             --clades clades_nextstrain.tmp \
             --internal-pango {input.internal_pango} \
@@ -346,17 +307,13 @@ rule clades_who:
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data="builds" + "/{build_name}/clades_who.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
+        node_data="builds/{build_name}/clades_who.json",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data clades_who.tmp 2>&1 | tee {log}
+            --output-node-data clades_who.tmp
         python scripts/overwrite_recombinant_clades.py \
             --clades clades_who.tmp \
             --internal-pango {input.internal_pango} \
@@ -400,18 +357,14 @@ rule colors:
         color_schemes=config["files"]["color_schemes"],
         metadata="builds/{build_name}/metadata.tsv",
     output:
-        colors="builds" + "/{build_name}/colors.tsv",
-    log:
-        "logs/colors_{build_name}.txt",
-    benchmark:
-        "benchmarks/colors_{build_name}.txt"
+        colors="builds/{build_name}/colors.tsv",
     shell:
         """
         python3 scripts/assign-colors.py \
             --ordering {input.ordering} \
             --color-schemes {input.color_schemes} \
             --output {output.colors} \
-            --metadata {input.metadata} 2>&1 | tee {log}
+            --metadata {input.metadata}
         """
 
 
@@ -441,24 +394,14 @@ rule export:
         tree=rules.refine.output.tree,
         metadata="builds/{build_name}/metadata_with_designation_date.tsv",
         node_data=_get_node_data_by_wildcards,
-        auspice_config=lambda w: config["builds"][w.build_name]["auspice_config"]
-        if "auspice_config" in config["builds"][w.build_name]
-        else config["files"]["auspice_config"],
-        description=lambda w: config["builds"][w.build_name]["description"]
-        if "description" in config["builds"][w.build_name]
-        else config["files"]["description"],
-        colors=lambda w: rules.colors.output.colors.format(**w),
+        auspice_config="profiles/clades/auspice_config.json",
+        description="profiles/clades/description.md",
+        colors=rules.colors.output.colors,
     output:
         auspice_json="auspice/{build_name}/auspice_raw.json",
         root_json="auspice/{build_name}/auspice_raw_root-sequence.json",
-    log:
-        "logs/export_{build_name}.txt",
-    benchmark:
-        "benchmarks/export_{build_name}.txt"
     params:
-        title=lambda w: config["builds"][w.build_name].get(
-            "title", "SARS-CoV-2 phylogeny"
-        ),
+        title="SARS-CoV-2 phylogeny",
     shell:
         """
         augur export v2 \
@@ -480,8 +423,6 @@ rule add_branch_labels:
         mutations=rules.aa_muts_explicit.output.node_data,
     output:
         auspice_json="auspice/{build_name}/auspice.json",
-    log:
-        "logs/add_branch_labels_{build_name}.txt",
     shell:
         """
         python3 scripts/add_branch_labels.py \
@@ -496,8 +437,6 @@ rule remove_recombinants_from_auspice:
         auspice_json=rules.add_branch_labels.output.auspice_json,
     output:
         auspice_json="auspice/{build_name}/auspice_without_recombinants.json",
-    log:
-        "logs/remove_recombinants_from_auspice_{build_name}.txt",
     shell:
         """
         python3 scripts/remove_recombinants_from_auspice.py \
