@@ -9,15 +9,18 @@ localrules:
 
 
 rule align:
+    """
+    TODO: Unnecessary, because synthetic sequences are already aligned
+    """
     input:
-        sequences="builds/nextclade/sequences.fasta",
+        sequences="builds/{build_name}/sequences.fasta",
         genemap="defaults/annotation.gff",
         reference="defaults/reference_seq.fasta",
     output:
-        alignment="builds/nextclade/aligned.fasta",
-        translations="builds/nextclade/translations/aligned.gene.S.fasta",
+        alignment="builds/{build_name}/aligned.fasta",
+        translations="builds/{build_name}/translations/aligned.gene.S.fasta",
     params:
-        outdir=lambda w: "builds/nextclade/translations/aligned.gene.{gene}.fasta",
+        outdir=lambda w: f"builds/{w.build_name}/translations/aligned.gene.{{gene}}.fasta",
     threads: 4
     shell:
         """
@@ -36,7 +39,7 @@ rule mask:
     input:
         alignment=rules.align.output.alignment,
     output:
-        alignment="builds/nextclade/masked.fasta",
+        alignment="builds/{build_name}/masked.fasta",
     shell:
         """
         augur mask \
