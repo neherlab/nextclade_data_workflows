@@ -76,6 +76,24 @@ rule separate_recombinants:
         """
 
 
+rule prune_constraint_tree:
+    """
+    Prune constraint tree to only include sequences in the alignment
+    """
+    input:
+        constraint_tree="defaults/constraint.nwk",
+        strains=rules.get_strains.output.strains,
+    output:
+        constraint_tree="builds/{build_name}/constraint.nwk",
+    shell:
+        """
+        python3 scripts/prune_constraint_tree.py \
+            --constraint-tree {input.constraint_tree} \
+            --strains {input.strains} \
+            --output {output.constraint_tree}
+        """
+
+
 rule tree:
     input:
         alignment="builds/nextclade/masked_without_recombinants.fasta",
