@@ -21,20 +21,43 @@ timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
 
 rule all:
     input:
-        lambda w: f"deploy/staging.log",
+        expand("deploy/{build_name}/staging.log", build_name=["wuhan", "21L"]),
 
 
-rule deploy_staging:
+rule deploy_wuhan:
     input:
-        tree="auspice/nextclade/auspice.json",
-        tree_no_recomb="auspice/nextclade/auspice_without_recombinants.json",
-        root="auspice/nextclade/auspice_raw_root-sequence.json",
+        tree="auspice/wuhan/auspice.json",
+        tree_no_recomb="auspice/wuhan/auspice_without_recombinants.json",
+        root="auspice/wuhan/auspice_raw_root-sequence.json",
     output:
-        log="deploy/staging.log",
-        tree=temp("nextclade_sars-cov-2.json"),
-        tree_no_recomb=temp("nextclade_sars-cov-2-no-recomb.json"),
-        root=temp("nextclade_sars-cov-2_root-sequence.json"),
-        root_no_recomb=temp("nextclade_sars-cov-2-no-recomb_root-sequence.json"),
+        log="deploy/wuhan/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2.json"),
+        tree_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb.json"),
+        root=temp("deploy/nextclade_sars-cov-2_root-sequence.json"),
+        root_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_root-sequence.json"),
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        cp {input.tree_no_recomb} {output.tree_no_recomb}
+        cp {input.root} {output.root}
+        cp {input.root} {output.root_no_recomb}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root} \
+            {output.tree_no_recomb} {output.root_no_recomb}
+        """
+
+
+rule deploy_21L:
+    input:
+        tree="auspice/21L/auspice.json",
+        tree_no_recomb="auspice/21L/auspice_without_recombinants.json",
+        root="auspice/21L/auspice_raw_root-sequence.json",
+    output:
+        log="deploy/21L/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2_21L.json"),
+        tree_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_21L.json"),
+        root=temp("deploy/nextclade_sars-cov-2_21L_root-sequence.json"),
+        root_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_21L_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
