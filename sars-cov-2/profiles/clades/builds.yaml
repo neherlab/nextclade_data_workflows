@@ -1,19 +1,5 @@
 title: "Nextclade Reference Tree for SARS-Cov-2"
 
-files:
-  reference: "defaults/reference_seq.gb"
-  alignment_reference: "defaults/reference_seq.fasta"
-  annotation: "defaults/annotation.gff"
-  include: "defaults/include.txt"
-  color_schemes: "defaults/color_schemes.tsv"
-  auspice_config: "profiles/clades/auspice_config.json"
-  description: "profiles/clades/description.md"
-  clades: "builds/clades.tsv"
-  ordering: "builds/color_ordering.tsv"
-  lat_longs: "builds/lat_longs.tsv"
-  exclude_sites: "defaults/exclude_sites.tsv"
-  constraint_tree: "defaults/constraint.nwk"
-
 root: 
   wuhan: B #"Wuhan/Hu-1/2019"
   21L: BA.2

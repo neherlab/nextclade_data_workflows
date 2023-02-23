@@ -48,6 +48,11 @@
       "type": "categorical"
     },
     {
+      "key": "designation_recency",
+      "title": "Designation recency",
+      "type": "categorical"
+    },
+    {
       "key": "Nextclade_pango",
       "title": "Nextclade Pango Lineage",
       "type": "categorical"
@@ -71,6 +76,41 @@
       "key": "clade_legacy",
       "title": "Legacy clade name",
       "type": "categorical"
+    },
+    {
+      "key": "immune_escape",
+      "title": "RBD immune escape score",
+      "type": "continuous"
+    },
+    {
+      "key": "ace2_binding",
+      "title": "ACE2 affinity score",
+      "type": "continuous"
+    },
+    {
+      "key": "qc.overallScore",
+      "title": "Overall QC score",
+      "type": "continuous"
+    },
+    {
+      "key": "totalFrameShifts",
+      "title": "Total frame shifts",
+      "type": "categorical"
+    },
+    {
+      "key": "qc.stopCodons.totalStopCodons",
+      "title": "Total stop codons",
+      "type": "categorical"
+    },
+    {
+      "key": "totalAminoacidSubstitutions",
+      "title": "Total amino acid substitutions",
+      "type": "continuous"
+    },
+    {
+      "key": "totalAminoacidDeletions",
+      "title": "Total amino acid deletions",
+      "type": "continuous"
     }
   ],
   "display_defaults": {
@@ -87,7 +127,8 @@
     "partiallyAliased",
     "clade_who",
     "clade_legacy",
-    "designation_date"
+    "designation_date",
+    "designation_recency"
   ],
   "panels": ["tree", "entropy"]
 }

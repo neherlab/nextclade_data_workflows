@@ -48,6 +48,10 @@ def main(
                     continue
 
             keep.append(lineage)
+    
+    # Add outgroup (BA.3)
+    if build_name == "21L":
+        keep.append("BA.3")
 
     pd.Series(keep).to_csv(outfile, sep="\t", index=False, header=False)
 

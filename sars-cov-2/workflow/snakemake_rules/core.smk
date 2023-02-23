@@ -8,9 +8,70 @@ localrules:
     identify_recombinants,
 
 
+genes = [
+    "ORF1a",
+    "ORF1b",
+    "S",
+    "ORF3a",
+    "M",
+    "N",
+    "E",
+    "ORF6",
+    "ORF7a",
+    "ORF7b",
+    "ORF8",
+    "ORF9b",
+]
+
+
+rule generate_nextclade_ba2_tsv:
+    input:
+        sequences="builds/{build_name}/sequences.fasta",
+    output:
+        tsv="builds/{build_name}/nextclade_ba2.tsv",
+    shell:
+        """
+        nextclade run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
+        """
+
+
+rule generate_nextclade_wuhan_tsv:
+    input:
+        sequences="builds/{build_name}/sequences.fasta",
+    output:
+        tsv="builds/{build_name}/nextclade_wuhan.tsv",
+    shell:
+        """
+        nextclade run -d sars-cov-2 {input.sequences} -t {output.tsv}
+        """
+
+
+rule add_nextclade_columns_to_meta:
+    input:
+        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
+        ba2_tsv=rules.generate_nextclade_ba2_tsv.output.tsv,
+        wuhan_tsv=rules.generate_nextclade_wuhan_tsv.output.tsv,
+    output:
+        metadata="builds/{build_name}/metadata_with_bloom_scores.tsv",
+    shell:
+        """
+        tsv-join -H --filter-file {input.ba2_tsv} \
+            --key-fields seqName \
+            --data-fields strain \
+            --append-fields immune_escape,ace2_binding \
+            {input.metadata} \
+        | tsv-join -H --filter-file {input.wuhan_tsv} \
+            --key-fields seqName \
+            --data-fields strain \
+            --append-fields qc.overallScore,totalFrameShifts,qc.stopCodons.totalStopCodons,totalAminoacidSubstitutions,totalAminoacidDeletions \
+        > {output}
+        """
+
+
 rule align:
     """
-    TODO: Unnecessary, because synthetic sequences are already aligned
+    Only used for translations
+    As `sequences.fasta` is already aligned
     """
     input:
         sequences="builds/{build_name}/sequences.fasta",
@@ -18,9 +79,13 @@ rule align:
         reference="defaults/reference_seq.fasta",
     output:
         alignment="builds/{build_name}/aligned.fasta",
-        translations="builds/{build_name}/translations/aligned.gene.S.fasta",
+        translations=expand(
+            "builds/{{build_name}}/translations/aligned.gene.{genes}.fasta",
+            genes=genes,
+        ),
     params:
         outdir=lambda w: f"builds/{w.build_name}/translations/aligned.gene.{{gene}}.fasta",
+        genes=",".join(genes),
     threads: 4
     shell:
         """
@@ -28,16 +93,16 @@ rule align:
             --jobs={threads} \
             --input-ref {input.reference} \
             --input-gene-map {input.genemap} \
+            --genes {params.genes} \
             {input.sequences} \
             --output-translations {params.outdir} \
-            --output-fasta {output.alignment} \
-            2>&1
+            --output-fasta {output.alignment}
         """
 
 
 rule mask:
     input:
-        alignment=rules.align.output.alignment,
+        alignment="builds/{build_name}/sequences.fasta",
     output:
         alignment="builds/{build_name}/masked.fasta",
     shell:
@@ -102,14 +167,14 @@ rule tree:
     output:
         tree="builds/{build_name}/tree_raw.nwk",
     params:
-        args=lambda w, input: f"'-czb -g {input.constraint_tree}'",
-    threads: 8
+        args=lambda w, input: f"-czb -g {input.constraint_tree} -ninit 1 -n 1",
+    threads: 4
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
             --exclude-sites {input.exclude_sites} \
-            --tree-builder-args {params.args} \
+            --tree-builder-args {params.args:q} \
             --output {output.tree} \
             --nthreads {threads} 2>&1
         """
@@ -121,22 +186,24 @@ rule recombinant_tree:
     output:
         tree="builds/{build_name}/tree_raw_recombinant_{recombinant}.nwk",
     params:
-        constraint=lambda w: f"-g profiles/clades/constraint_{w.recombinant}.nwk"
-        if os.path.exists(f"profiles/clades/constraint_{w.recombinant}.nwk")
-        else "",
+        constraint=lambda w: (
+            f"-g profiles/clades/constraint_{w.recombinant}.nwk"
+            if os.path.exists(f"profiles/clades/constraint_{w.recombinant}.nwk")
+            else ""
+        ),
     shell:
         """
         # Check if there are 3 or more sequences in the alignment
         if [ $(grep -c ">" {input.alignment}) -lt 3 ]; then
             python scripts/simple_tree.py \
                 --alignment {input.alignment} \
-                --tree {output.tree} 2>&1
+                --tree {output.tree};
         else 
             augur tree \
                 --alignment {input.alignment} \
-                --tree-builder-args "-czb {params.constraint}" \
-                --output {output.tree} \
-                2>&1
+                --tree-builder-args "-czb -ninit 1 -n 1 {params.constraint}" \
+                --nthreads 1 \
+                --output {output.tree};
         fi
         """
 
@@ -171,7 +238,7 @@ rule add_recombinants_to_tree:
 rule refine:
     input:
         tree=rules.add_recombinants_to_tree.output.tree,
-        alignment=rules.align.output.alignment,
+        alignment="builds/{build_name}/sequences.fasta",
         metadata="builds/{build_name}/metadata.tsv",
     output:
         tree="builds/{build_name}/tree.nwk",
@@ -187,14 +254,14 @@ rule refine:
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
             --keep-root \
-            --divergence-unit mutations | tee {log}
+            --divergence-unit mutations
         """
 
 
 rule ancestral:
     input:
         tree=rules.refine.output.tree,
-        alignment=rules.align.output.alignment,
+        alignment="builds/{build_name}/sequences.fasta",
     output:
         node_data="builds/{build_name}/nt_muts.json",
     shell:
@@ -231,13 +298,18 @@ rule aa_muts_explicit:
         translations=rules.align.output.translations,
     output:
         node_data="builds/{build_name}/aa_muts_explicit.json",
-        translations="builds/{build_name}/translations/aligned.gene.S_withInternalNodes.fasta",
+        translations=expand(
+            "builds/{{build_name}}/translations/aligned.gene.{gene}_withInternalNodes.fasta",
+            gene=genes,
+        ),
+    params:
+        genes=" ".join(genes),
     shell:
         """
         python3 scripts/explicit_translation.py \
             --tree {input.tree} \
             --translations {input.translations:q} \
-            --genes S \
+            --genes {params.genes}\
             --output {output.node_data}
         """
 
@@ -262,12 +334,25 @@ rule internal_pango:
         """
 
 
+rule preprocess_clades:
+    input:
+        clades="builds/clades{type}.tsv",
+        outgroup="profiles/clades/{build_name}/outgroup.tsv",
+    output:
+        clades="builds/{build_name}/clades{type}.tsv",
+    shell:
+        """
+        cp {input.clades} {output.clades};
+        cat <(echo) {input.outgroup} >> {output.clades};
+        """
+
+
 rule clades_legacy:
     input:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/clades.tsv",
+        clades="builds/{build_name}/clades.tsv",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
@@ -294,7 +379,7 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/clades_nextstrain.tsv",
+        clades="builds/{build_name}/clades_nextstrain.tsv",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
@@ -323,7 +408,7 @@ rule clades_who:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/clades_who.tsv",
+        clades="builds/{build_name}/clades_who.tsv",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
@@ -342,32 +427,6 @@ rule clades_who:
             --output {output.node_data}
         rm clades_who.tmp
         sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
-        """
-
-
-rule download_designation_dates:
-    output:
-        designation_dates="builds/designation_dates.tsv",
-    shell:
-        """
-        curl https://raw.githubusercontent.com/corneliusroemer/pango-designation-dates/main/data/lineage_designation_date.csv \
-            | csv2tsv > {output}
-        """
-
-
-rule add_designation_date_to_meta:
-    input:
-        metadata="builds/{build_name}/metadata.tsv",
-        designation_dates=rules.download_designation_dates.output.designation_dates,
-    output:
-        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
-    shell:
-        """
-        tsv-join -H --filter-file {input.designation_dates} \
-            --key-fields 1 \
-            --append-fields 2 \
-            {input.metadata} \
-        > {output}
         """
 
 
@@ -412,7 +471,7 @@ def _get_node_data_by_wildcards(wildcards):
 rule export:
     input:
         tree=rules.refine.output.tree,
-        metadata=rules.add_designation_date_to_meta.output.metadata,
+        metadata=rules.add_nextclade_columns_to_meta.output.metadata,
         node_data=_get_node_data_by_wildcards,
         colors=rules.colors.output.colors,
         auspice_config="profiles/clades/auspice_config.json",

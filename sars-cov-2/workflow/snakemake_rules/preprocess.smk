@@ -46,6 +46,16 @@ rule download_sequences:
         "aws s3 cp {params.address} {output}"
 
 
+rule download_designation_dates:
+    output:
+        designation_dates="builds/designation_dates.tsv",
+    shell:
+        """
+        curl https://raw.githubusercontent.com/corneliusroemer/pango-designation-dates/main/data/lineage_designation_date.csv \
+            | csv2tsv > {output}
+        """
+
+
 rule download_metadata:
     message:
         "Downloading metadata from {params.address} -> {output}"

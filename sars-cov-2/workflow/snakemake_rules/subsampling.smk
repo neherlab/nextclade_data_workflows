@@ -54,6 +54,35 @@ rule add_synthetic_metadata:
         """
 
 
+rule add_designation_recency:
+    input:
+        designation_dates=rules.download_designation_dates.output.designation_dates,
+    output:
+        metadata="builds/{build_name}/designation_dates.tsv",
+    shell:
+        """
+        python3 scripts/add_designation_recency.py \
+            {input.designation_dates} \
+            {output}
+        """
+
+
+rule add_designation_date_to_meta:
+    input:
+        metadata="builds/{build_name}/metadata.tsv",
+        designation_dates=rules.add_designation_recency.output.metadata,
+    output:
+        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
+    shell:
+        """
+        tsv-select -H -f 1 {input.metadata} | \
+        tsv-join -H --filter-file {input.designation_dates} \
+            --key-fields 1 \
+            --append-fields 2,3 \
+        > {output}
+        """
+
+
 rule get_strains:
     input:
         sequences="builds/{build_name}/sequences.fasta",
