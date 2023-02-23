@@ -30,7 +30,7 @@ rule deploy_wuhan:
         tree_no_recomb="auspice/wuhan/auspice_without_recombinants.json",
         root="auspice/wuhan/auspice_raw_root-sequence.json",
     output:
-        log="deploy/wuhan/staging.log",
+        touchfile="deploy/wuhan/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2.json"),
         tree_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb.json"),
         root=temp("deploy/nextclade_sars-cov-2_root-sequence.json"),
@@ -43,7 +43,8 @@ rule deploy_wuhan:
         cp {input.root} {output.root_no_recomb}
         nextstrain deploy s3://nextstrain-staging \
             {output.tree} {output.root} \
-            {output.tree_no_recomb} {output.root_no_recomb}
+            {output.tree_no_recomb} {output.root_no_recomb};
+        touch {output.touchfile}
         """
 
 
@@ -53,11 +54,13 @@ rule deploy_21L:
         tree_no_recomb="auspice/21L/auspice_without_recombinants.json",
         root="auspice/21L/auspice_raw_root-sequence.json",
     output:
-        log="deploy/21L/staging.log",
+        touchfile="deploy/21L/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_21L.json"),
         tree_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_21L.json"),
         root=temp("deploy/nextclade_sars-cov-2_21L_root-sequence.json"),
-        root_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_21L_root-sequence.json"),
+        root_no_recomb=temp(
+            "deploy/nextclade_sars-cov-2-no-recomb_21L_root-sequence.json"
+        ),
     shell:
         """
         cp {input.tree} {output.tree}
@@ -66,8 +69,8 @@ rule deploy_21L:
         cp {input.root} {output.root_no_recomb}
         nextstrain deploy s3://nextstrain-staging \
             {output.tree} {output.root} \
-            {output.tree_no_recomb} {output.root_no_recomb} \
-            2>&1 | tee {output.log}
+            {output.tree_no_recomb} {output.root_no_recomb};
+        touch {output.touchfile}
         """
 
 

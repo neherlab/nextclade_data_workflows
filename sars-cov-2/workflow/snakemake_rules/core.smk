@@ -31,6 +31,7 @@ rule generate_nextclade_ba2_tsv:
         tsv="builds/{build_name}/nextclade_ba2.tsv",
     shell:
         """
+        # nextclade run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
         nextclade run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
         """
 
@@ -329,6 +330,7 @@ rule internal_pango:
             --synthetic {input.synthetic} \
             --alias {input.alias} \
             --designations {input.designations} \
+            --build-name {wildcards.build_name} \
             --output {output.node_data} \
             --field-name Nextclade_pango
         """
@@ -336,14 +338,24 @@ rule internal_pango:
 
 rule preprocess_clades:
     input:
-        clades="builds/clades{type}.tsv",
+        clades="builds/clades{clade_type}.tsv",
         outgroup="profiles/clades/{build_name}/outgroup.tsv",
     output:
-        clades="builds/{build_name}/clades{type}.tsv",
+        clades="builds/{build_name}/clades{clade_type}.tsv",
+    wildcard_constraints:
+        clade_type=".*",  # Snakemake wildcard default is ".+" which doesn't match empty strings
     shell:
         """
         cp {input.clades} {output.clades};
         cat <(echo) {input.outgroup} >> {output.clades};
+        if [ {wildcards.build_name} = 21L ]; then
+            for clade in 19A 19B 20A 20B 20C 20D 20E 20F 20G 20H 20I \
+                20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M \
+                Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu;
+            do
+                sed -i "/$clade/d" {output.clades};
+            done
+        fi
         """
 
 
@@ -357,19 +369,21 @@ rule clades_legacy:
         alias=rules.download_pango_alias.output,
     output:
         node_data="builds/{build_name}/clades_legacy.json",
+    params:
+        tmp="builds/{build_name}/clades_legacy.tmp",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data clades_raw.tmp
+            --output-node-data {params.tmp}
         python scripts/overwrite_recombinant_clades.py \
-            --clades clades_raw.tmp \
+            --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
             --clade-type clade_legacy \
             --output {output.node_data}
-        rm clades_raw.tmp
+        rm {params.tmp}
         sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data}
         """
 
@@ -385,19 +399,21 @@ rule clades:
     output:
         node_data="builds/{build_name}/clades.json",
         node_data_nextstrain="builds/{build_name}/clades_nextstrain.json",
+    params:
+        tmp="builds/{build_name}/clades_nextstrain.tmp",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data clades_nextstrain.tmp
+            --output-node-data {params.tmp}
         python scripts/overwrite_recombinant_clades.py \
-            --clades clades_nextstrain.tmp \
+            --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
             --clade-type clade_nextstrain \
             --output {output.node_data}
-        rm clades_nextstrain.tmp
+        rm {params.tmp}
         cp {output.node_data} {output.node_data_nextstrain}
         sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data_nextstrain}
         """
@@ -413,19 +429,21 @@ rule clades_who:
         alias=rules.download_pango_alias.output,
     output:
         node_data="builds/{build_name}/clades_who.json",
+    params:
+        tmp="builds/{build_name}/clades_who.tmp",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data clades_who.tmp
+            --output-node-data {params.tmp}
         python scripts/overwrite_recombinant_clades.py \
-            --clades clades_who.tmp \
+            --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
             --clade-type clade_who \
             --output {output.node_data}
-        rm clades_who.tmp
+        rm {params.tmp}
         sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
         """
 
@@ -474,7 +492,7 @@ rule export:
         metadata=rules.add_nextclade_columns_to_meta.output.metadata,
         node_data=_get_node_data_by_wildcards,
         colors=rules.colors.output.colors,
-        auspice_config="profiles/clades/auspice_config.json",
+        auspice_config="profiles/clades/{build_name}/auspice_config.json",
         description="profiles/clades/description.md",
     output:
         auspice_json="auspice/{build_name}/auspice_raw.json",
@@ -502,7 +520,7 @@ rule add_branch_labels:
         auspice_json=rules.export.output.auspice_json,
         mutations=rules.aa_muts_explicit.output.node_data,
     output:
-        auspice_json="auspice/{build_name}/auspice.json",
+        auspice_json="auspice/{build_name}/auspice_max.json",
     shell:
         """
         python3 scripts/add_branch_labels.py \
@@ -516,12 +534,23 @@ rule remove_recombinants_from_auspice:
     input:
         auspice_json=rules.add_branch_labels.output.auspice_json,
     output:
-        auspice_json="auspice/{build_name}/auspice_without_recombinants.json",
+        auspice_json="auspice/{build_name}/auspice_without_recombinants_max.json",
     shell:
         """
         python3 scripts/remove_recombinants_from_auspice.py \
             --input {input.auspice_json} \
             --output {output.auspice_json}
+        """
+
+
+rule minify_json:
+    input:
+        "auspice/{build_name}/{build_type}_max.json",
+    output:
+        "auspice/{build_name}/{build_type}.json",
+    shell:
+        """
+        jq -c . {input} > {output}
         """
 
 

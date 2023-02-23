@@ -51,7 +51,7 @@ def main(
     
     # Add outgroup (BA.3)
     if build_name == "21L":
-        keep.append("BA.3")
+        keep.extend(["BA.3", "BA.1", "B.1.1", "B.1.617.2", "B.1", "B.1.1.7", "B", "A"])
 
     pd.Series(keep).to_csv(outfile, sep="\t", index=False, header=False)
 
