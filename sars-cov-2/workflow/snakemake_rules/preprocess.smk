@@ -9,6 +9,7 @@ localrules:
     download_pango_alias,
     download_sequences,
     download_metadata,
+    download_nextclade_tsv,
     download_clades,
     download_clades_nextstrain,
     download_clades_who,
