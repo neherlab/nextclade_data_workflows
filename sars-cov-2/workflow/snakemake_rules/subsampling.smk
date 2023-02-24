@@ -15,6 +15,7 @@ rule synthetic_pick:
         lineages=rules.designated_lineages.output.lineages,
         alias_file="pre-processed/alias.json",
         excluded_recombinants="profiles/clades/{build_name}/excluded_recombinants.txt",
+        excludes="profiles/clades/excludes.txt",
     output:
         strains="builds/{build_name}/chosen_synthetic_strains.txt",
     shell:
@@ -25,6 +26,7 @@ rule synthetic_pick:
             --alias-file {input.alias_file} \
             --build-name {wildcards.build_name} \
             --excluded-recombinants {input.excluded_recombinants} \
+            --excludes {input.excludes} \
             --outfile {output.strains}
         """
 

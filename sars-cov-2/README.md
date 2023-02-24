@@ -3,6 +3,7 @@
 ## Running the workflow
 
 ```sh
+snakemake -c10 --profile profiles/clades -F
 ```
 
 ## Creating a new dataset version

@@ -9,7 +9,8 @@ def main(
     lineages: str = "builds/nextclade/designated_lineages.txt",
     alias_file: str = "pre-processed/alias.json",
     build_name: str = "wuhan",  # other option is "21L"
-    excluded_recombinants: str = "profiles/21L/excluded_recombinants.txt",
+    excluded_recombinants: str = "profiles/clades/21L/excluded_recombinants.txt",
+    excludes: str = "profiles/clades/excludes.txt",
     outfile: str = "builds/nextclade/chosen_synthetic_strains.txt",
 ):
     aliasor = Aliasor(alias_file)
@@ -52,6 +53,10 @@ def main(
     # Add outgroup (BA.3)
     if build_name == "21L":
         keep.extend(["BA.3", "BA.1", "B.1.1", "B.1.617.2", "B.1", "B.1.1.7", "B", "A"])
+    
+    # Remove excludes
+    excludes = set(open(excludes).read().splitlines())
+    keep = list(set(keep) - excludes)
 
     pd.Series(keep).to_csv(outfile, sep="\t", index=False, header=False)
 
