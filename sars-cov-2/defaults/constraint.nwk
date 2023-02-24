@@ -206,7 +206,10 @@
                               BA.5.2.25,
                               (
                                 DB.1,
-                                DB.2
+                                (
+                                  DB.2,
+                                  DB.3
+                                )internal_007e
                               )internal_46ed
                             )internal_28cf,
                             (
