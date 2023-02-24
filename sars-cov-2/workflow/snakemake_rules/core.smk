@@ -3,6 +3,8 @@ localrules:
     colors,
     internal_pango,
     add_recombinants_to_tree,
+    generate_nextclade_ba2_tsv,
+    generate_nextclade_wuhan_tsv,
 
 
 genes = [
