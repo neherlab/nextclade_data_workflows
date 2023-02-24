@@ -6,7 +6,8 @@ localrules:
     clean,
     clean_all,
     dump_config,
-    deploy_staging,
+    deploy_wuhan,
+    deploy_21L,
 
 
 include: "workflow/snakemake_rules/preprocess.smk"

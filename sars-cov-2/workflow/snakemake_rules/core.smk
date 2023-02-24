@@ -2,10 +2,7 @@ localrules:
     add_branch_labels,
     colors,
     internal_pango,
-    overwrite_recombinant_clades,
     add_recombinants_to_tree,
-    remove_recombinants_from_alignment,
-    identify_recombinants,
 
 
 genes = [
