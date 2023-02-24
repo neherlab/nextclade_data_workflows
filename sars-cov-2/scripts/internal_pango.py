@@ -18,9 +18,10 @@ from treetime import TreeAnc
 @click.option("--synthetic", required=False, type=str)
 @click.option("--tree", required=True, type=str)
 @click.option("--alias", required=True, type=str)
+@click.option("--build-name", required=True, type=str)
 @click.option("--output", required=True, type=str)
 @click.option("--field-name", default="inferred_lineage")
-def main(designations, tree, alias, synthetic, output, field_name):
+def main(designations, tree, alias, build_name, synthetic, output, field_name):
     """
     Takes designation csv, nwk tree, and alias json
     Produces node.json with field-name (default: inferred_lineage)
@@ -155,13 +156,33 @@ def main(designations, tree, alias, synthetic, output, field_name):
             seq_to_lineage_list(rec.seq)
         )
     #%%
-    meta["realiased"] = meta["reconstructed"].apply(aliasor.compress)
+    # ipdb.set_trace()
+    meta[field_name] = (
+        meta["reconstructed"].apply(aliasor.compress).rename(field_name)
+    )
+    
+    # Set non-21L to empty string
+    if build_name == "21L":
+        meta[field_name] = meta[field_name].apply(
+            lambda x: ""
+            if not (
+                aliasor.uncompress(x).startswith("B.1.1.529.2")
+                or aliasor.uncompress(x).startswith("B.1.1.529.4")
+                or aliasor.uncompress(x).startswith("B.1.1.529.5")
+                or aliasor.uncompress(x).startswith("X")
+            )
+            else x
+        )
+
+    meta["partiallyAliased"] = meta["reconstructed"].apply(
+        lambda x: aliasor.partial_compress(x, accepted_aliases=["BA"])
+    )
+    export_df = meta[[field_name, "partiallyAliased"]]
     #%%
     augur.utils.write_json(
         {
-            "nodes": meta["realiased"]
-            .rename(field_name)
-            .to_frame()  # Necessary to prevent slash escape
+            "nodes": export_df
+            # .to_frame()  # Necessary to prevent slash escape
             .to_dict(orient="index")
         },
         output,

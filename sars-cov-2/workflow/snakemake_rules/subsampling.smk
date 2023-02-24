@@ -1,100 +1,31 @@
-"""
-This part of the workflow starts from files
-
-  - pre-processed/sequences.fasta
-  - pre-processed/metadata.tsv
-
-and produces files
-
-  - builds/{build_name}/sequences.fasta
-  - builds/{build_name}/metadata.tsv
-
-"""
-
-build_dir = "builds"
-
-
-rule prepare_build:
+rule designated_lineages:
     input:
-        sequences=build_dir + "/{build_name}/sequences.fasta",
-        metadata=build_dir + "/{build_name}/metadata.tsv",
-
-rule pango_pick:
-    input:
-        counts="defaults/nr.tsv",
-        metadata="pre-processed/open_pango_metadata.tsv",
-        exclude="pre-processed/problematic_exclude.txt",
+        sequences="pre-processed/synthetic.fasta",
     output:
-        strains=build_dir + "/{build_name}/chosen_pango_strains.txt",
-    log:
-        "logs/pango_pick_{build_name}.txt",
+        lineages="builds/designated_lineages.txt",
     shell:
         """
-        python scripts/pick_samples.py \
-            --designations {input.metadata} \
-            --counts {input.counts} \
-            --exclude {input.exclude} \
-            --outfile {output.strains} 2>&1 \
-        | tee {log}
-        """
-
-
-rule pango_select:
-    input:
-        sequences="pre-processed/open_pango.fasta.zst",
-        strains=rules.pango_pick.output.strains,
-    output:
-        sequences=build_dir + "/{build_name}/picked_pango.fasta",
-    threads: 3
-    shell:
-        """
-        zstdcat -T2 {input.sequences} | \
-        seqkit grep -f {input.strains} -o {output.sequences}
-        """
-
-
-rule pango_sampling:
-    input:
-        sequences=rules.pango_select.output.sequences,
-        metadata="pre-processed/open_pango_metadata.tsv",
-    output:
-        sequences=build_dir + "/{build_name}/sample-pango.fasta",
-        strains=build_dir + "/{build_name}/sample-pango.txt",
-    log:
-        "logs/subsample_{build_name}_pango.txt",
-    benchmark:
-        "benchmarks/subsample_{build_name}_pango.txt"
-    params:
-        exclude_where_args=config["exclude-where-args"],
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
-    shell:
-        """
-        augur filter \
-            --sequences {input.sequences} \
-            --metadata {input.metadata} \
-            --exclude-where Nextstrain_clade='21K (Omicron)' Nextstrain_clade='21L (Omicron)' Nextstrain_clade='21M (Omicron)' recombinant=True \
-            --output {output.sequences} \
-            --output-strains {output.strains} 2>&1 | tee {log}
+        seqkit seq -n {input.sequences} >{output.lineages}
         """
 
 
 rule synthetic_pick:
     input:
         counts="defaults/nr.tsv",
-        metadata="pre-processed/open_pango_metadata.tsv",
+        lineages=rules.designated_lineages.output.lineages,
+        alias_file="pre-processed/alias.json",
+        excluded_recombinants="profiles/clades/{build_name}/excluded_recombinants.txt",
     output:
-        strains=build_dir + "/{build_name}/chosen_synthetic_strains.txt",
-    log:
-        "logs/synthetic_pick_{build_name}.txt",
+        strains="builds/{build_name}/chosen_synthetic_strains.txt",
     shell:
         """
-        python scripts/pick_synthetic.py \
-            --designations {input.metadata} \
+        python scripts/synthetic_pick.py \
             --counts {input.counts} \
-            --outfile {output.strains} 2>&1 \
-        | tee {log}
+            --lineages {input.lineages} \
+            --alias-file {input.alias_file} \
+            --build-name {wildcards.build_name} \
+            --excluded-recombinants {input.excluded_recombinants} \
+            --outfile {output.strains}
         """
 
 
@@ -103,103 +34,61 @@ rule synthetic_select:
         sequences="pre-processed/synthetic.fasta",
         strains=rules.synthetic_pick.output.strains,
     output:
-        sequences=build_dir + "/{build_name}/picked_synthetic.fasta",
-    log:
-        "logs/synthetic_select_{build_name}.txt",
+        sequences="builds/{build_name}/sequences.fasta",
     shell:
         """
-        seqkit grep -f {input.strains} -o {output.sequences} {input.sequences} \
-        2>&1 | tee {log}
+        seqkit grep -f {input.strains} -o {output.sequences} {input.sequences}
         """
-
-
-rule combine_subsamples:
-    # Similar to rule combine_input_metadata, this rule should only be run if multiple inputs are being used (i.e. multiple origins)
-    message:
-        """
-        Combine and deduplicate aligned & filtered FASTAs from multiple origins in preparation for subsampling: {input}.
-        """
-    input:
-        # natural = lambda w: [build_dir + f"/{w.build_name}/sample-{subsample}.fasta"
-        #            for subsample in config["builds"][w.build_name]["subsamples"]],
-        synthetic=rules.synthetic_select.output.sequences,
-        pango=rules.pango_sampling.output.sequences,
-    output:
-        build_dir + "/{build_name}/sequences_raw.fasta",
-    benchmark:
-        "benchmarks/combine_subsamples_{build_name}.txt"
-    shell:
-        """
-        python3 scripts/combine-and-dedup-fastas.py --input {input} --output {output}
-        """
-
-
-rule extract_metadata:
-    input:
-        strains=[
-            build_dir + "/{build_name}/chosen_synthetic_strains.txt",
-            build_dir + "/{build_name}/chosen_pango_strains.txt",
-        ],
-        metadata="data/metadata.tsv",
-    output:
-        metadata=build_dir + "/{build_name}/extracted_metadata.tsv",
-    params:
-        adjust=lambda w: config["builds"][w.build_name].get("metadata_adjustments", {}),
-    benchmark:
-        "benchmarks/extract_metadata_{build_name}.txt"
-    run:
-        import pandas as pd
-
-        strains = set()
-        for f in input.strains:
-            with open(f) as fh:
-                strains.update([x.strip() for x in fh if x[0] != "#"])
-
-        d = pd.read_csv(input.metadata, index_col="strain", sep="\t")
-        d = d[d.index.isin(list(strains))]
-        if len(params.adjust):
-            for adjustment in params.adjust:
-                ind = d.eval(adjustment["query"])
-                d.loc[ind, adjustment["dst"]] = d.loc[ind, adjustment["src"]]
-
-        d.to_csv(output.metadata, sep="\t")
 
 
 rule add_synthetic_metadata:
     input:
-        metadata=rules.extract_metadata.output.metadata,
         synthetic=rules.synthetic_pick.output.strains,
     output:
-        metadata=rules.prepare_build.input.metadata,
-    log:
-        "logs/add_synthetic_metadata_{build_name}.txt",
+        metadata="builds/{build_name}/metadata.tsv",
     shell:
         """
         python3 scripts/add_synthetic_metadata.py \
-            --metadata {input.metadata} \
             --synthetic {input.synthetic} \
-            --outfile {output.metadata} 2>&1 \
-        | tee {log}
+            --outfile {output.metadata}
         """
 
 
-rule exclude_outliers:
+rule add_designation_recency:
     input:
-        sequences="builds/{build_name}/sequences_raw.fasta",
-        metadata=rules.prepare_build.input.metadata,
-        exclude="profiles/exclude.txt",
+        designation_dates=rules.download_designation_dates.output.designation_dates,
     output:
-        sampled_sequences="builds/{build_name}/sequences.fasta",
-        sampled_strains="builds/{build_name}/subsample.txt",
-    log:
-        "logs/exclude_outliers_{build_name}.txt",
+        metadata="builds/{build_name}/designation_dates.tsv",
     shell:
         """
-        augur filter \
-            --sequences {input.sequences} \
-            --metadata {input.metadata} \
-            --exclude {input.exclude} \
-            --output {output.sampled_sequences} \
-            --output-strains {output.sampled_strains} \
-        2>&1 | tee {log}
+        python3 scripts/add_designation_recency.py \
+            {input.designation_dates} \
+            {output}
+        """
+
+
+rule add_designation_date_to_meta:
+    input:
+        metadata="builds/{build_name}/metadata.tsv",
+        designation_dates=rules.add_designation_recency.output.metadata,
+    output:
+        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
+    shell:
+        """
+        tsv-select -H -f 1 {input.metadata} | \
+        tsv-join -H --filter-file {input.designation_dates} \
+            --key-fields 1 \
+            --append-fields 2,3 \
+        > {output}
+        """
+
+
+rule get_strains:
+    input:
+        sequences="builds/{build_name}/sequences.fasta",
+    output:
+        strains="builds/{build_name}/strains.txt",
+    shell:
+        """
+        seqkit seq -n {input.sequences} >{output.strains}
         """

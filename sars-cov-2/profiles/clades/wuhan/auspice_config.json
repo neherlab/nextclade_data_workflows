@@ -1,0 +1,134 @@
+{
+  "title": "Your samples placed on a SARS-CoV-2 phylogeny",
+  "build_url": "https://github.com/neherlab/nextclade_data_workflows",
+  "maintainers": [
+    { "name": "Cornelius Roemer", "url": "https://neherlab.org" },
+    { "name": "Richard Neher", "url": "https://neherlab.org" }
+  ],
+  "extensions": {
+    "nextclade": {
+      "clade_node_attrs": [
+        {
+          "name": "Nextclade_pango",
+          "displayName": "Pango lineage (Nextclade)",
+          "description": "Pango lineage as inferred by Nextclade from the nearest neighbour in the reference tree. 98% accurate for recent sequences, for higher accuracy use dedicated pangolin software in UShER or pangoLEARN mode. Recombinants may get (wrongly) assigned to a designated recombinant lineage if they have similar breakpoints.",
+          "hideInWeb": false
+        },
+        {
+          "name": "partiallyAliased",
+          "displayName": "Unaliased",
+          "description": "Partially aliased reconstructed Pango lineage",
+          "hideInWeb": false
+        },
+        {
+          "name": "clade_nextstrain",
+          "displayName": "Nextstrain Clade",
+          "description": "Nextstrain Clade",
+          "hideInWeb": true
+        },
+        {
+          "name": "clade_who",
+          "displayName": "WHO name",
+          "description": "Greek letter WHO name",
+          "hideInWeb": true
+        },
+        {
+          "name": "clade_legacy",
+          "displayName": "Backwards compatible Nextstrain name",
+          "description": "Combination of Nextstrain clade, WHO name and other names like EU1 for backwards compatibility",
+          "hideInWeb": true
+        }
+      ]
+    }
+  },
+  "colorings": [
+    {
+      "key": "designation_date",
+      "title": "Designation date",
+      "type": "categorical"
+    },
+    {
+      "key": "designation_recency",
+      "title": "Designation recency",
+      "type": "categorical"
+    },
+    {
+      "key": "Nextclade_pango",
+      "title": "Nextclade Pango Lineage",
+      "type": "categorical"
+    },
+    {
+      "key": "partiallyAliased",
+      "title": "Unaliased Pango Lineage",
+      "type": "categorical"
+    },
+    {
+      "key": "clade_who",
+      "title": "WHO name",
+      "type": "categorical"
+    },
+    {
+      "key": "clade_nextstrain",
+      "title": "Nextstrain clade name",
+      "type": "categorical"
+    },
+    {
+      "key": "clade_legacy",
+      "title": "Legacy clade name",
+      "type": "categorical"
+    },
+    {
+      "key": "immune_escape",
+      "title": "RBD immune escape score",
+      "type": "continuous"
+    },
+    {
+      "key": "ace2_binding",
+      "title": "ACE2 affinity score",
+      "type": "continuous"
+    },
+    {
+      "key": "qc.overallScore",
+      "title": "Overall QC score",
+      "type": "continuous"
+    },
+    {
+      "key": "totalFrameShifts",
+      "title": "Total frame shifts",
+      "type": "categorical"
+    },
+    {
+      "key": "qc.stopCodons.totalStopCodons",
+      "title": "Total stop codons",
+      "type": "categorical"
+    },
+    {
+      "key": "totalAminoacidSubstitutions",
+      "title": "Total amino acid substitutions",
+      "type": "continuous"
+    },
+    {
+      "key": "totalAminoacidDeletions",
+      "title": "Total amino acid deletions",
+      "type": "continuous"
+    }
+  ],
+  "display_defaults": {
+    "color_by": "clade_membership",
+    "distance_measure": "div",
+    "map_triplicate": false,
+    "branch_label": "clade",
+    "transmission_lines": false
+  },
+  "filters": [
+    "new_node",
+    "clade_membership",
+    "Nextclade_pango",
+    "partiallyAliased",
+    "clade_who",
+    "clade_legacy",
+    "designation_date",
+    "designation_recency"
+  ],
+  "panels": ["tree", "entropy"]
+}

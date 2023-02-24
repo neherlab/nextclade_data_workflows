@@ -1,63 +1,90 @@
-"""
-This part of the workflow starts from files
-
-  - builds/{build_name}/sequences.fasta
-  - builds/{build_name}/metadata.tsv
-
-and produces files
-
-  - auspice/ncov_{build_name}.json
-  - auspice/ncov_{build_name}-tip-frequencies.json
-  - auspice/ncov_{build_name}-root-sequence.json
-
-"""
-
-
 localrules:
-    add_custom_node_attr_to_meta,
     add_branch_labels,
     colors,
     internal_pango,
-    overwrite_recombinant_clades,
     add_recombinants_to_tree,
-    remove_recombinants_from_alignment,
-    identify_recombinants,
 
 
-build_dir = config.get("build_dir", "builds")
-auspice_dir = config.get("auspice_dir", "auspice")
-auspice_prefix = config.get("auspice_prefix", "ncov")
+genes = [
+    "ORF1a",
+    "ORF1b",
+    "S",
+    "ORF3a",
+    "M",
+    "N",
+    "E",
+    "ORF6",
+    "ORF7a",
+    "ORF7b",
+    "ORF8",
+    "ORF9b",
+]
+
+
+rule generate_nextclade_ba2_tsv:
+    input:
+        sequences="builds/{build_name}/sequences.fasta",
+    output:
+        tsv="builds/{build_name}/nextclade_ba2.tsv",
+    shell:
+        """
+        # nextclade run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
+        nextclade run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
+        """
+
+
+rule generate_nextclade_wuhan_tsv:
+    input:
+        sequences="builds/{build_name}/sequences.fasta",
+    output:
+        tsv="builds/{build_name}/nextclade_wuhan.tsv",
+    shell:
+        """
+        nextclade run -d sars-cov-2 {input.sequences} -t {output.tsv}
+        """
+
+
+rule add_nextclade_columns_to_meta:
+    input:
+        metadata="builds/{build_name}/metadata_with_designation_date.tsv",
+        ba2_tsv=rules.generate_nextclade_ba2_tsv.output.tsv,
+        wuhan_tsv=rules.generate_nextclade_wuhan_tsv.output.tsv,
+    output:
+        metadata="builds/{build_name}/metadata_with_bloom_scores.tsv",
+    shell:
+        """
+        tsv-join -H --filter-file {input.ba2_tsv} \
+            --key-fields seqName \
+            --data-fields strain \
+            --append-fields immune_escape,ace2_binding \
+            {input.metadata} \
+        | tsv-join -H --filter-file {input.wuhan_tsv} \
+            --key-fields seqName \
+            --data-fields strain \
+            --append-fields qc.overallScore,totalFrameShifts,qc.stopCodons.totalStopCodons,totalAminoacidSubstitutions,totalAminoacidDeletions \
+        > {output}
+        """
 
 
 rule align:
-    message:
-        """
-        Aligning sequences to {input.reference}
-            - gaps relative to reference are considered real
-        """
+    """
+    Only used for translations
+    As `sequences.fasta` is already aligned
+    """
     input:
-        sequences=build_dir + "/{build_name}/sequences.fasta",
-        genemap=config["files"]["annotation"],
-        reference=config["files"]["alignment_reference"],
+        sequences="builds/{build_name}/sequences.fasta",
+        genemap="defaults/annotation.gff",
+        reference="defaults/reference_seq.fasta",
     output:
-        alignment=build_dir + "/{build_name}/aligned.fasta",
+        alignment="builds/{build_name}/aligned.fasta",
         translations=expand(
-            build_dir + "/{{build_name}}/translations/aligned.gene.{gene}.fasta",
-            gene=config.get("genes", ["S"]),
+            "builds/{{build_name}}/translations/aligned.gene.{genes}.fasta",
+            genes=genes,
         ),
     params:
-        outdir=lambda w: build_dir
-        + f"/{w.build_name}/"
-        + "translations/aligned.gene.{gene}.fasta",
-        genes=",".join(config.get("genes", ["S"])),
-        basename="aligned",
-    log:
-        "logs/align_{build_name}.txt",
-    benchmark:
-        "benchmarks/align_{build_name}.txt"
+        outdir=lambda w: f"builds/{w.build_name}/translations/aligned.gene.{{gene}}.fasta",
+        genes=",".join(genes),
     threads: 4
-    resources:
-        mem_mb=3000,
     shell:
         """
         nextalign run \
@@ -67,147 +94,155 @@ rule align:
             --genes {params.genes} \
             {input.sequences} \
             --output-translations {params.outdir} \
-            --output-fasta {output.alignment} \
-            > {log} 2>&1
+            --output-fasta {output.alignment}
         """
 
 
 rule mask:
-    message:
-        """
-        Mask bases in alignment {input.alignment}
-          - masking {params.mask_arguments}
-        """
     input:
-        alignment=rules.align.output.alignment,
+        alignment="builds/{build_name}/sequences.fasta",
     output:
-        alignment=build_dir + "/{build_name}/masked.fasta",
-    log:
-        "logs/mask_{build_name}.txt",
-    benchmark:
-        "benchmarks/mask_{build_name}.txt"
-    params:
-        mask_arguments=lambda w: config.get("mask", ""),
+        alignment="builds/{build_name}/masked.fasta",
     shell:
         """
-        python3 scripts/mask-alignment.py \
-            --alignment {input.alignment} \
-            {params.mask_arguments} \
-            --output {output.alignment} 2>&1 | tee {log}
+        augur mask \
+            --sequences {input.alignment} \
+            --mask-from-beginning 100 \
+            --mask-from-end 100 \
+            --mask-invalid \
+            --output {output.alignment}
         """
 
 
-rule identify_recombinants:
-    input:
-        strains=rules.exclude_outliers.output.sampled_strains,
-    output:
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
-    shell:
-        """
-        grep '^X' {input.strains} > {output.recombinants}
-        """
-
-
-rule remove_recombinants_from_alignment:
+rule separate_recombinants:
     input:
         alignment=rules.mask.output.alignment,
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
+        alias_json=rules.download_pango_alias.output,
     output:
-        alignment=build_dir + "/{build_name}/masked_without_recombinants.fasta",
-    log:
-        "logs/remove_recombinants_{build_name}.txt",
-    benchmark:
-        "benchmarks/remove_recombinants_{build_name}.txt"
+        without_recombinants="builds/{build_name}/masked_without_recombinants.fasta",
+        recombinant_alignments=expand(
+            "builds/{{build_name}}/masked_recombinant_{tree_recombinants}.fasta",
+            tree_recombinants=config["tree-recombinants"],
+        ),
+        recombinants="builds/{build_name}/recombinants.txt",
+    params:
+        tree_recombinants=",".join(config["tree-recombinants"]),
     shell:
         """
-        seqkit grep -v -f {input.recombinants} {input.alignment} > {output.alignment}
-        2>&1 | tee {log}
+        python3 scripts/separate_recombinants.py \
+            --alignment {input.alignment} \
+            --output-without-recombinants {output.without_recombinants} \
+            --output-recombinant "builds/{wildcards.build_name}" \
+            --alias-json {input.alias_json} \
+            --tree-recombinants {params.tree_recombinants} \
+            --recombinants {output.recombinants}
+        """
+
+
+rule prune_constraint_tree:
+    """
+    Prune constraint tree to only include sequences in the alignment
+    """
+    input:
+        constraint_tree="defaults/constraint.nwk",
+        strains=rules.get_strains.output.strains,
+    output:
+        constraint_tree="builds/{build_name}/constraint.nwk",
+    shell:
+        """
+        python3 scripts/prune_constraint_tree.py \
+            --constraint-tree {input.constraint_tree} \
+            --strains {input.strains} \
+            --output {output.constraint_tree}
         """
 
 
 rule tree:
-    message:
-        "Building tree"
     input:
-        alignment=rules.remove_recombinants_from_alignment.output.alignment,
-        constraint_tree=config["files"]["constraint_tree"],
-        exclude_sites=config["files"]["exclude_sites"],
+        alignment="builds/{build_name}/masked_without_recombinants.fasta",
+        constraint_tree="builds/{build_name}/constraint.nwk",
+        exclude_sites="defaults/exclude_sites.tsv",
     output:
-        tree=build_dir + "/{build_name}/tree_raw.nwk",
+        tree="builds/{build_name}/tree_raw.nwk",
     params:
-        args=lambda w: config["tree"].get("tree-builder-args", "")
-        if "tree" in config
-        else "",
-    log:
-        "logs/tree_{build_name}.txt",
-    benchmark:
-        "benchmarks/tree_{build_name}.txt"
-    threads: 8
-    resources:
-        # Multiple sequence alignments can use up to 40 times their disk size in
-        # memory, especially for larger alignments.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 40 * int(input.size / 1024 / 1024),
+        args=lambda w, input: f"-czb -g {input.constraint_tree} -ninit 1 -n 1",
+    threads: 4
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
             --exclude-sites {input.exclude_sites} \
-            --tree-builder-args {params.args} \
+            --tree-builder-args {params.args:q} \
             --output {output.tree} \
-            --nthreads {threads} 2>&1 | tee {log}
+            --nthreads {threads} 2>&1
+        """
+
+
+rule recombinant_tree:
+    input:
+        alignment="builds/{build_name}/masked_recombinant_{recombinant}.fasta",
+    output:
+        tree="builds/{build_name}/tree_raw_recombinant_{recombinant}.nwk",
+    params:
+        constraint=lambda w: (
+            f"-g profiles/clades/constraint_{w.recombinant}.nwk"
+            if os.path.exists(f"profiles/clades/constraint_{w.recombinant}.nwk")
+            else ""
+        ),
+    shell:
+        """
+        # Check if there are 3 or more sequences in the alignment
+        if [ $(grep -c ">" {input.alignment}) -lt 3 ]; then
+            python scripts/simple_tree.py \
+                --alignment {input.alignment} \
+                --tree {output.tree};
+        else 
+            augur tree \
+                --alignment {input.alignment} \
+                --tree-builder-args "-czb -ninit 1 -n 1 {params.constraint}" \
+                --nthreads 1 \
+                --output {output.tree};
+        fi
         """
 
 
 rule add_recombinants_to_tree:
-    message:
-        "Adding recombinant singlets to root of raw tree"
+    """
+    Adding recombinants to root of raw tree
+    """
     input:
         tree=rules.tree.output.tree,
-        recombinants=build_dir + "/{build_name}/recombinants.txt",
+        recombinants="builds/{build_name}/recombinants.txt",
+        recombinant_trees=expand(
+            "builds/{{build_name}}/tree_raw_recombinant_{recombinant}.nwk",
+            recombinant=config["tree-recombinants"],
+        ),
     output:
-        tree=build_dir + "/{build_name}/tree_with_recombinants.nwk",
-    log:
-        "logs/add_recombinants_{build_name}.txt",
-    benchmark:
-        "benchmarks/add_recombinants_{build_name}.txt"
+        tree="builds/{build_name}/tree_with_recombinants.nwk",
     params:
-        root=config["refine"]["root"],
+        root=lambda w: config["root"][w.build_name],
+        joined_trees=lambda w, input: ",".join(input.recombinant_trees),
     shell:
         """
         python scripts/add_recombinants.py \
             --tree {input.tree} \
             --recombinants {input.recombinants} \
+            --recombinant-trees {params.joined_trees} \
             --root {params.root} \
-            --output {output.tree} 2>&1 | tee {log}
+            --output {output.tree}
         """
 
 
 rule refine:
-    message:
-        """
-        Refining tree
-        """
     input:
         tree=rules.add_recombinants_to_tree.output.tree,
-        alignment=rules.align.output.alignment,
+        alignment="builds/{build_name}/sequences.fasta",
         metadata="builds/{build_name}/metadata.tsv",
     output:
-        tree=build_dir + "/{build_name}/tree.nwk",
-        node_data=build_dir + "/{build_name}/branch_lengths.json",
-    log:
-        "logs/refine_{build_name}.txt",
-    benchmark:
-        "benchmarks/refine_{build_name}.txt"
-    threads: 1
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024),
+        tree="builds/{build_name}/tree.nwk",
+        node_data="builds/{build_name}/branch_lengths.json",
     params:
-        root=config["refine"]["root"],
-        divergence_unit=config["refine"].get("divergence_unit", "mutations"),
+        root=lambda w: config["root"][w.build_name],
     shell:
         """
         augur refine \
@@ -217,175 +252,63 @@ rule refine:
             --output-tree {output.tree} \
             --output-node-data {output.node_data} \
             --keep-root \
-            --divergence-unit {params.divergence_unit} | tee {log}
+            --divergence-unit mutations
         """
 
 
 rule ancestral:
-    message:
-        """
-        Reconstructing ancestral sequences and mutations
-          - inferring ambiguous mutations
-        """
     input:
         tree=rules.refine.output.tree,
-        alignment=rules.align.output.alignment,
+        alignment="builds/{build_name}/sequences.fasta",
     output:
-        node_data=build_dir + "/{build_name}/nt_muts.json",
-    log:
-        "logs/ancestral_{build_name}.txt",
-    benchmark:
-        "benchmarks/ancestral_{build_name}.txt"
-    params:
-        inference=config["ancestral"]["inference"],
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024),
+        node_data="builds/{build_name}/nt_muts.json",
     shell:
         """
         augur ancestral \
             --tree {input.tree} \
             --alignment {input.alignment} \
             --output-node-data {output.node_data} \
-            --inference {params.inference} \
-            --infer-ambiguous 2>&1 | tee {log}
+            --inference joint \
+            --infer-ambiguous
         """
 
 
 rule translate:
-    message:
-        "Translating amino acid sequences"
     input:
         tree=rules.refine.output.tree,
         node_data=rules.ancestral.output.node_data,
-        reference=config["files"]["reference"],
+        reference="defaults/reference_seq.gb",
     output:
-        node_data=build_dir + "/{build_name}/aa_muts.json",
-    log:
-        "logs/translate_{build_name}.txt",
-    benchmark:
-        "benchmarks/translate_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.node_data.size / 1024 / 1024),
+        node_data="builds/{build_name}/aa_muts.json",
     shell:
         """
         augur translate \
             --tree {input.tree} \
             --ancestral-sequences {input.node_data} \
             --reference-sequence {input.reference} \
-            --output-node-data {output.node_data} 2>&1 | tee {log}
+            --output-node-data {output.node_data}
         """
 
 
 rule aa_muts_explicit:
-    message:
-        "Translating amino acid sequences"
     input:
         tree=rules.refine.output.tree,
-        translations=lambda w: rules.align.output.translations,
+        translations=rules.align.output.translations,
     output:
-        node_data=build_dir + "/{build_name}/aa_muts_explicit.json",
+        node_data="builds/{build_name}/aa_muts_explicit.json",
         translations=expand(
-            build_dir
-            + "/{{build_name}}/translations/aligned.gene.{gene}_withInternalNodes.fasta",
-            gene=config.get("genes", ["S"]),
+            "builds/{{build_name}}/translations/aligned.gene.{gene}_withInternalNodes.fasta",
+            gene=genes,
         ),
     params:
-        genes=config.get("genes", "S"),
-    log:
-        "logs/aamuts_{build_name}.txt",
-    benchmark:
-        "benchmarks/aamuts_{build_name}.txt"
-    resources:
-        # Multiple sequence alignments can use up to 15 times their disk size in
-        # memory.
-        # Note that Snakemake >5.10.0 supports input.size_mb to avoid converting from bytes to MB.
-        mem_mb=lambda wildcards, input: 15 * int(input.size / 1024 / 1024),
+        genes=" ".join(genes),
     shell:
         """
         python3 scripts/explicit_translation.py \
             --tree {input.tree} \
             --translations {input.translations:q} \
-            --genes {params.genes} \
-            --output {output.node_data} 2>&1 | tee {log}
-        """
-
-
-rule traits:
-    message:
-        """
-        Inferring ancestral traits for {params.columns!s}
-          - increase uncertainty of reconstruction by {params.sampling_bias_correction} to partially account for sampling bias
-        """
-    input:
-        tree=rules.refine.output.tree,
-        metadata="builds/{build_name}/metadata.tsv",
-    output:
-        node_data=build_dir + "/{build_name}/traits.json",
-    log:
-        "logs/traits_{build_name}.txt",
-    benchmark:
-        "benchmarks/traits_{build_name}.txt"
-    params:
-        columns=config["traits"]["columns"],
-        sampling_bias_correction=config["traits"]["sampling_bias_correction"],
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
-    shell:
-        """
-        augur traits \
-            --tree {input.tree} \
-            --metadata {input.metadata} \
-            --output {output.node_data} \
-            --columns {params.columns} \
-            --confidence \
-            --sampling-bias-correction {params.sampling_bias_correction} 2>&1 | tee {log}
-        """
-
-
-rule clades:
-    message:
-        "Adding internal clade labels"
-    input:
-        tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
-        nuc_muts=rules.ancestral.output.node_data,
-        clades=config["files"]["clades"],
-    output:
-        node_data=build_dir + "/{build_name}/clades_raw.json",
-    log:
-        "logs/clades_{build_name}.txt",
-    benchmark:
-        "benchmarks/clades_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with size of the node data.
-        mem_mb=lambda wildcards, input: 3 * int(input.size / 1024 / 1024),
-    shell:
-        """
-        augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
-            --clades {input.clades} \
-            --output-node-data {output.node_data} 2>&1 | tee {log}
-        """
-
-
-rule overwrite_recombinant_clades:
-    input:
-        clades_json=rules.clades.output.node_data,
-    output:
-        node_data=build_dir + "/{build_name}/clades.json",
-    log:
-        "logs/overwrite_recombinant_clades_{build_name}.txt",
-    shell:
-        """
-        python scripts/overwrite_recombinant_clades.py \
-            --clades {input.clades_json} \
-            --output {output.node_data} \
-        2>&1 | tee {log}
+            --genes {params.genes}\
+            --output {output.node_data}
         """
 
 
@@ -396,9 +319,7 @@ rule internal_pango:
         synthetic=rules.synthetic_pick.output,
         designations=rules.pango_strain_rename.output.pango_designations,
     output:
-        node_data=build_dir + "/{build_name}/internal_pango.json",
-    log:
-        "logs/internal_pango_{build_name}.txt",
+        node_data="builds/{build_name}/internal_pango.json",
     shell:
         """
         python scripts/internal_pango.py \
@@ -406,36 +327,138 @@ rule internal_pango:
             --synthetic {input.synthetic} \
             --alias {input.alias} \
             --designations {input.designations} \
+            --build-name {wildcards.build_name} \
             --output {output.node_data} \
-            --field-name Nextclade_pango 2>&1 | tee {log}
+            --field-name Nextclade_pango
+        """
+
+
+rule preprocess_clades:
+    input:
+        clades="builds/clades{clade_type}.tsv",
+        outgroup="profiles/clades/{build_name}/outgroup.tsv",
+    output:
+        clades="builds/{build_name}/clades{clade_type}.tsv",
+    wildcard_constraints:
+        clade_type=".*",  # Snakemake wildcard default is ".+" which doesn't match empty strings
+    shell:
+        """
+        cp {input.clades} {output.clades};
+        cat <(echo) {input.outgroup} >> {output.clades};
+        if [ {wildcards.build_name} = 21L ]; then
+            for clade in 19A 19B 20A 20B 20C 20D 20E 20F 20G 20H 20I \
+                20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M \
+                Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu;
+            do
+                sed -i "/$clade/d" {output.clades};
+            done
+        fi
+        """
+
+
+rule clades_legacy:
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/{build_name}/clades.tsv",
+        internal_pango=rules.internal_pango.output.node_data,
+        alias=rules.download_pango_alias.output,
+    output:
+        node_data="builds/{build_name}/clades_legacy.json",
+    params:
+        tmp="builds/{build_name}/clades_legacy.tmp",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {params.tmp}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades {params.tmp} \
+            --internal-pango {input.internal_pango} \
+            --alias {input.alias} \
+            --clade-type clade_legacy \
+            --output {output.node_data}
+        rm {params.tmp}
+        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data}
+        """
+
+
+rule clades:
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/{build_name}/clades_nextstrain.tsv",
+        internal_pango=rules.internal_pango.output.node_data,
+        alias=rules.download_pango_alias.output,
+    output:
+        node_data="builds/{build_name}/clades.json",
+        node_data_nextstrain="builds/{build_name}/clades_nextstrain.json",
+    params:
+        tmp="builds/{build_name}/clades_nextstrain.tmp",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {params.tmp}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades {params.tmp} \
+            --internal-pango {input.internal_pango} \
+            --alias {input.alias} \
+            --clade-type clade_nextstrain \
+            --output {output.node_data}
+        rm {params.tmp}
+        cp {output.node_data} {output.node_data_nextstrain}
+        sed -i'' 's/clade_membership/clade_nextstrain/gi' {output.node_data_nextstrain}
+        """
+
+
+rule clades_who:
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.translate.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="builds/{build_name}/clades_who.tsv",
+        internal_pango=rules.internal_pango.output.node_data,
+        alias=rules.download_pango_alias.output,
+    output:
+        node_data="builds/{build_name}/clades_who.json",
+    params:
+        tmp="builds/{build_name}/clades_who.tmp",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {params.tmp}
+        python scripts/overwrite_recombinant_clades.py \
+            --clades {params.tmp} \
+            --internal-pango {input.internal_pango} \
+            --alias {input.alias} \
+            --clade-type clade_who \
+            --output {output.node_data}
+        rm {params.tmp}
+        sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
         """
 
 
 rule colors:
-    message:
-        "Constructing colors file"
     input:
-        ordering=config["files"]["ordering"],
-        color_schemes=config["files"]["color_schemes"],
+        ordering="defaults/color_ordering.tsv",
+        color_schemes="defaults/color_schemes.tsv",
         metadata="builds/{build_name}/metadata.tsv",
     output:
-        colors=build_dir + "/{build_name}/colors.tsv",
-    log:
-        "logs/colors_{build_name}.txt",
-    benchmark:
-        "benchmarks/colors_{build_name}.txt"
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        # Compared to other rules, this rule loads metadata as a pandas
-        # DataFrame instead of a dictionary, so it uses much less memory.
-        mem_mb=lambda wildcards, input: 5 * int(input.metadata.size / 1024 / 1024),
+        colors="builds/{build_name}/colors.tsv",
     shell:
         """
         python3 scripts/assign-colors.py \
             --ordering {input.ordering} \
             --color-schemes {input.color_schemes} \
             --output {output.colors} \
-            --metadata {input.metadata} 2>&1 | tee {log}
+            --metadata {input.metadata}
         """
 
 
@@ -447,12 +470,13 @@ def _get_node_data_by_wildcards(wildcards):
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
-        rules.overwrite_recombinant_clades.output.node_data,
+        rules.clades_legacy.output.node_data,
+        rules.clades.output.node_data,
+        rules.clades.output.node_data_nextstrain,
+        rules.clades_who.output.node_data,
         rules.aa_muts_explicit.output.node_data,
         rules.internal_pango.output.node_data,
     ]
-    if "distances" in config:
-        inputs.append(rules.distances.output.node_data)
 
     # Convert input files from wildcard strings to real file names.
     inputs = [input_file.format(**wildcards_dict) for input_file in inputs]
@@ -460,33 +484,18 @@ def _get_node_data_by_wildcards(wildcards):
 
 
 rule export:
-    message:
-        "Exporting data files for auspice"
     input:
         tree=rules.refine.output.tree,
-        metadata="builds/{build_name}/metadata.tsv",
+        metadata=rules.add_nextclade_columns_to_meta.output.metadata,
         node_data=_get_node_data_by_wildcards,
-        auspice_config=lambda w: config["builds"][w.build_name]["auspice_config"]
-        if "auspice_config" in config["builds"][w.build_name]
-        else config["files"]["auspice_config"],
-        description=lambda w: config["builds"][w.build_name]["description"]
-        if "description" in config["builds"][w.build_name]
-        else config["files"]["description"],
-        colors=lambda w: rules.colors.output.colors.format(**w),
+        colors=rules.colors.output.colors,
+        auspice_config="profiles/clades/{build_name}/auspice_config.json",
+        description="profiles/clades/description.md",
     output:
         auspice_json="auspice/{build_name}/auspice_raw.json",
         root_json="auspice/{build_name}/auspice_raw_root-sequence.json",
-    log:
-        "logs/export_{build_name}.txt",
-    benchmark:
-        "benchmarks/export_{build_name}.txt"
     params:
-        title=lambda w: config["builds"][w.build_name].get(
-            "title", "SARS-CoV-2 phylogeny"
-        ),
-    resources:
-        # Memory use scales primarily with the size of the metadata file.
-        mem_mb=lambda wildcards, input: 15 * int(input.metadata.size / 1024 / 1024),
+        title="SARS-CoV-2 phylogeny",
     shell:
         """
         augur export v2 \
@@ -498,20 +507,17 @@ rule export:
             --title {params.title:q} \
             --description {input.description} \
             --include-root-sequence \
-            --output {output.auspice_json} 2>&1 | tee {log};
+            --minify-json \
+            --output {output.auspice_json}
         """
 
 
 rule add_branch_labels:
-    message:
-        "Adding custom branch labels to the Auspice JSON"
     input:
         auspice_json=rules.export.output.auspice_json,
         mutations=rules.aa_muts_explicit.output.node_data,
     output:
-        auspice_json="auspice/{build_name}/auspice.json",
-    log:
-        "logs/add_branch_labels_{build_name}.txt",
+        auspice_json="auspice/{build_name}/auspice_max.json",
     shell:
         """
         python3 scripts/add_branch_labels.py \
@@ -525,9 +531,7 @@ rule remove_recombinants_from_auspice:
     input:
         auspice_json=rules.add_branch_labels.output.auspice_json,
     output:
-        auspice_json="auspice/{build_name}/auspice_without_recombinants.json",
-    log:
-        "logs/remove_recombinants_from_auspice_{build_name}.txt",
+        auspice_json="auspice/{build_name}/auspice_without_recombinants_max.json",
     shell:
         """
         python3 scripts/remove_recombinants_from_auspice.py \
@@ -536,7 +540,20 @@ rule remove_recombinants_from_auspice:
         """
 
 
+rule minify_json:
+    input:
+        "auspice/{build_name}/{build_type}_max.json",
+    output:
+        "auspice/{build_name}/{build_type}.json",
+    shell:
+        """
+        jq -c . {input} > {output}
+        """
+
+
 rule produce_trees:
     input:
-        "auspice/nextclade/auspice.json",
-        "auspice/nextclade/auspice_without_recombinants.json",
+        "auspice/wuhan/auspice.json",
+        "auspice/wuhan/auspice_without_recombinants.json",
+        "auspice/21L/auspice.json",
+        "auspice/21L/auspice_without_recombinants.json",

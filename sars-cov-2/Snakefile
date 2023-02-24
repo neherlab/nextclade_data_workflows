@@ -1,39 +1,41 @@
 import datetime
 
-localrules: all, clean, clean_all, dump_config, deploy_staging
 
-if "builds" not in config:
-    config["builds"] = {}
+localrules:
+    all,
+    clean,
+    clean_all,
+    dump_config,
+    deploy_wuhan,
+    deploy_21L,
 
-configfile: "defaults/parameters.yaml"
+
 include: "workflow/snakemake_rules/preprocess.smk"
-# include: "workflow/snakemake_rules/templated_build.smk"
-include: "workflow/snakemake_rules/qc_preparation.smk"
+# include: "workflow/snakemake_rules/qc_preparation.smk"
 include: "workflow/snakemake_rules/subsampling.smk"
 include: "workflow/snakemake_rules/core.smk"
 
-auspice_prefix = config.get("auspice_prefix", "ncov")
-auspice_dir = config.get("auspice_dir", "auspice")
-build_dir = config.get("build_dir", "builds")
 
 date = datetime.date.today()
-timestamp = datetime.datetime.utcnow().isoformat()[:-7]+'Z'
+timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
+
 
 rule all:
     input:
-        lambda w: f"deploy/staging.log"
+        expand("deploy/{build_name}/staging.log", build_name=["wuhan", "21L"]),
 
-rule deploy_staging:
+
+rule deploy_wuhan:
     input:
-        tree = "auspice/nextclade/auspice.json",
-        tree_no_recomb = "auspice/nextclade/auspice_without_recombinants.json",
-        root = "auspice/nextclade/auspice_raw_root-sequence.json",
+        tree="auspice/wuhan/auspice.json",
+        tree_no_recomb="auspice/wuhan/auspice_without_recombinants.json",
+        root="auspice/wuhan/auspice_raw_root-sequence.json",
     output:
-        log = 'deploy/staging.log',
-        tree = temp("nextclade_sars-cov-2.json"),
-        tree_no_recomb = temp("nextclade_sars-cov-2-no-recomb.json"),
-        root = temp("nextclade_sars-cov-2_root-sequence.json"),
-        root_no_recomb = temp("nextclade_sars-cov-2-no-recomb_root-sequence.json")
+        touchfile="deploy/wuhan/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2.json"),
+        tree_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb.json"),
+        root=temp("deploy/nextclade_sars-cov-2_root-sequence.json"),
+        root_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
@@ -42,122 +44,48 @@ rule deploy_staging:
         cp {input.root} {output.root_no_recomb}
         nextstrain deploy s3://nextstrain-staging \
             {output.tree} {output.root} \
-            {output.tree_no_recomb} {output.root_no_recomb} \
-            2>&1 | tee {output.log}
+            {output.tree_no_recomb} {output.root_no_recomb};
+        touch {output.touchfile}
         """
 
-rule generate_sample_sequences:
+
+rule deploy_21L:
     input:
-        # sequences = "data/sequences.fasta.xz",
-        metadata = "data/metadata.tsv",
-        # sequence_index = "pre-processed/sequence_index.tsv",
+        tree="auspice/21L/auspice.json",
+        tree_no_recomb="auspice/21L/auspice_without_recombinants.json",
+        root="auspice/21L/auspice_raw_root-sequence.json",
     output:
-        sequences = "examples/{build_name}_example_sequences.txt",
-    params:
-        filters = lambda w: config["samples"][w.build_name],
+        touchfile="deploy/21L/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2_21L.json"),
+        tree_no_recomb=temp("deploy/nextclade_sars-cov-2-no-recomb_21L.json"),
+        root=temp("deploy/nextclade_sars-cov-2_21L_root-sequence.json"),
+        root_no_recomb=temp(
+            "deploy/nextclade_sars-cov-2-no-recomb_21L_root-sequence.json"
+        ),
     shell:
         """
-        augur filter \
-            --metadata {input.metadata} \
-            {params.filters} \
-            --no-probabilistic-sampling \
-            --output-strains {output.sequences}
+        cp {input.tree} {output.tree}
+        cp {input.tree_no_recomb} {output.tree_no_recomb}
+        cp {input.root} {output.root}
+        cp {input.root} {output.root_no_recomb}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root} \
+            {output.tree_no_recomb} {output.root_no_recomb};
+        touch {output.touchfile}
         """
 
-rule join_sample_sequences:
-    input: expand("examples/{build_name}_example_sequences.txt", build_name = config["samples"].keys()),
-    output: "examples/example_sequences.txt",
-    shell: "cat {input} > {output}"
-
-rule generate_bgzip:
-    message: "Convert sequences from xz to bgzip"
-    input: "data/sequences.fasta.xz"
-    output: "data/sequences.fasta.gz"
-    threads: 16
-    shell: "xz -c -d {input} | bgzip -cf -l 4 --threads {threads} >{output}"
-
-rule generate_bgzip_index:
-    message: "Generate index for bgzip file"
-    input: "data/sequences.fasta.gz"
-    output: "data/sequences.fasta.gz.fai"
-    shell: "samtools faidx {input}"
-
-rule extract_sample_sequences:
-    input: 
-        strains = rules.join_sample_sequences.output,
-        sequences = "data/sequences.fasta.gz",
-        index = "data/sequences.fasta.gz.fai",
-    output: "examples/example_sequences.fasta",
-    shell: 
-        """
-        samtools faidx -c -r \
-            {input.strains} \
-            {input.sequences} \
-            > {output}
-        """
-
-# make segment_no function
-rule assemble_folder:
-    input:
-        genemap = "references/{reference}/genemap.gff",
-        reference = "references/{reference}/reference.fasta",
-        sample_sequences = "examples/example_sequences.fasta",
-        tree = "auspice/nextclade/auspice.json",
-        qc = "profiles/qc.json",
-        tag = "profiles/tag.json",
-        primers = "profiles/primers.csv",
-    output:
-        genemap = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/genemap.gff",
-        primers = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/primers.csv",
-        qc = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/qc.json",
-        reference = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/reference.fasta",
-        sample_sequences = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/sequences.fasta",
-        tree = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/tree.json",
-        tag = "output/sars-cov-2/references/{reference}/versions/{timestamp}/files/tag.json",
-    shell:
-        """
-        mkdir -p output/sars-cov-2/references/{wildcards.reference}/versions/{wildcards.timestamp}/files/;
-        jq <{input.tag} '.tag="{wildcards.timestamp}"' >{output.tag};
-        cp {input.genemap} {output.genemap};
-        cp {input.reference} {output.reference};
-        cp {input.primers} {output.primers};
-        cp {input.qc} {output.qc};
-        cp {input.sample_sequences} {output.sample_sequences};
-        cp {input.tree} {output.tree};
-        """
-
-rule test_nextclade:
-    input: expand("output/sars-cov-2/references/{{reference}}/versions/{timestamp}/files/tree.json", timestamp=timestamp),
-    output: "test/{reference}/nextclade.aligned.fasta"
-    params:
-        indir = expand("output/sars-cov-2/references/{{reference}}/versions/{timestamp}/files" , timestamp=timestamp),
-        outdir = "test/{reference}"
-    shell:
-        """
-        nextclade \
-         --input-fasta={params.indir}/sequences.fasta\
-         --input-root-seq={params.indir}/reference.fasta\
-         --input-qc-config={params.indir}/qc.json\
-         --input-gene-map={params.indir}/genemap.gff\
-         --input-tree={params.indir}/tree.json\
-         --output-dir={params.outdir}\
-         --output-tsv={params.outdir}/nextclade.tsv\
-         --output-tree={params.outdir}/nextclade.auspice.json\
-         --output-basename=nextclade 2>&1
-        """
-# print(config)
-# print(                [f"test/{strain}/{segment_name}/{reference}/nextclade.aligned.fasta" for strain in config["builds"] for segment_name in config["builds"][strain] for reference in config["builds"][strain][segment_name]])
 
 rule clean_all:
-    message: "Removing directories: {params}"
+    message:
+        "Removing directories: {params}"
     params:
         "pre-processed",
         "data",
         "log/*",
         "logs",
         "benchmarks",
-        auspice_dir,
-        build_dir,
+        "auspice",
+        "builds",
         "output",
         "examples",
         "test",
@@ -166,22 +94,25 @@ rule clean_all:
 
 
 rule clean:
-    message: "Removing directories: {params}"
+    message:
+        "Removing directories: {params}"
     params:
         "log/*",
         "logs",
         "benchmarks",
-        auspice_dir,
-        build_dir,
+        "auspice",
+        "builds",
         "test",
         "output",
         "examples",
     shell:
         "rm -rfv {params}"
 
+
 rule dump_config:
     run:
         import sys
         import ruamel.yaml
-        yaml=ruamel.yaml.YAML()
+
+        yaml = ruamel.yaml.YAML()
         yaml.dump(config, sys.stdout)
