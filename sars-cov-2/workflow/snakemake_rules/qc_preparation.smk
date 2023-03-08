@@ -14,11 +14,24 @@ rule select_frameshifts:
     input:
         rules.download_metadata.output.metadata,
     output:
-        "pre-processed/frameshifts.tsv",
+        "pre-processed/frameshifts_raw.tsv",
     shell:
         """
         zstdcat {input} | \
         tsv-select -H -f frame_shifts | tsv-filter -H --not-empty frame_shifts | tsv-summarize -H -w -x --group-by frame_shifts --count | keep-header -- sort -k2 -rn -t$'\\t' > {output} 
+        """
+
+
+rule exclude_impossible_frameshifts:
+    input:
+        frameshifts="pre-processed/frameshifts_raw.tsv",
+        exclude="defaults/frameshifts_exclude.txt",
+    output:
+        "pre-processed/frameshifts.tsv",
+    shell:
+        """
+        # Exclude all lines from the input file that are present in the exclude file
+        grep -v -f {input.exclude} {input.frameshifts} > {output}
         """
 
 
@@ -36,12 +49,14 @@ rule select_stops:
 
 rule filter_stops:
     input:
-        "pre-processed/aa_substitutions.tsv",
+        aa="pre-processed/aa_substitutions.tsv",
+        exclude="defaults/stops_exclude.txt",
     output:
         "pre-processed/stops_long.tsv",
     shell:
         """
-        python scripts/filter_stops.py --input-file {input} --output-file {output}
+        python scripts/filter_stops.py --input-file {input.aa} --output-file /dev/stdout | \
+        grep -v -f {input.exclude} > {output}
         """
 
 
@@ -74,5 +89,5 @@ rule format_frameshifts:
         "pre-processed/frameshifts.txt",
     shell:
         """
-        python scripts/common_frameshifts.py --number 100 --input-file {input} >{output}
+        python scripts/common_frameshifts.py --number 20 --input-file {input} >{output}
         """

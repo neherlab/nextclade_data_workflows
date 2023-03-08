@@ -12,8 +12,8 @@ MIN_COUNT = 100000
 #%%
 # aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.gz .
 df = pd.read_csv(
-    # "metadata.tsv.gz",
-    "s3://nextstrain-ncov-private/metadata.tsv.gz",
+    "metadata.tsv.zst",
+    # "s3://nextstrain-ncov-private/metadata.tsv.gz",
     sep="\t",
     usecols=["Nextstrain_clade", "substitutions"],
     parse_dates=False,

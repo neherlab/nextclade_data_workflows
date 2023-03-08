@@ -11,7 +11,7 @@ localrules:
 
 
 include: "workflow/snakemake_rules/preprocess.smk"
-# include: "workflow/snakemake_rules/qc_preparation.smk"
+include: "workflow/snakemake_rules/qc_preparation.smk"
 include: "workflow/snakemake_rules/subsampling.smk"
 include: "workflow/snakemake_rules/core.smk"
 
