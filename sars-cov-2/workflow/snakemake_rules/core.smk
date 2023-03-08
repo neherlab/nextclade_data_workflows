@@ -514,6 +514,41 @@ rule export:
         """
 
 
+rule generate_priors:
+    """
+    Run nextclade on generated tree to get placement priors
+    """
+    input:
+        fasta="data/sequences.fasta.zst",
+        tree=rules.export.output.auspice_json,
+    output:
+        tsv="builds/{build_name}/nextclade.tsv",
+    shell:
+        """
+        zstdcat sequences.fasta.zst | \
+        seqkit sample -p 0.005 -w0 | \
+        ncr run -d sars-cov-2 -a {input.tree} -t {output.tsv}
+        """
+
+
+rule add_priors:
+    """
+    Update placement priors
+    """
+    input:
+        tree=rules.export.output.auspice_json,
+        tsv=rules.run_nextclade.output.tsv,
+    output:
+        tree="builds/{build_name}/auspice_priors.json",
+    shell:
+        """
+        python3 scripts/add_priors.py \
+            --tree {input.tree} \
+            --tsv {input.tsv} \
+            --output {output.tree}
+        """
+
+
 rule add_branch_labels:
     input:
         auspice_json=rules.export.output.auspice_json,
