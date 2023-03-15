@@ -13,22 +13,21 @@ import typer
 
 def main(
     tree: str = "auspice/wuhan/auspice_raw.json",
-    tsv: str = "~/code/nextclade/out.tsv",
+    ndjson: str = "~/code/nextclade/out.tsv",
     output: str = "builds/wuhan/auspice_priors.json",
 ):
     """
-    Add placement priors from nextclade.tsv to auspice.json tree
+    Add placement priors from nextclade.ndjson.zst to auspice.json tree
     """
     import json
     import polars as pl
 
     priors = (
-        pl.scan_csv(tsv, sep="\t", infer_schema_length=10000)
+        pl.scan_ndjson(ndjson, infer_schema_length=10000)
         .select(
             [
-                pl.col("nearestNodes").str.split(";").alias("nearestNodes"),
+                pl.col("nearestNodes"),
                 pl.col("nearestNodes")
-                .str.split(";")
                 .arr.lengths()
                 .pow(-1)
                 .alias("1/nearestNodesListLength"),

@@ -519,15 +519,21 @@ rule generate_priors:
     Run nextclade on generated tree to get placement priors
     """
     input:
-        fasta="data/sequences.fasta.zst",
+        fasta=rules.download_sequences.output,
         tree=rules.export.output.auspice_json,
     output:
-        tsv="builds/{build_name}/nextclade.tsv",
+        ndjson="builds/{build_name}/nextclade.ndjson.zst",
+    params:
+        dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
     shell:
         """
-        zstdcat {input.fasta} | \
-        seqkit sample -p 0.01 -w0 | \
-        /Users/corneliusromer/code/nextclade/target/release/nextclade run -d sars-cov-2 -a {input.tree} -t {output.tsv}
+        zstdcat -T2 {input.fasta} | \
+        seqkit sample -p 0.001 -w0 | \
+        /Users/corneliusromer/code/nextclade/target/release/nextclade run \
+            -d {params.dataset} \
+            -a {input.tree} \
+            --include-nearest-node-info \
+            --output-ndjson {output.ndjson}
         """
 
 
@@ -537,14 +543,17 @@ rule add_priors:
     """
     input:
         auspice_json=rules.export.output.auspice_json,
-        tsv=rules.generate_priors.output.tsv,
+        ndjson=rules.generate_priors.output.ndjson,
     output:
         auspice_json="builds/{build_name}/auspice_priors.json",
     shell:
         """
+        zstdcat {input.ndjson} | \
+        jq -c '{{seqName,nearestNodes}}' > builds/{wildcards.build_name}/nextclade.ndjson
+
         python3 scripts/add_priors.py \
             --tree {input.auspice_json} \
-            --tsv {input.tsv} \
+            --ndjson builds/{wildcards.build_name}/nextclade.ndjson \
             --output {output.auspice_json}
         """
 
