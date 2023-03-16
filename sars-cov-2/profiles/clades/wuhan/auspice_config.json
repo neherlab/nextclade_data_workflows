@@ -88,6 +88,11 @@
       "type": "continuous"
     },
     {
+      "key": "placement_priors",
+      "title": "Prior (log10)",
+      "type": "continuous"
+    },
+    {
       "key": "qc.overallScore",
       "title": "Overall QC score",
       "type": "continuous"

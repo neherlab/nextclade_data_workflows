@@ -74,6 +74,14 @@ def main(
 
     attach_labels(auspice_json["tree"])
 
+    auspice_json["meta"]["colorings"].append(
+        {
+            "key": "placement_prior",
+            "title": "Placement Prior (log10)",
+            "type": "continuous",
+        }
+    )
+
     json.dump(auspice_json, open(output, "w"), indent=2)
 
 
