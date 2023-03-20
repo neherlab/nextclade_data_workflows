@@ -24,12 +24,15 @@
             )internal_120e,
             (
               XBB.1.8,
-              XBB.1.12, XBB.1.25
+              XBB.1.12
             )internal_32cd
           )internal_XBB_1_11,
           (
-            XBB.1.1,
-            XBB.1.2,
+            (
+              XBB.1.1,
+              XBB.1.2,
+              XBB.1.24
+            )internal_aa87,
             (
               XBB.1.4,
               (
