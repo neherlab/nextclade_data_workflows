@@ -528,8 +528,8 @@ rule generate_priors:
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.02 -w0 | \
-        /Users/corneliusromer/code/nextclade/target/release/nextclade run \
+        seqkit sample -p 0.01 -w0 | \
+        nextclade run \
             -d {params.dataset} \
             -a {input.tree} \
             --include-nearest-node-info \
