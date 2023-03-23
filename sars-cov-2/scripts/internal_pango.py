@@ -161,22 +161,30 @@ def main(designations, tree, alias, build_name, synthetic, output, field_name):
         meta["reconstructed"].apply(aliasor.compress).rename(field_name)
     )
     
-    # Set non-21L to empty string
-    if build_name == "21L":
-        meta[field_name] = meta[field_name].apply(
-            lambda x: ""
-            if not (
-                aliasor.uncompress(x).startswith("B.1.1.529.2")
-                or aliasor.uncompress(x).startswith("B.1.1.529.4")
-                or aliasor.uncompress(x).startswith("B.1.1.529.5")
-                or aliasor.uncompress(x).startswith("X")
-            )
-            else x
-        )
-
     meta["partiallyAliased"] = meta["reconstructed"].apply(
         lambda x: aliasor.partial_compress(x, accepted_aliases=["BA"])
     )
+
+    def overwrite_outgroup(x):
+        uncompressed = aliasor.uncompress(x)
+        if not (
+            uncompressed.startswith("B.1.1.529.2")
+            or uncompressed.startswith("B.1.1.529.4")
+            or uncompressed.startswith("B.1.1.529.5")
+            or uncompressed.startswith("X")
+        ):
+            return ""
+        return x
+
+    # Set non-21L to empty string
+    if build_name == "21L":
+        meta[field_name] = meta[field_name].apply(
+            overwrite_outgroup
+        )
+        meta["partiallyAliased"] = meta["partiallyAliased"].apply(
+            overwrite_outgroup
+        )
+
     export_df = meta[[field_name, "partiallyAliased"]]
     #%%
     augur.utils.write_json(
