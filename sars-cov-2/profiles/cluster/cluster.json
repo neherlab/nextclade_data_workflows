@@ -5,6 +5,12 @@
     "n": 1,
     "mem": "32G"
   },
+  "generate_priors": {
+    "time": "00:29:00",
+    "qos": "30min",
+    "n": 32,
+    "mem": "32G"
+  },
   "fix_pango_lineages": {
     "mem": "64G"
   },

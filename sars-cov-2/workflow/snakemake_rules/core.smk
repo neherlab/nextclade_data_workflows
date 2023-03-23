@@ -5,6 +5,7 @@ localrules:
     add_recombinants_to_tree,
     generate_nextclade_ba2_tsv,
     generate_nextclade_wuhan_tsv,
+    download_dataset,
 
 
 genes = [
@@ -514,6 +515,22 @@ rule export:
         """
 
 
+rule download_nextclade_dataset:
+    """
+    Download Nextclade dataset so Nextclade can run without internet connection
+    """
+    output:
+        dataset="builds/{build_name}/nextclade_dataset.zip",
+    params:
+        dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
+    shell:
+        """
+        nextclade dataset get \
+            --name {params.dataset} \
+            --output-zip {output.dataset}
+        """
+
+
 rule generate_priors:
     """
     Run nextclade on generated tree to get placement priors
@@ -521,16 +538,15 @@ rule generate_priors:
     input:
         fasta=rules.download_sequences.output,
         tree=rules.export.output.auspice_json,
+        dataset=rules.download_nextclade_dataset.output.dataset,
     output:
         ndjson="builds/{build_name}/nextclade.ndjson.zst",
-    params:
-        dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.01 -w0 | \
+        seqkit sample -p 0.1 -w0 | \
         nextclade run \
-            -d {params.dataset} \
+            -D {input.dataset} \
             -a {input.tree} \
             --include-nearest-node-info \
             --output-ndjson {output.ndjson}
