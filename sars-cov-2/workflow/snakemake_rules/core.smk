@@ -5,7 +5,7 @@ localrules:
     add_recombinants_to_tree,
     generate_nextclade_ba2_tsv,
     generate_nextclade_wuhan_tsv,
-    download_dataset,
+    download_nextclade_dataset,
 
 
 genes = [
