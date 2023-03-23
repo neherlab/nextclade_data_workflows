@@ -5,6 +5,7 @@ localrules:
     add_recombinants_to_tree,
     generate_nextclade_ba2_tsv,
     generate_nextclade_wuhan_tsv,
+    download_nextclade_dataset,
 
 
 genes = [
@@ -514,9 +515,80 @@ rule export:
         """
 
 
-rule add_branch_labels:
+rule download_nextclade_dataset:
+    """
+    Download Nextclade dataset so Nextclade can run without internet connection
+    """
+    output:
+        dataset="builds/{build_name}/nextclade_dataset.zip",
+    params:
+        dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
+    shell:
+        """
+        nextclade dataset get \
+            --name {params.dataset} \
+            --output-zip {output.dataset}
+        """
+
+
+rule generate_priors:
+    """
+    Run nextclade on generated tree to get placement priors
+    """
+    input:
+        fasta=rules.download_sequences.output,
+        tree=rules.export.output.auspice_json,
+        dataset=rules.download_nextclade_dataset.output.dataset,
+    output:
+        ndjson="builds/{build_name}/nextclade.ndjson.zst",
+    shell:
+        """
+        zstdcat -T2 {input.fasta} | \
+        seqkit sample -p 0.1 -w0 | \
+        nextclade run \
+            -D {input.dataset} \
+            -a {input.tree} \
+            --include-nearest-node-info \
+            --output-ndjson {output.ndjson}
+        """
+
+
+rule get_nearest_nodes_from_ndjson:
+    """
+    Extract nearestNodes from Nextclade output
+    """
+    input:
+        ndjson=rules.generate_priors.output.ndjson,
+    output:
+        ndjson="builds/{build_name}/nearest_nodes.ndjson",
+    shell:
+        """
+        zstdcat {input.ndjson} | \
+        jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
+        """
+
+
+rule add_priors:
+    """
+    Update placement priors
+    """
     input:
         auspice_json=rules.export.output.auspice_json,
+        ndjson=rules.get_nearest_nodes_from_ndjson.output.ndjson,
+    output:
+        auspice_json="builds/{build_name}/auspice_priors.json",
+    shell:
+        """
+        python3 scripts/add_priors.py \
+            --tree {input.auspice_json} \
+            --ndjson {input.ndjson} \
+            --output {output.auspice_json}
+        """
+
+
+rule add_branch_labels:
+    input:
+        auspice_json=rules.add_priors.output.auspice_json,
         mutations=rules.aa_muts_explicit.output.node_data,
     output:
         auspice_json="auspice/{build_name}/auspice_max.json",
