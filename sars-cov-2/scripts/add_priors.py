@@ -63,7 +63,7 @@ def main(
 
     auspice_json = json.load(open(tree, "r"))
 
-    def attach_labels(n: dict[str, dict]):  # closure
+    def attach_labels(n):  # closure
         if "node_attrs" not in n:
             n["node_attrs"] = {}
         n["node_attrs"]["placement_prior"] = {"value": node_data.get(n["name"], -10)}
