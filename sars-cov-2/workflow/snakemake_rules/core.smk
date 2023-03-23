@@ -553,23 +553,35 @@ rule generate_priors:
         """
 
 
+rule get_nearest_nodes_from_ndjson:
+    """
+    Extract nearestNodes from Nextclade output
+    """
+    input:
+        ndjson=rules.generate_priors.output.ndjson,
+    output:
+        ndjson="builds/{build_name}/nearest_nodes.ndjson",
+    shell:
+        """
+        zstdcat {input.ndjson} | \
+        jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
+        """
+
+
 rule add_priors:
     """
     Update placement priors
     """
     input:
         auspice_json=rules.export.output.auspice_json,
-        ndjson=rules.generate_priors.output.ndjson,
+        ndjson=rules.get_nearest_nodes_from_ndjson.output.ndjson,
     output:
         auspice_json="builds/{build_name}/auspice_priors.json",
     shell:
         """
-        zstdcat {input.ndjson} | \
-        jq -c '{{seqName,nearestNodes}}' > builds/{wildcards.build_name}/nextclade.ndjson
-
         python3 scripts/add_priors.py \
             --tree {input.auspice_json} \
-            --ndjson builds/{wildcards.build_name}/nextclade.ndjson \
+            --ndjson {input.ndjson} \
             --output {output.auspice_json}
         """
 
