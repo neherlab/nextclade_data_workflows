@@ -4,4 +4,4 @@ printshellcmds: True
 keep-going: True
 reason: True
 
-cores: 12
+cores: 6

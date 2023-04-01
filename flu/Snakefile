@@ -159,7 +159,7 @@ rule exclude_outliers:
             --sequences {input.sequences} \
             --metadata {input.enriched_metadata} \
             --exclude {input.exclude} {input.exclude_specific}\
-            --min-date 2016 \
+            --min-date 2008 \
             --output {output.sampled_sequences} \
             --output-strains {output.sampled_strains}
         """
