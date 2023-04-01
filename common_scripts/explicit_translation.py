@@ -68,7 +68,8 @@ if __name__ == '__main__':
     leafs = {n.name for n in T.get_terminals()}
 
     node_data = {}
-    references ={}
+    references = {}
+    root_sequence = {}
     for gene, translation in zip(genes, translations):
         seqs = []
         for s in SeqIO.parse(translation, 'fasta'):
@@ -83,13 +84,17 @@ if __name__ == '__main__':
                 raise
 
         tt.infer_ancestral_sequences(reconstruct_tip_states=True)
-
+        root_name = tt.tree.root.name
         with open(translation.replace('.fasta', '_withInternalNodes.fasta'), 'w') as fh:
             for n in tt.tree.find_clades():
                 if n.name not in node_data:
                     node_data[n.name] = {"aa_muts":{}}
                 if len(n.mutations):
                     node_data[n.name]["aa_muts"][gene] = [f"{a}{p+1}{d}" for a,p,d in n.mutations]
+                if n.name==root_name:
+                    if "aa_sequences" not in node_data[n.name]: node_data[n.name]["aa_sequences"] = {}
+                    node_data[n.name]["aa_sequences"][gene] = tt.sequence(n, as_string=True, reconstructed=True)
+
                 fh.write(f">{n.name}\n{tt.sequence(n, as_string=True, reconstructed=True)}\n")
         references[gene] = tt.sequence(tt.tree.root, as_string=True, reconstructed=True)
 
