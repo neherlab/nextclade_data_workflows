@@ -21,6 +21,7 @@ clade_membership	22D
 clade_membership	22E
 clade_membership	22F
 clade_membership	23A
+clade_membership	23B
 
 clade	20H
 clade	20I
@@ -45,6 +46,7 @@ clade	22D
 clade	22E
 clade	22F
 clade	23A
+clade	23B
 
 clade_legacy	20H (Beta, V2)
 clade_legacy	20I (Alpha, V1)
@@ -69,6 +71,7 @@ clade_legacy	22D (Omicron)
 clade_legacy	22E (Omicron)
 clade_legacy	22F (Omicron)
 clade_legacy	23A (Omicron)
+clade_legacy	23B (Omicron)
 
 clade_nextstrain	19A
 clade_nextstrain	19B
@@ -102,6 +105,7 @@ clade_nextstrain	22D
 clade_nextstrain	22E
 clade_nextstrain	22F
 clade_nextstrain	23A
+clade_nextstrain	23B
 
 clade_who	Alpha
 clade_who	Beta

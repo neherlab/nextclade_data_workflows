@@ -88,8 +88,14 @@
               XBB.1.5.24
             )internal_XBB_1_5_no17124,
             (
-              XBB.1.5.1,
-              XBB.1.5.2,
+              (
+                XBB.1.5.1,
+                XBB.1.5.28
+              )internal_185a,
+              (
+                XBB.1.5.2,
+                XBB.1.5.40
+              )internal_472a,
               XBB.1.5.3,
               XBB.1.5.4,
               XBB.1.5.7,
@@ -102,7 +108,10 @@
               XBB.1.5.18,
               XBB.1.5.21,
               (
-                XBB.1.5.5,
+                (
+                  XBB.1.5.5,
+                  XBB.1.5.27
+                )internal_dd56,
                 XBB.1.5.6,
                 XBB.1.5.8,
                 XBB.1.5.9,
@@ -114,7 +123,14 @@
               )internal_XBB_1_5_10204C
             )XBB_1_5_17124C
           )internal_XBB_1_5,
-          XBB.1.13,
+          (
+            XBB.1.13,
+            XBB.1.27
+          )internal_89d3,
+          (
+            XBB.1.14,
+            XBB.1.31
+          )internal_15ba,
           (
             XBB.1.17,
             (
