@@ -331,7 +331,8 @@
                       (
                         BA.5.2.50,
                         BA.5.2.51,
-                        BA.5.2.60
+                        BA.5.2.60,
+                        BA.5.2.63
                       )internal_9aab
                     )ORF1b1050_internal,
                     (
@@ -830,7 +831,14 @@
                         BM.1.1,
                         (
                           BM.1.1.1,
-                          CJ.1
+                          (
+                            CJ.1.3,
+                            (
+                              CJ.1,
+                              CJ.1.1,
+                              CJ.1.2
+                            )internal_ed55
+                          )internal_a785
                         )internal_f6c6,
                         BM.1.1.2,
                         BM.1.1.3
