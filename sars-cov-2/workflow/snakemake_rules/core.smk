@@ -445,6 +445,7 @@ rule clades_who:
             --output {output.node_data}
         rm {params.tmp}
         sed -i'' 's/clade_membership/clade_who/gi' {output.node_data}
+        sed -i'' 's/unassigned//gi' {output.node_data} # replace unassigned with empty string
         """
 
 
