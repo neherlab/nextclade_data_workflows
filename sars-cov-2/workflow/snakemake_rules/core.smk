@@ -602,19 +602,6 @@ rule add_branch_labels:
         """
 
 
-rule remove_recombinants_from_auspice:
-    input:
-        auspice_json=rules.add_branch_labels.output.auspice_json,
-    output:
-        auspice_json="auspice/{build_name}/auspice_without_recombinants_max.json",
-    shell:
-        """
-        python3 scripts/remove_recombinants_from_auspice.py \
-            --input {input.auspice_json} \
-            --output {output.auspice_json}
-        """
-
-
 rule minify_json:
     input:
         "auspice/{build_name}/{build_type}_max.json",
@@ -629,6 +616,4 @@ rule minify_json:
 rule produce_trees:
     input:
         "auspice/wuhan/auspice.json",
-        "auspice/wuhan/auspice_without_recombinants.json",
         "auspice/21L/auspice.json",
-        "auspice/21L/auspice_without_recombinants.json",
