@@ -38,7 +38,7 @@ rule deploy_wuhan:
         cp {input.tree} {output.tree}
         cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root} \
+            {output.tree} {output.root}
         touch {output.touchfile}
         """
 
@@ -57,7 +57,7 @@ rule deploy_21L:
         cp {input.tree} {output.tree}
         cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root} \
+            {output.tree} {output.root}
         touch {output.touchfile}
         """
 
