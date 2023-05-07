@@ -26,7 +26,11 @@
             )internal_120e,
             (
               XBB.1.8,
-              XBB.1.12
+              XBB.1.12,
+              (
+                XBB.1.37,
+                XBB.1.37.1
+              )internal_8d12
             )internal_32cd
           )internal_XBB_1_11,
           (
