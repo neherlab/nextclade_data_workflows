@@ -9,6 +9,13 @@ from tqdm import tqdm
 # Defines minimum proportions and counts for relevant mutations to keep
 MIN_PROPORTION = 0.3
 MIN_COUNT = 100000
+
+clades_with_high_proportion_threshold = [
+    # "21A",
+    # "21M",
+]
+
+HIGH_THRESHOLD_PROPORTION = 0.8
 #%%
 # aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.gz .
 df = pd.read_csv(
@@ -66,10 +73,13 @@ mutations.sort_values(
 mutations["genotype"] = mutations["mutation"].apply(lambda x: x[1:])
 mutations["short_clade"] = mutations["Nextstrain_clade"].apply(lambda x: x[:3])
 mutations
+
+#%%
+min_proportion = mutations["short_clade"].apply(lambda x: HIGH_THRESHOLD_PROPORTION if x in clades_with_high_proportion_threshold else MIN_PROPORTION)
 # %%
 # Choose which mutations to keep
 relevant = mutations[
-    (mutations["proportion"] > MIN_PROPORTION) | (mutations["mut_count"] > MIN_COUNT)
+    (mutations["proportion"] > min_proportion) | (mutations["mut_count"] > MIN_COUNT)
 ]
 relevant
 # %%
@@ -100,3 +110,5 @@ with open("virus_properties.json", "w") as f_out:
     }
 
     json.dump(virus_json, f_out, indent=2)
+
+# %%
