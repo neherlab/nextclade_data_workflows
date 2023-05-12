@@ -16,10 +16,18 @@ builds:
           key: clade_membership
           label_key: clade_annotation
           def: "references/a/EPI_ISL_412866/clades_genome.tsv"
+          ref_path: "data/a/EPI_ISL_412866/clade_reference.gbk"
         G:
           key: G_clade
           label_key: G_clade_label
           def: "references/a/EPI_ISL_412866/clades_G.tsv"
+          ref_path: "data/a/EPI_ISL_412866/clade_reference.gbk"
+        pango:
+          key: pango
+          label_key: pango
+          excel_path: "profiles/pango/amino-acid-genotypes.xlsx"
+          excel_sheet: "AA_RSVA"
+          ref_path: "profiles/pango/REFROOTA.gb"
   b:
     EPI_ISL_1653999:
       filter: "--min-date 1965 --probabilistic-sampling --group-by year --subsample-max-sequences 1500 --query 'genome_coverage>0.95'"
@@ -30,10 +38,18 @@ builds:
           key: clade_membership
           label_key: clade_annotation
           def: "references/b/EPI_ISL_1653999/clades_genome.tsv"
+          ref_path: "data/b/EPI_ISL_1653999/clade_reference.gbk"
         G:
           key: G_clade
           label_key: G_clade_label
           def: "references/b/EPI_ISL_1653999/clades_G.tsv"
+          ref_path: "data/b/EPI_ISL_1653999/clade_reference.gbk"
+        pango:
+          key: pango_lineage
+          label_key: pango_lineage
+          excel_path: "profiles/pango/amino-acid-genotypes.xlsx"
+          excel_sheet: "AA_RSVB"
+          ref_path: "profiles/pango/REFROOTB.gb"
 
 
 unused_builds:

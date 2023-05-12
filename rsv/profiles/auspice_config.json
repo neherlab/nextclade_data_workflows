@@ -27,6 +27,11 @@
       "type": "categorical"
     },
     {
+      "key": "pango",
+      "title": "Proposed lineages",
+      "type": "categorical"
+    },
+    {
       "key": "date",
       "title": "Sample Date",
       "type": "ordinal"
