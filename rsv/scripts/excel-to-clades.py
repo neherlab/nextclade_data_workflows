@@ -25,6 +25,8 @@ def main(
                 gene, rest = mut.split(":")
                 site = rest[1:-1]
                 alt = rest[-1]
+                if gene == "G":
+                    continue
                 f.write(f"{row['RSV genotype']}\t{gene}\t{site}\t{alt}\n")
 
 if __name__ == "__main__":

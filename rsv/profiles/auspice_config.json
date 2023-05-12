@@ -62,6 +62,12 @@
           "displayName": "G_clade (Goya et al)",
           "description": "Clades based on the G gene and Goya et al, IRV, 2019.",
           "hideInWeb": false
+        },
+        {
+          "name": "pango",
+          "displayName": "Proposed lineages",
+          "description": "Proposed lineages based on Pango",
+          "hideInWeb": false
         }
       ]
     }

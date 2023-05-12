@@ -1,8 +1,9 @@
 #!/bin/env python3
-import os
 import copy
-from Bio import SeqIO, AlignIO, SeqRecord, Seq
+import os
+
 import numpy as np
+from Bio import AlignIO, Seq, SeqIO, SeqRecord
 
 
 def parse_args():
@@ -51,23 +52,30 @@ if __name__=="__main__":
 
     coord_maps = {'nuc': get_coordinate_map(orig_ref.seq, new_ref.seq)}
     for f in orig_features:
-        coord_maps[f] = get_coordinate_map(orig_features[f].extract(orig_ref).translate().seq,
-                                           new_features[f].extract(new_ref).translate().seq)
+        try:
+            coord_maps[f] = get_coordinate_map(orig_features[f].extract(orig_ref).translate().seq,
+                                            new_features[f].extract(new_ref).translate().seq)
+        except:
+            print(f"Could not map {f}")
 
 
     with open(args.clades) as f:
         clades = [l.strip().split('\t') for l in f]
 
     with open(args.output_clades, 'w') as f:
+        f.write("clade\tgene\tsite\talt\n")
         for clade in clades:
             if (len(clade) < 4) or clades[0][0]=='#':
                 f.write('\t'.join(clade) + '\n')
                 continue
 
             if clade[1] in coord_maps:
-                new_pos = max(0,coord_maps[clade[1]][0][int(clade[2])-1])+1
-                f.write('\t'.join([clade[0], clade[1], str(new_pos),clade[3]]) + '\n')
-
-            else:
+                try:
+                    new_pos = max(0,coord_maps[clade[1]][0][int(clade[2])-1])+1
+                    f.write('\t'.join([clade[0], clade[1], str(new_pos),clade[3]]) + '\n')
+                except:
+                    print(f"Could not map {clade}")
+            
+            if clade[1] == 'clade':
                 f.write('\t'.join(clade) + '\n')
 

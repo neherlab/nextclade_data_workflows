@@ -24,7 +24,7 @@ builds:
           ref_path: "data/a/EPI_ISL_412866/clade_reference.gbk"
         pango:
           key: pango
-          label_key: pango
+          label_key: pango_label
           excel_path: "profiles/pango/amino-acid-genotypes.xlsx"
           excel_sheet: "AA_RSVA"
           ref_path: "profiles/pango/REFROOTA.gb"
@@ -45,8 +45,8 @@ builds:
           def: "references/b/EPI_ISL_1653999/clades_G.tsv"
           ref_path: "data/b/EPI_ISL_1653999/clade_reference.gbk"
         pango:
-          key: pango_lineage
-          label_key: pango_lineage
+          key: pango
+          label_key: pango_label
           excel_path: "profiles/pango/amino-acid-genotypes.xlsx"
           excel_sheet: "AA_RSVB"
           ref_path: "profiles/pango/REFROOTB.gb"
