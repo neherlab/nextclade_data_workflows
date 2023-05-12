@@ -64,9 +64,9 @@ if __name__=="__main__":
                 f.write('\t'.join(clade) + '\n')
                 continue
 
-            if clade[2] in coord_maps:
-                new_pos = max(0,coord_maps[clade[2]][0][int(clade[1])-1])+1
-                f.write('\t'.join([clade[0], str(new_pos), clade[2], clade[3]]) + '\n')
+            if clade[1] in coord_maps:
+                new_pos = max(0,coord_maps[clade[1]][0][int(clade[2])-1])+1
+                f.write('\t'.join([clade[0], clade[1], str(new_pos),clade[3]]) + '\n')
 
             else:
                 f.write('\t'.join(clade) + '\n')
