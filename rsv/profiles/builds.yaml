@@ -1,6 +1,7 @@
 strain_id_field: accession
 genes: ["NS1", "NS2", "N", "P", "M", "SH", "G", "F", "M2-1", "M2-2", "L"]
 auspice_config: "profiles/auspice_config.json"
+color_schemes: "profiles/color_schemes.tsv"
 exclude: "profiles/exclude.txt"
 
 timestamp: "2023-02-03T12:00:00Z"
