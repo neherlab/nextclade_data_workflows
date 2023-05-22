@@ -67,13 +67,11 @@ rule download_metadata:
         "aws s3 cp {params.address} {output:q}"
 
 
-rule download_clades:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
+rule download_clade_display_names:
     output:
-        "builds/clades.tsv",
+        "builds/clade_display_names.yml",
     params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv",
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_display_names.yml",
     shell:
         "curl {params.source} -o {output}"
 
@@ -84,9 +82,24 @@ rule download_clades_nextstrain:
     output:
         "builds/clades_nextstrain.tsv",
     params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades_nextstrain.tsv",
+        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv",
     shell:
         "curl {params.source} -o {output}"
+
+
+rule nextstrain_clades_to_legacy:
+    input:
+        clade_file="builds/clades_nextstrain.tsv",
+        display_names="builds/clade_display_names.yml",
+    output:
+        "builds/clades_display.tsv",
+    shell:
+        """
+        python3 scripts/rename_clades.py \
+            --input-clade-files {input.clade_file} \
+            --name-mapping {input.display_names} \
+            --output-clades {output}
+        """
 
 
 rule download_clades_who:
