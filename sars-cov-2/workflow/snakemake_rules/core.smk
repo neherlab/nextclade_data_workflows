@@ -359,18 +359,18 @@ rule preprocess_clades:
         """
 
 
-rule clades_legacy:
+rule clades_display:
     input:
         tree=rules.refine.output.tree,
         aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/{build_name}/clades.tsv",
+        clades="builds/{build_name}/clades_display.tsv",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
-        node_data="builds/{build_name}/clades_legacy.json",
+        node_data="builds/{build_name}/clades_display.json",
     params:
-        tmp="builds/{build_name}/clades_legacy.tmp",
+        tmp="builds/{build_name}/clades_display.tmp",
     shell:
         """
         augur clades --tree {input.tree} \
@@ -381,10 +381,10 @@ rule clades_legacy:
             --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
-            --clade-type clade_legacy \
+            --clade-type clade_display \
             --output {output.node_data}
         rm {params.tmp}
-        sed -i'' 's/clade_membership/clade_legacy/gi' {output.node_data}
+        sed -i'' 's/clade_membership/clade_display/gi' {output.node_data}
         """
 
 
@@ -474,7 +474,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
-        rules.clades_legacy.output.node_data,
+        rules.clades_display.output.node_data,
         rules.clades.output.node_data,
         rules.clades.output.node_data_nextstrain,
         rules.clades_who.output.node_data,
