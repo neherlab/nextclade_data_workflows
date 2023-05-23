@@ -174,7 +174,6 @@
     )internal_XBB1,
     (
       XBB.2,
-      XBB.2.4,
       (
         XBB.2.1,
         XBB.2.2,
@@ -196,7 +195,17 @@
             )internal_e9e2
           )internal_647b
         )internal_d430
-      )internal_d796
+      )internal_d796,
+      (
+        XBB.2.4,
+        XBB.2.5
+      )internal_d56500f8,
+      (
+        XBB.2.6,
+        XBB.2.7,
+        XBB.2.8,
+        XBB.2.9
+      )internal_4cba4a51
     )internal_XBB2,
     (
       XBB.3,
