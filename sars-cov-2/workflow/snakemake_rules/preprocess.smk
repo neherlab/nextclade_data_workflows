@@ -13,6 +13,7 @@ localrules:
     download_clades,
     download_clades_nextstrain,
     download_clades_who,
+    download_display_names,
     download_designation_dates,
     preprocess,
     download_color_ordering,
