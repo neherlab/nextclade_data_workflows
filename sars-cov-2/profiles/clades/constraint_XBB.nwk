@@ -224,7 +224,10 @@
             )XBB_1_5_17124C
           )internal_XBB_1_5,
           (
-            XBB.1.13,
+            (
+              XBB.1.13,
+              XBB.1.13.1
+            )internal_32defdcb,
             XBB.1.27,
             XBB.1.40,
             (
@@ -254,7 +257,11 @@
           (
             XBB.1.38,
             XBB.1.38.1
-          )internal_234859ae
+          )internal_234859ae,
+          (
+            XBB.1.45,
+            XBB.1.45.1
+          )internal_8f782cea
         )internal_ORF8stop
       )internal_XBB1_out
     )internal_XBB1,
