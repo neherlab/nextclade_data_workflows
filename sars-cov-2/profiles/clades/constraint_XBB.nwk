@@ -285,7 +285,10 @@
           )internal_1abd,
           (
             XBB.2.3.4,
-            XBB.2.3.11
+            (
+              XBB.2.3.11,
+              GS.1
+            )internal_0a853857
           )internal_5814,
           (
             XBB.2.3.5,
