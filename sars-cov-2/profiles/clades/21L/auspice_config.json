@@ -19,6 +19,24 @@
           "displayName": "Unaliased",
           "description": "Partially aliased reconstructed Pango lineage",
           "hideInWeb": false
+        },
+        {
+          "name": "clade_nextstrain",
+          "displayName": "Nextstrain Clade",
+          "description": "Nextstrain Clade",
+          "hideInWeb": true
+        },
+        {
+          "name": "clade_who",
+          "displayName": "WHO name",
+          "description": "Greek letter WHO name",
+          "hideInWeb": true
+        },
+        {
+          "name": "clade_display",
+          "displayName": "Clade display name",
+          "description": "Combination of Nextstrain clade and Pango lineage",
+          "hideInWeb": true
         }
       ]
     }
@@ -83,6 +101,21 @@
       "key": "totalAminoacidDeletions",
       "title": "Total amino acid deletions",
       "type": "continuous"
+    },
+    {
+      "key": "clade_who",
+      "title": "WHO name",
+      "type": "categorical"
+    },
+    {
+      "key": "clade_nextstrain",
+      "title": "Nextstrain clade name",
+      "type": "categorical"
+    },
+    {
+      "key": "clade_display",
+      "title": "Display clade name",
+      "type": "categorical"
     }
   ],
   "display_defaults": {
@@ -98,6 +131,8 @@
     "Nextclade_pango",
     "partiallyAliased",
     "designation_recency",
+    "clade_who",
+    "clade_display",
     "designation_date"
   ],
   "panels": ["tree", "entropy"]

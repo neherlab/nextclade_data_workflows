@@ -897,6 +897,8 @@
                                   (
                                     CH.1.1.1,
                                     DV.4,
+                                    DV.7,
+                                    DV.8,
                                     (
                                       (
                                         DV.1,
@@ -909,7 +911,14 @@
                                           DV.3.1
                                         )internal_fbb9,
                                         DV.5
-                                      )internal_0513
+                                      )internal_0513,
+                                      (
+                                        DV.6,
+                                        (
+                                          DV.6.1,
+                                          DV.6.2
+                                        )internal_656b8ca4
+                                      )internal_56d62e69
                                     )internal_7e67
                                   )internal_ddb1,
                                   CH.1.1.2,

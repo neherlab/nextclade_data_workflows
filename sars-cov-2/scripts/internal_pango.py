@@ -110,7 +110,7 @@ def main(designations, tree, alias, build_name, synthetic, output, field_name):
     alignment = Bio.Align.MultipleSeqAlignment(
         [
             Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(vector), id=strain, name=strain)
-            for strain, vector in meta.trait_vector.iteritems()
+            for strain, vector in meta.trait_vector.items()
         ]
     )
     #%%

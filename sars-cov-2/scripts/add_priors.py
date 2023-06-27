@@ -10,7 +10,10 @@ python3 scripts/add_priors.py \
 """
 import typer
 
+app = typer.Typer(pretty_exceptions_enable=False)
 
+
+@app.command()
 def main(
     tree: str = "auspice/wuhan/auspice_raw.json",
     ndjson: str = "~/code/nextclade/out.tsv",
@@ -21,6 +24,15 @@ def main(
     """
     import json
     import polars as pl
+    import pkg_resources
+    from packaging import version
+
+    
+    polars_version = version.parse((pkg_resources.get_distribution("polars").version))
+
+    if polars_version < version.parse("0.18.0"):
+        # rename `arr` to `list` for compatibility with polars < 0.18.0
+        pl.Expr.list = pl.Expr.arr
 
     priors = (
         pl.scan_ndjson(ndjson, infer_schema_length=10000)
@@ -28,12 +40,12 @@ def main(
             [
                 pl.col("nearestNodes"),
                 pl.col("nearestNodes")
-                .arr.lengths()
+                .list.lengths()
                 .pow(-1)
                 .alias("1/nearestNodesListLength"),
             ]
         )
-        .filter(pl.col("nearestNodes").arr.lengths() > 0)
+        .filter(pl.col("nearestNodes").list.lengths() > 0)
         .explode("nearestNodes")
         .groupby("nearestNodes")
         .sum()
@@ -86,4 +98,4 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()
