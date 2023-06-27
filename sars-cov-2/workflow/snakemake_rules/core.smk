@@ -541,32 +541,33 @@ rule generate_priors:
         tree=rules.export.output.auspice_json,
         dataset=rules.download_nextclade_dataset.output.dataset,
     output:
-        ndjson="builds/{build_name}/nextclade.ndjson.zst",
+        ndjson="builds/{build_name}/nearest_nodes.ndjson",
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.1 -w0 | \
+        seqkit sample -p 0.2 -w0 | \
         nextclade run \
             -D {input.dataset} \
             -a {input.tree} \
             --include-nearest-node-info \
-            --output-ndjson {output.ndjson}
+            --output-ndjson /dev/stdout \
+        | jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
         """
 
 
-rule get_nearest_nodes_from_ndjson:
-    """
-    Extract nearestNodes from Nextclade output
-    """
-    input:
-        ndjson=rules.generate_priors.output.ndjson,
-    output:
-        ndjson="builds/{build_name}/nearest_nodes.ndjson",
-    shell:
-        """
-        zstdcat {input.ndjson} | \
-        jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
-        """
+#rule get_nearest_nodes_from_ndjson:
+#    """
+#    Extract nearestNodes from Nextclade output
+#    """
+#    input:
+#        ndjson=rules.generate_priors.output.ndjson,
+#    output:
+#        ndjson="builds/{build_name}/nearest_nodes.ndjson",
+#    shell:
+#        """
+#        zstdcat {input.ndjson} | \
+#        jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
+#        """
 
 
 rule add_priors:
@@ -575,7 +576,7 @@ rule add_priors:
     """
     input:
         auspice_json=rules.export.output.auspice_json,
-        ndjson=rules.get_nearest_nodes_from_ndjson.output.ndjson,
+        ndjson="builds/{build_name}/nearest_nodes.ndjson",
     output:
         auspice_json="builds/{build_name}/auspice_priors.json",
     shell:
