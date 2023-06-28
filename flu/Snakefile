@@ -9,7 +9,6 @@ wildcard_constraints:
     reference="[^_/]+",
 
 
-
 rule all:
     input:
         [
@@ -19,13 +18,15 @@ rule all:
             for reference in config["builds"][strain][segment]
         ],
 
+
 rule fetch_data:
     output:
-        raw_sequences="data/{strain}/raw_{segment}.fasta"
+        raw_sequences="data/{strain}/raw_{segment}.fasta",
     shell:
         """
         scp -r neher@transfer.scicore.unibas.ch:/scicore/home/neher/neher/nextstrain/seasonal-flu/data/{wildcards.strain}/raw_{wildcards.segment}.fasta {output.raw_sequences}
         """
+
 
 rule download_clades:
     message:
@@ -33,9 +34,7 @@ rule download_clades:
     output:
         "data/clades_{strain}_{segment}_{reference}_raw.tsv",
     params:
-        source=lambda w: config["builds"][w.strain][w.segment][w.reference][
-            "clade_url"
-        ],
+        source=lambda w: config["builds"][w.strain][w.segment][w.reference]["clade_url"],
     shell:
         "curl {params.source} | sed '/V1A\\tHA1\\t146\\tI/d' >{output}"
 
@@ -57,6 +56,7 @@ rule offset_clades:
             {input} \
             >{output}
         """
+
 
 rule download_includes:
     output:
@@ -99,8 +99,10 @@ rule parse:
 
 
 def genes(w):
-    if w.segment=='ha': return ["SigPep", "HA1", "HA2"]
-    if w.segment=='na': return ["NA"]
+    if w.segment == "ha":
+        return ["SigPep", "HA1", "HA2"]
+    if w.segment == "na":
+        return ["NA"]
 
 
 rule subsample:
@@ -112,13 +114,15 @@ rule subsample:
         sampled_sequences="build/{strain}/{segment}/{reference}/subsample_raw.fasta",
         sampled_strains="build/{strain}/{segment}/{reference}/subsample_raw.txt",
     params:
-        filter_arguments=lambda w: config["builds"][w.strain][w.segment][
-            w.reference
-        ]["filter"],
-        reference_EPI_ISL=lambda w: config["builds"][w.strain][w.segment][
-            w.reference
-        ]["reference_EPI_ISL"],
-        other_include = lambda w:config["builds"][w.strain][w.segment][w.reference].get("include_file","")
+        filter_arguments=lambda w: config["builds"][w.strain][w.segment][w.reference][
+            "filter"
+        ],
+        reference_EPI_ISL=lambda w: config["builds"][w.strain][w.segment][w.reference][
+            "reference_EPI_ISL"
+        ],
+        other_include=lambda w: config["builds"][w.strain][w.segment][w.reference].get(
+            "include_file", ""
+        ),
     shell:
         """
         augur filter \
@@ -225,15 +229,16 @@ rule tree:
             > /dev/null
         """
 
+
 # root using dates in treetime, use 1500 as sequence length (good enough, doesn't matter)
 rule root:
     input:
         tree=rules.tree.output.tree,
-        metadata = rules.parse.output.metadata,
+        metadata=rules.parse.output.metadata,
     output:
         tree="build/{strain}/{segment}/{reference}/tree_rooted.nwk",
     params:
-        outdir = "build/{strain}/{segment}/{reference}/tt_out"
+        outdir="build/{strain}/{segment}/{reference}/tt_out",
     shell:
         """
         treetime clock \
@@ -244,6 +249,7 @@ rule root:
             --outdir {params.outdir}
         cp {params.outdir}/rerooted.newick {output.tree}
         """
+
 
 # refine while keeping the root
 rule refine:
@@ -344,21 +350,26 @@ rule clades:
             > /dev/null
         """
 
+
 ## TODO explicitly relabel clade branch labels to differentiate long and short ones
 # currently long ones are overwritten by short ones.
 rule make_short_clades:
     input:
         clades=rules.offset_clades.output,
     output:
-        clades = "data/clades-short_{strain}_{segment}_{reference}.tsv"
+        clades="data/clades-short_{strain}_{segment}_{reference}.tsv",
     run:
         with open(str(input.clades)) as fh:
             clades = fh.readlines()
 
-        for contraction in config["builds"][wildcards.strain][wildcards.segment][wildcards.reference].get("clade_contractions", []):
-            clades = [x.replace(contraction['orig'], contraction['short']) for x in clades]
+        for contraction in config["builds"][wildcards.strain][wildcards.segment][
+            wildcards.reference
+        ].get("clade_contractions", []):
+            clades = [
+                x.replace(contraction["orig"], contraction["short"]) for x in clades
+            ]
 
-        with open(str(output.clades), 'w') as fh:
+        with open(str(output.clades), "w") as fh:
             for line in clades:
                 fh.write(line)
 
@@ -370,7 +381,7 @@ rule clades_short:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades = "data/clades-short_{strain}_{segment}_{reference}.tsv"
+        clades="data/clades-short_{strain}_{segment}_{reference}.tsv",
     output:
         node_data="build/{strain}/{segment}/{reference}/clades-short.json",
     shell:
@@ -383,18 +394,19 @@ rule clades_short:
             sed -i 's/clade_membership/short_clade/' {output.node_data}
         """
 
+
 # make sure all differences between the alignment reference and the root are attached as mutations to the root
 rule attach_root_mutations:
     input:
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        translations = rules.align.output.alignment,
-        tree = rules.refine.output.tree
+        translations=rules.align.output.alignment,
+        tree=rules.refine.output.tree,
     output:
         aa_muts="build/{strain}/{segment}/{reference}/aa_muts_adapted.json",
-        nuc_muts="build/{strain}/{segment}/{reference}/nuc_muts_adapted.json"
+        nuc_muts="build/{strain}/{segment}/{reference}/nuc_muts_adapted.json",
     params:
-        genes = genes,
+        genes=genes,
         translations=lambda w: expand(
             "build/{strain}/{segment}/{reference}/aligned.gene.{genes}.fasta",
             strain=w.strain,
@@ -402,7 +414,7 @@ rule attach_root_mutations:
             genes=genes(w),
             reference=w.reference,
         ),
-        reference = lambda w: w.reference
+        reference=lambda w: w.reference,
     shell:
         """
         python3 ../common_scripts/attach_root_mutations.py \
@@ -428,7 +440,9 @@ def get_node_data(w):
         node_data.append("build/{strain}/{segment}/{reference}/clades.json".format(**w))
 
     if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference]:
-        node_data.append("build/{strain}/{segment}/{reference}/clades-short.json".format(**w))
+        node_data.append(
+            "build/{strain}/{segment}/{reference}/clades-short.json".format(**w)
+        )
 
     return node_data
 
@@ -439,8 +453,10 @@ rule export:
     input:
         tree=rules.refine.output.tree,
         metadata=rules.parse.output.metadata,
-        node_data = get_node_data,
-        auspice_config=lambda w: config["files"]["auspice_config_shortclade"] if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference] else config["files"]["auspice_config"],
+        node_data=get_node_data,
+        auspice_config=lambda w: config["files"]["auspice_config_shortclade"]
+        if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference]
+        else config["files"]["auspice_config"],
     output:
         auspice_json="auspice/{strain}/{segment}/{reference}/auspice_raw.json",
     params:
@@ -466,7 +482,7 @@ rule swap_strain_accession:
     output:
         auspice_json="auspice/{strain}/{segment}/{reference}/auspice.json",
     params:
-        fake_clade = lambda w: '--add-fake-clade none' if w.segment != 'ha' else ''
+        fake_clade=lambda w: "--add-fake-clade none" if w.segment != "ha" else "",
     shell:
         """
         python3 scripts/swap_strain_accession.py \
@@ -526,10 +542,11 @@ rule assemble_folder:
         cp {input.tree} {output.tree};
         """
 
-if 'timestamp' not in config:
+
+if "timestamp" not in config:
     timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
 else:
-    timestamp = config['timestamp']
+    timestamp = config["timestamp"]
 
 
 rule test_nextclade:
@@ -556,7 +573,6 @@ rule test_nextclade:
          --output-tree={params.outdir}/nextclade.auspice.json\
          --output-basename=nextclade 2>&1
         """
-
 
 
 rule clean:
