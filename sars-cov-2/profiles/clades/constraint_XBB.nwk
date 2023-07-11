@@ -303,8 +303,14 @@
                   XBB.1.5.15,
                   XBB.1.5.81
                 )internal_0caf84ff,
-                XBB.1.5.19,
-                XBB.1.5.20,
+                (
+                  XBB.1.5.19,
+                  XBB.1.5.90
+                )internal_c4732922,
+                (
+                  XBB.1.5.20,
+                  XBB.1.5.91
+                )internal_66daaeff,
                 (
                   XBB.1.5.25,
                   XBB.1.5.89
