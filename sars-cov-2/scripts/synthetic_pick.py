@@ -47,12 +47,19 @@ def main(
                 # Exclude non-BA.2 recombinants
                 if top_parent(lineage) in excluded_recombinants:
                     continue
+            if build_name == "22F":
+                # Exclude all non-XBBs
+                if not aliasor.uncompress(lineage).startswith("XBB"):
+                    continue
 
             keep.append(lineage)
     
     # Add outgroup (BA.3)
-    if build_name == "21L":
+    if build_name != "wuhan":
         keep.extend(["BA.3", "BA.1", "B.1.1", "B.1.617.2", "B.1", "B.1.1.7", "B", "A"])
+    
+    if build_name == "22F":
+        keep.extend(["BA.2", "BA.4", "BA.5", "BQ.1", "BA.2.75", "CH.1.1", "BN.1", "BA.2.3.20", "BA.2.12.1"])
     
     # Remove excludes
     excludes = set(open(excludes).read().splitlines())

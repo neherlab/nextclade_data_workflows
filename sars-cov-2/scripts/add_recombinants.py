@@ -5,6 +5,7 @@
 # --root {input.root} \
 # --output {output.tree} 2>&1 | tee {log}
 
+import os
 import typer
 import ipdb
 from pango_aliasor.aliasor import Aliasor
@@ -14,6 +15,7 @@ def main(
     tree: str = "builds/nextclade/tree_raw.nwk",
     recombinants: str = "builds/nextclade/recombinants.txt",
     root: str = "Wuhan/Hu-1/2019",
+    non_recomb_root: str = "Wuhan/Hu-1/2019",
     recombinant_trees: str = "",
     alias_file: str = "pre-processed/alias.json",
     output: str = "builds/nextclade/tree_with_recombinants.nwk",
@@ -26,7 +28,7 @@ def main(
     tree = Phylo.read(tree, "newick")
 
     # Root tree on reference
-    tree.root_with_outgroup(root)
+    tree.root_with_outgroup(non_recomb_root)
 
     # Load recombinants from txt into a list
     with open(recombinants, "r") as f:
@@ -82,8 +84,12 @@ def main(
     # Attach recombinant trees
     added = set()
     for recombinant_tree in recombinant_trees.split(","):
+        # If file empty, skip
+        if os.stat(recombinant_tree).st_size == 0:
+            continue
         # import ipdb; ipdb.set_trace()
         # Get recombinant name (top parent)
+        
         recombinant_tree = Phylo.read(recombinant_tree, "newick")
         rec_name = [r.name for r in recombinant_tree.get_terminals()][0]
         rec_name = top_parent(rec_name)
@@ -105,6 +111,8 @@ def main(
     # Phylo.draw_ascii(rec_parent)
         
     tree.root.clades.append(rec_parent)
+
+    tree.root_with_outgroup(root)
 
     # Write tree to output
     Phylo.write(tree, output, "newick", format_branch_length='%1.8f', branch_length_only=True)

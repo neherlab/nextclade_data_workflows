@@ -185,6 +185,15 @@ def main(designations, tree, alias, build_name, synthetic, output, field_name):
             overwrite_outgroup
         )
 
+    # Set non-22F to empty string
+    if build_name == "22F":
+        meta[field_name] = meta[field_name].apply(
+            overwrite_outgroup
+        )
+        meta["partiallyAliased"] = meta["partiallyAliased"].apply(
+            overwrite_outgroup
+        )
+
     export_df = meta[[field_name, "partiallyAliased"]]
     #%%
     augur.utils.write_json(

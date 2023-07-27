@@ -8,6 +8,10 @@ localrules:
     download_nextclade_dataset,
 
 
+wildcard_constraints:
+    build_name="wuhan|21L|22F",
+
+
 genes = [
     "ORF1a",
     "ORF1b",
@@ -33,6 +37,18 @@ rule generate_nextclade_ba2_tsv:
         """
         # nextclade run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
         nextclade run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
+        """
+
+
+rule generate_nextclade_22F_tsv:
+    input:
+        sequences="builds/{build_name}/sequences.fasta",
+    output:
+        tsv="builds/{build_name}/nextclade_22F.tsv",
+    shell:
+        """
+        # nextclade run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
+        nextclade run -d sars-cov-2-22F {input.sequences} -t {output.tsv}
         """
 
 
@@ -194,17 +210,22 @@ rule recombinant_tree:
         ),
     shell:
         """
+        # Check if there are any sequences in the alignment
+        if [ $(grep -c ">" {input.alignment}) -lt 1 ]; then
+            touch {output.tree};
         # Check if there are 3 or more sequences in the alignment
-        if [ $(grep -c ">" {input.alignment}) -lt 3 ]; then
+        else 
+            if [ $(grep -c ">" {input.alignment}) -lt 3 ]; then
             python scripts/simple_tree.py \
                 --alignment {input.alignment} \
                 --tree {output.tree};
-        else 
-            augur tree \
-                --alignment {input.alignment} \
-                --tree-builder-args "-czb -ninit 1 -n 1 {params.constraint}" \
-                --nthreads 1 \
-                --output {output.tree};
+            else 
+                augur tree \
+                    --alignment {input.alignment} \
+                    --tree-builder-args "-czb -ninit 1 -n 1 {params.constraint}" \
+                    --nthreads 1 \
+                    --output {output.tree};
+            fi
         fi
         """
 
@@ -224,6 +245,7 @@ rule add_recombinants_to_tree:
         tree="builds/{build_name}/tree_with_recombinants.nwk",
     params:
         root=lambda w: config["root"][w.build_name],
+        non_recomb_root=lambda w: config["non_recomb_root"][w.build_name],
         joined_trees=lambda w, input: ",".join(input.recombinant_trees),
     shell:
         """
@@ -232,6 +254,7 @@ rule add_recombinants_to_tree:
             --recombinants {input.recombinants} \
             --recombinant-trees {params.joined_trees} \
             --root {params.root} \
+            --non-recomb-root {params.non_recomb_root} \
             --output {output.tree}
         """
 
@@ -342,6 +365,9 @@ rule preprocess_clades:
         outgroup="profiles/clades/{build_name}/outgroup.tsv",
     output:
         clades="builds/{build_name}/clades{clade_type}.tsv",
+    params:
+        ba2_ignore="19A 19B 20A 20B 20C 20D 20E 20F 20G 20H 20I 20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu",
+        xbb_ignore="19A 19B 20A 20B 20C 20D 20E 20F 20G 20H 20I 20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu 22A 22B 22C 22D 22E",
     wildcard_constraints:
         clade_type=".*",  # Snakemake wildcard default is ".+" which doesn't match empty strings
     shell:
@@ -349,9 +375,13 @@ rule preprocess_clades:
         cp {input.clades} {output.clades};
         cat <(echo) {input.outgroup} >> {output.clades};
         if [ {wildcards.build_name} = 21L ]; then
-            for clade in 19A 19B 20A 20B 20C 20D 20E 20F 20G 20H 20I \
-                20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M \
-                Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu;
+            for clade in {params.ba2_ignore};
+            do
+                sed -i "/$clade/d" {output.clades};
+            done
+        fi
+        if [ {wildcards.build_name} = 22F ]; then
+            for clade in {params.xbb_ignore};
             do
                 sed -i "/$clade/d" {output.clades};
             done
@@ -516,6 +546,13 @@ rule export:
         """
 
 
+build_to_dataset = {
+    "wuhan": "sars-cov-2",
+    "21L": "sars-cov-2-21L",
+    "22F": "sars-cov-2-21L",  # TODO: Replace with actual 22F dataset
+}
+
+
 rule download_nextclade_dataset:
     """
     Download Nextclade dataset so Nextclade can run without internet connection
@@ -523,7 +560,7 @@ rule download_nextclade_dataset:
     output:
         dataset="builds/{build_name}/nextclade_dataset.zip",
     params:
-        dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
+        dataset=lambda w: build_to_dataset[w.build_name],
     shell:
         """
         nextclade dataset get \
@@ -545,7 +582,7 @@ rule generate_priors:
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.2 -w0 | \
+        seqkit sample -p 0.001 -w0 | \
         nextclade run \
             -D {input.dataset} \
             -a {input.tree} \
@@ -555,7 +592,7 @@ rule generate_priors:
         """
 
 
-#rule get_nearest_nodes_from_ndjson:
+# rule get_nearest_nodes_from_ndjson:
 #    """
 #    Extract nearestNodes from Nextclade output
 #    """
@@ -605,9 +642,9 @@ rule add_branch_labels:
 
 rule minify_json:
     input:
-        "auspice/{build_name}/{build_type}_max.json",
+        "auspice/{build_name}/auspice_max.json",
     output:
-        "auspice/{build_name}/{build_type}.json",
+        "auspice/{build_name}/auspice.json",
     shell:
         """
         jq -c . {input} > {output}
@@ -618,3 +655,4 @@ rule produce_trees:
     input:
         "auspice/wuhan/auspice.json",
         "auspice/21L/auspice.json",
+        "auspice/22F/auspice.json",

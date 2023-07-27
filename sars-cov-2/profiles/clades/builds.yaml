@@ -3,6 +3,12 @@ title: "Nextclade Reference Tree for SARS-Cov-2"
 root: 
   wuhan: B #"Wuhan/Hu-1/2019"
   21L: BA.2
+  22F: XBB
+
+non_recomb_root: 
+  wuhan: B #"Wuhan/Hu-1/2019"
+  21L: BA.2
+  22F: BA.2
 
 tree-recombinants:
   - "XAY"
