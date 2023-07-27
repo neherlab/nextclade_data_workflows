@@ -50,6 +50,17 @@ rule download_clades:
         """
 
 
+rule copy_consortium_clades:
+    input:
+        tsv="defaults/clades_consortium_{a_or_b}.tsv",
+    output:
+        tsv="data/{a_or_b}/{reference}/clades_consortium_raw.tsv",
+    shell:
+        """
+        cp {input.tsv} {output.tsv}
+        """
+
+
 rule download:
     output:
         sequences="data/{a_or_b}/sequences.fasta.xz",
@@ -75,7 +86,7 @@ rule lift_clades_to_reference:
         """
         python3 ../common_scripts/clade_translator.py \
             --clades {input.clade_file} \
-            --original-reference {input.orig_reference} \
+            --original-reference {input.clade_reference} \
             --new-reference {input.reference} \
             --output-clades {output.clade_file}
         """
@@ -425,7 +436,7 @@ rule export:
         auspice_json=build_dir + "/{a_or_b}/{reference}/auspice_raw.json",
     params:
         fields="region strain country date",
-        type=lambda w: "A" if w.a_or_b == "a" else "B",
+        subtype=lambda w: "A" if w.a_or_b == "a" else "B",
     shell:
         """
         AUGUR_RECURSION_LIMIT=10000 \
@@ -436,7 +447,7 @@ rule export:
             --auspice-config {input.auspice_config} \
             --color-by-metadata {params.fields} \
             --colors {input.colors} \
-            --title "Nextclade reference tree for RSV-{params.type} with root {wildcards.reference}" \
+            --title "Nextclade reference tree for RSV-{params.subtype} with root {wildcards.reference}" \
             --output {output.auspice_json} 2>&1;
         """
 

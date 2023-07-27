@@ -3,5 +3,6 @@ configfile: profiles/builds.yaml
 printshellcmds: True
 keep-going: True
 reason: True
+rerun-incomplete: True
 
-cores: 12
+cores: all

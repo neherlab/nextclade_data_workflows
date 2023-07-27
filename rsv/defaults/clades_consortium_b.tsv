@@ -1,0 +1,39 @@
+clade	gene	site	alt
+B	nuc	2000	C
+
+B.1	nuc	4095	A
+
+B.1.1	clade	B.1
+B.1.1	nuc	1535	A
+
+B.2	nuc	903	C
+
+B.2.1	clade	B.2
+B.2.1	nuc	14568	A
+
+B.2.1.1	clade	B.2.1
+B.2.1.1	nuc	8703	A
+
+B.2.2	clade	B.2
+B.2.2	nuc	13833	A
+
+B.2.3	clade	B.2
+B.2.3	nuc	14019	G
+
+B.2.4	clade	B.2
+B.2.4	nuc	10800	T
+
+#8177C
+B.2.5	clade	B.2
+B.2.5	nuc	8177	C
+
+#12582T
+B.2.6	clade	B.2
+B.2.6	nuc	12582	T
+
+#9120G
+B.2.7	clade	B.2
+B.2.7	nuc	9120	G
+
+#
+aws s3api get-object --bucket nextstrain-data --key files/ncov/open/metadata.tsv.zst --version-id AnF_xO4iudTVdiocg0yCFmP6nyvwiVLt /dev/stdout | zstdcat  | less
