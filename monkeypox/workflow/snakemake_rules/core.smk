@@ -28,7 +28,7 @@ rule wrangle_metadata:
         """
 
 
-rule filter:
+rule subsample:
     input:
         sequences="data/sequences.fasta",
         metadata=build_dir + "/{build_name}/metadata.tsv",
@@ -38,12 +38,13 @@ rule filter:
         specific_include="config/{build_name}/include_accessions.txt",
         include="config/include_accessions.txt",
     output:
-        sequences=build_dir + "/{build_name}/filtered.fasta",
-        log=build_dir + "/{build_name}/filtered.log",
+        sequences=build_dir + "/{build_name}/filtered_raw.fasta",
+        log=build_dir + "/{build_name}/filtered_raw.log",
     params:
         min_date=lambda w: config[w.build_name]["min_date"],
         min_length=config["min_length"],
         exclude_where=lambda w: config[w.build_name]["exclude_where"],
+        subsampling=lambda w: config[w.build_name]["subsampling"],
     shell:
         """
         augur filter \
@@ -53,9 +54,30 @@ rule filter:
             --exclude {input.exclude} {input.specific_exclude} {input.deduplicate_exclude} \
             {params.exclude_where} \
             {params.min_date} \
+            {params.subsampling} \
             --include {input.include} {input.specific_include} \
             --output {output.sequences} \
             --min-length {params.min_length} \
+            --output-log {output.log}
+        """
+
+
+rule filter:
+    input:
+        sequences=build_dir + "/{build_name}/filtered_raw.fasta",
+        metadata=build_dir + "/{build_name}/metadata.tsv",
+        exclude="config/{build_name}/post_filter_exclude.txt",
+    output:
+        sequences=build_dir + "/{build_name}/filtered.fasta",
+        log=build_dir + "/{build_name}/filtered.log",
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --metadata-id-columns strain \
+            --exclude {input.exclude} \
+            --output {output.sequences} \
             --output-log {output.log}
         """
 

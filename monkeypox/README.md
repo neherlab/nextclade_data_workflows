@@ -26,8 +26,8 @@ nextstrain view auspice/
 
 ```sh
 #!/bin/bash
-OLD="2022-11-03T12:00:00Z"
-NEW="2023-01-26T12:00:00Z"
+OLD="2023-01-26T12:00:00Z"
+NEW="2023-08-01T12:00:00Z"
 
 B1="hMPXV_B1/references/pseudo_ON563414"
 MPXV="MPXV/references/ancestral"
