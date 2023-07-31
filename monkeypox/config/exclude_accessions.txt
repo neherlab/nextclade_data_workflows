@@ -145,3 +145,23 @@ OP890550	# B.1.3 with 190660A reverted, causing tree issues
 OP539893	# B.1.3 with 190660A reverted, causing tree issues
 
 OQ172216	# Overdiverged French B.1
+
+OQ581850    # Overdiverged B.1.10
+
+OQ773425
+OP642407
+OR030919
+OP642407
+OP715828
+OR035671
+OR035724
+OP373392
+OQ581851
+OQ581852
+
+OQ621553    # MPXV/Sudan/2022/RKI630, 800 private mutations, clade 1
+
+OR086950
+OQ547772
+OP605564
+
