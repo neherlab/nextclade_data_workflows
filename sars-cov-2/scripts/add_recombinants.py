@@ -101,6 +101,13 @@ def main(
         if recombinant not in added:
             rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=recombinant, branch_length=10.0))
             added.add(recombinant)
+    
+    # Patch branch lengths for ORF9b:I5T branch
+    for clade in rec_parent.root.find_clades():
+        if clade.name == "internal_ORF9b_I5T":
+            clade.branch_length = 1 / 30000 / 100
+        if clade.name == "XBB.1.22" or "internal_XBB_1_22":
+            clade.branch_length = 1 / 30000 * 100
 
     # Phylo.draw_ascii(rec_parent)
         
