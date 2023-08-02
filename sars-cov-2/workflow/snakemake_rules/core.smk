@@ -263,8 +263,13 @@ rule ancestral:
     input:
         tree=rules.refine.output.tree,
         alignment="builds/{build_name}/sequences.fasta",
+        dataset_reference="profiles/clades/{build_name}/reference.fasta",
+        annotation="defaults/reference_seq.gb",
+    params:
+        genes=" ".join(genes),
+        translation_template="builds/{build_name}/translations/aligned.gene.%GENE.fasta",
     output:
-        node_data="builds/{build_name}/nt_muts.json",
+        node_data="builds/{build_name}/muts.json",
     shell:
         """
         augur ancestral \
@@ -272,46 +277,11 @@ rule ancestral:
             --alignment {input.alignment} \
             --output-node-data {output.node_data} \
             --inference joint \
+            --root-sequence {input.dataset_reference} \
+            --annotation {input.annotation} \
+            --genes {params.genes} \
+            --translations {params.translation_template} \
             --infer-ambiguous
-        """
-
-
-rule translate:
-    input:
-        tree=rules.refine.output.tree,
-        node_data=rules.ancestral.output.node_data,
-        reference="defaults/reference_seq.gb",
-    output:
-        node_data="builds/{build_name}/aa_muts.json",
-    shell:
-        """
-        augur translate \
-            --tree {input.tree} \
-            --ancestral-sequences {input.node_data} \
-            --reference-sequence {input.reference} \
-            --output-node-data {output.node_data}
-        """
-
-
-rule aa_muts_explicit:
-    input:
-        tree=rules.refine.output.tree,
-        translations=rules.align.output.translations,
-    output:
-        node_data="builds/{build_name}/aa_muts_explicit.json",
-        translations=expand(
-            "builds/{{build_name}}/translations/aligned.gene.{gene}_withInternalNodes.fasta",
-            gene=genes,
-        ),
-    params:
-        genes=" ".join(genes),
-    shell:
-        """
-        python3 scripts/explicit_translation.py \
-            --tree {input.tree} \
-            --translations {input.translations:q} \
-            --genes {params.genes}\
-            --output {output.node_data}
         """
 
 
@@ -362,7 +332,6 @@ rule preprocess_clades:
 rule clades_display:
     input:
         tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/{build_name}/clades_display.tsv",
         internal_pango=rules.internal_pango.output.node_data,
@@ -374,7 +343,7 @@ rule clades_display:
     shell:
         """
         augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
+            --mutations {input.nuc_muts} \
             --clades {input.clades} \
             --output-node-data {params.tmp}
         python scripts/overwrite_recombinant_clades.py \
@@ -391,7 +360,6 @@ rule clades_display:
 rule clades:
     input:
         tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/{build_name}/clades_nextstrain.tsv",
         internal_pango=rules.internal_pango.output.node_data,
@@ -404,7 +372,7 @@ rule clades:
     shell:
         """
         augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
+            --mutations {input.nuc_muts} \
             --clades {input.clades} \
             --output-node-data {params.tmp}
         python scripts/overwrite_recombinant_clades.py \
@@ -422,7 +390,6 @@ rule clades:
 rule clades_who:
     input:
         tree=rules.refine.output.tree,
-        aa_muts=rules.translate.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/{build_name}/clades_who.tsv",
         internal_pango=rules.internal_pango.output.node_data,
@@ -434,7 +401,7 @@ rule clades_who:
     shell:
         """
         augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
+            --mutations {input.nuc_muts} \
             --clades {input.clades} \
             --output-node-data {params.tmp}
         python scripts/overwrite_recombinant_clades.py \
@@ -473,12 +440,10 @@ def _get_node_data_by_wildcards(wildcards):
     inputs = [
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
-        rules.translate.output.node_data,
         rules.clades_display.output.node_data,
         rules.clades.output.node_data,
         rules.clades.output.node_data_nextstrain,
         rules.clades_who.output.node_data,
-        rules.aa_muts_explicit.output.node_data,
         rules.internal_pango.output.node_data,
     ]
 
@@ -545,7 +510,7 @@ rule generate_priors:
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.2 -w0 | \
+        seqkit sample -p 0.001 -w0 | \
         nextclade run \
             -D {input.dataset} \
             -a {input.tree} \
@@ -553,21 +518,6 @@ rule generate_priors:
             --output-ndjson /dev/stdout \
         | jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
         """
-
-
-#rule get_nearest_nodes_from_ndjson:
-#    """
-#    Extract nearestNodes from Nextclade output
-#    """
-#    input:
-#        ndjson=rules.generate_priors.output.ndjson,
-#    output:
-#        ndjson="builds/{build_name}/nearest_nodes.ndjson",
-#    shell:
-#        """
-#        zstdcat {input.ndjson} | \
-#        jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
-#        """
 
 
 rule add_priors:
@@ -591,7 +541,7 @@ rule add_priors:
 rule add_branch_labels:
     input:
         auspice_json=rules.add_priors.output.auspice_json,
-        mutations=rules.aa_muts_explicit.output.node_data,
+        mutations=rules.ancestral.output.node_data,
     output:
         auspice_json="auspice/{build_name}/auspice_max.json",
     shell:
