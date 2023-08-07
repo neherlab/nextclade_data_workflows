@@ -106,8 +106,11 @@ def main(
     for clade in rec_parent.root.find_clades():
         if clade.name == "internal_ORF9b_I5T":
             clade.branch_length = 1 / 30000 / 100
-        if clade.name == "XBB.1.22" or "internal_XBB_1_22":
+        if clade.name in ["XBB.1.22","internal_XBB_1_22"]:
             clade.branch_length = 1 / 30000 * 100
+    
+    # # Add root directly on rec_parent to ensure no mutations reconstructed on it
+    # rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=f"{root}_COPY", branch_length=0))
 
     # Phylo.draw_ascii(rec_parent)
         
