@@ -13,3 +13,5 @@ tree-recombinants:
   - "XBK"
   - "XBL"
   - "XCF"
+
+ncovbranch: "master"

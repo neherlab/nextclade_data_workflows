@@ -11,11 +11,9 @@ localrules:
     download_metadata,
     download_nextclade_tsv,
     download_clades_nextstrain,
-    download_clades_who,
     download_clade_display_names,
     download_designation_dates,
     preprocess,
-    download_color_ordering,
     download_designations,
 
 
@@ -71,7 +69,7 @@ rule download_clade_display_names:
     output:
         "builds/clade_display_names.yml",
     params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_display_names.yml",
+        source=f"https://raw.githubusercontent.com/nextstrain/ncov/{config['ncovbranch']}/defaults/clade_display_names.yml",
     shell:
         "curl {params.source} -o {output}"
 
@@ -82,7 +80,7 @@ rule download_clades_nextstrain:
     output:
         "builds/clades_nextstrain.tsv",
     params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv",
+        source=f"https://raw.githubusercontent.com/nextstrain/ncov/{config['ncovbranch']}/defaults/clades.tsv",
     shell:
         "curl {params.source} -o {output}"
 
@@ -102,28 +100,6 @@ rule nextstrain_clades_to_legacy:
         """
 
 
-rule download_clades_who:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
-    output:
-        "builds/clades_who.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades_who.tsv",
-    shell:
-        "curl {params.source} -o {output}"
-
-
-rule download_color_ordering:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
-    output:
-        "builds/color_ordering.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv",
-    shell:
-        "curl {params.source} -o {output}"
-
-
 rule download_designations:
     output:
         "pre-processed/designations.csv",
@@ -138,15 +114,6 @@ rule download_pango_alias:
         "pre-processed/alias.json",
     params:
         source="https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json",
-    shell:
-        "curl {params.source} -o {output}"
-
-
-rule download_clade_emergence_dates:
-    output:
-        "pre-processed/clade_emergence_dates.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_emergence_dates.tsv",
     shell:
         "curl {params.source} -o {output}"
 
