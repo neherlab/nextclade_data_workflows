@@ -262,7 +262,7 @@ rule refine:
 rule ancestral:
     input:
         tree=rules.refine.output.tree,
-        alignment="builds/{build_name}/sequences.fasta",
+        alignment="builds/{build_name}/aligned.fasta",
         dataset_reference="profiles/clades/{build_name}/reference.fasta",
         annotation="defaults/reference_seq.gb",
     params:
