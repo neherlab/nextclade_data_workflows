@@ -5,12 +5,11 @@ Download and prepare workflow input data
 
 localrules:
     join_meta_nextclade,
-    download_clade_emergence_dates,
     download_pango_alias,
     download_sequences,
     download_metadata,
     download_nextclade_tsv,
-    download_clades_nextstrain,
+    download_clades,
     download_clade_display_names,
     download_designation_dates,
     preprocess,
@@ -34,8 +33,6 @@ rule preprocess:
 
 
 rule download_sequences:
-    message:
-        "Downloading sequences from {params.address} -> {output[0]}"
     params:
         address="s3://nextstrain-ncov-private/sequences.fasta.zst",
     output:
@@ -55,8 +52,6 @@ rule download_designation_dates:
 
 
 rule download_metadata:
-    message:
-        "Downloading metadata from {params.address} -> {output}"
     params:
         address="s3://nextstrain-ncov-private/metadata.tsv.zst",
     output:
@@ -74,9 +69,7 @@ rule download_clade_display_names:
         "curl {params.source} -o {output}"
 
 
-rule download_clades_nextstrain:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
+rule download_clades:
     output:
         "builds/clades_nextstrain.tsv",
     params:
@@ -119,8 +112,6 @@ rule download_pango_alias:
 
 
 rule nextclade_strainnames:
-    message:
-        "Extract strain names using tsv-select"
     input:
         "data/metadata_raw.tsv.zst",
     output:
@@ -134,8 +125,6 @@ rule nextclade_strainnames:
 
 
 rule pango_strain_rename:
-    message:
-        "Convert pango strain names to nextclade strain names"
     input:
         metadata_strainnames="pre-processed/metadata_strainnames.tsv.zst",
         pango="pre-processed/designations.csv",
