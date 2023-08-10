@@ -60,6 +60,24 @@ rule offset_clades:
             >{output}
         """
 
+rule offset_lineages:
+    input:
+        lambda w: config["builds"][w.strain][w.segment][w.reference]["lineages"],
+    output:
+        "data/lineages_{strain}_{segment}_{reference}.tsv",
+    params:
+        offset=lambda w: config["builds"][w.strain][w.segment][w.reference][
+            "clade_offset"
+        ],
+    shell:
+        """
+        perl -F'\\t' -ne \
+            '$F[2]+={params.offset} if $F[1] =~ "nuc"; \
+            print join "\\t", @F' \
+            {input} \
+            >{output}
+        """
+
 rule download_includes:
     output:
         "data/includes_{strain}_{segment}_{reference}.tsv",
@@ -375,15 +393,43 @@ rule clades_short:
         clades = "data/clades-short_{strain}_{segment}_{reference}.tsv"
     output:
         node_data="build/{strain}/{segment}/{reference}/clades-short.json",
+    params:
+        membership_name = "short_clade",
+        label_name = "short_clade",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
+            --membership-name {params.membership_name} \
+            --label-name {params.label_name} \
             --output-node-data {output.node_data} \
-            > /dev/null
-            sed -i 's/clade_membership/short_clade/' {output.node_data}
         """
+
+
+rule lineages:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades = "data/lineages_{strain}_{segment}_{reference}.tsv"
+    output:
+        node_data="build/{strain}/{segment}/{reference}/lineages.json",
+    params:
+        membership_name = "lineage",
+        label_name = "lineage",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --membership-name {params.membership_name} \
+            --label-name {params.label_name} \
+            --output-node-data {output.node_data}
+        """
+
 
 # make sure all differences between the alignment reference and the root are attached as mutations to the root
 rule attach_root_mutations:
@@ -428,6 +474,7 @@ def get_node_data(w):
 
     if w.segment == "ha":
         node_data.append("build/{strain}/{segment}/{reference}/clades.json".format(**w))
+        node_data.append("build/{strain}/{segment}/{reference}/lineages.json".format(**w))
 
     if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference]:
         node_data.append("build/{strain}/{segment}/{reference}/clades-short.json".format(**w))

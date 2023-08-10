@@ -7,7 +7,14 @@
   ],
   "extensions": {
     "nextclade": {
-    }
+      "clade_node_attrs": [
+        {
+        "name": "lineage",
+        "displayName": "Lineage",
+        "description": "Experimental fine-grained lineage annotation."
+      }
+    ]
+  }
   },
   "data_provenance": [
     {

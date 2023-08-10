@@ -12,6 +12,11 @@
           "name": "short_clade",
           "displayName": "Abbreviated clade name",
           "description": "For recent subclades with long names, the prefix describing their history is omitted."
+        },
+        {
+          "name": "lineage",
+          "displayName": "Lineage",
+          "description": "Experimental fine-grained lineage annotation."
         }
       ]
     }
