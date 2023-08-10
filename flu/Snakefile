@@ -19,12 +19,14 @@ rule all:
             for reference in config["builds"][strain][segment]
         ],
 
-rule fetch_data:
+rule download_sequences:
     output:
-        raw_sequences="data/{strain}/raw_{segment}.fasta"
+        sequences="data/{strain}/raw_{segment}.fasta"
+    params:
+        s3_path="s3://nextstrain-data-private/files/workflows/seasonal-flu/{strain}/{segment}/raw_sequences.fasta.xz"
     shell:
         """
-        scp -r neher@transfer.scicore.unibas.ch:/scicore/home/neher/neher/nextstrain/seasonal-flu/data/{wildcards.strain}/raw_{wildcards.segment}.fasta {output.raw_sequences}
+        aws s3 cp {params.s3_path} - | xz -c -d > {output.sequences}
         """
 
 rule download_clades:
