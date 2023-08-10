@@ -2,7 +2,7 @@ files:
   auspice_config: "profiles/auspice_config.json"
   auspice_config_shortclade: "profiles/auspice_config_wshort_clade.json"
 
-timestamp: "2023-04-02T12:00:00Z"
+timestamp: "2023-08-10T12:00:00Z"
 
 builds:
   h1n1pdm:
@@ -11,6 +11,7 @@ builds:
         filter: "--min-date 2014 --probabilistic-sampling --group-by year --min-length 1500  --subsample-max-sequences 1500"
         clade_offset: 0
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h1n1pdm/ha/clades-long.tsv"
+        lineages: "profiles/h1n1pdm_lineages.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h1n1pdm/reference_strains.txt"
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h1n1pdm/outliers.txt
         reference_EPI_ISL: EPI1583287
@@ -20,6 +21,7 @@ builds:
         filter: "--min-date 2019 --probabilistic-sampling --group-by year --min-length 1500 --subsample-max-sequences 1500"
         clade_offset: 0
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h1n1pdm/ha/clades-long.tsv"
+        lineages: "profiles/h1n1pdm_lineages.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h1n1pdm/reference_strains.txt"
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h1n1pdm/outliers.txt
         reference_EPI_ISL: EPI1812046
@@ -38,6 +40,7 @@ builds:
         filter: "--min-date 2019 --probabilistic-sampling --group-by year --min-length 1500 --subsample-max-sequences 1500"
         clade_offset: -17
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h3n2/ha/clades-long.tsv"
+        lineages: "profiles/h3n2_lineages.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h3n2/reference_strains.txt"
         include_file: references/h3n2/includes.txt
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h3n2/outliers.txt
@@ -48,6 +51,7 @@ builds:
         filter: "--min-date 2014 --probabilistic-sampling --group-by year --min-length 1500 --subsample-max-sequences 1500"
         clade_offset: 0
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h3n2/ha/clades-long.tsv"
+        lineages: "profiles/h3n2_lineages.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h3n2/reference_strains.txt"
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/h3n2/outliers.txt
         include_file: references/h3n2/includes.txt
@@ -67,6 +71,7 @@ builds:
         filter: "--min-date 2014 --probabilistic-sampling --group-by year --min-length 1500 --subsample-max-sequences 1500"
         clade_offset: 0
         clade_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/vic/ha/clades.tsv"
+        lineages: "profiles/vic_lineages.tsv"
         include_url: "https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/vic/reference_strains.txt"
         exclude_url: https://raw.githubusercontent.com/nextstrain/seasonal-flu/master/config/vic/outliers.txt
         reference_EPI_ISL: EPI696970
