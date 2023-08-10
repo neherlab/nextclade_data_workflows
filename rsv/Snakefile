@@ -126,6 +126,7 @@ rule filter:
         reference="references/{a_or_b}/{reference}/reference.gbk",
         metadata="data/{a_or_b}/metadata_by_accession.tsv",
         exclude=build_dir + "/{a_or_b}/{reference}/exclude.txt",
+        include="profiles/rsv-{a_or_b}_include.txt",
         exclude_global=config["exclude"],
     output:
         sequences=build_dir + "/{a_or_b}/{reference}/filtered.fasta",
@@ -138,6 +139,7 @@ rule filter:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.metadata} \
+            --include {input.include} \
             --exclude {input.exclude} {input.exclude_global}\
             --output {output.sequences} \
             {params.filter_arguments}
@@ -323,26 +325,15 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="data/{a_or_b}/{reference}/clades_{clade_system}.tsv",
+        clades="profiles/rsv-{a_or_b}_clade_designations_new.tsv",
     output:
         node_data=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json",
-    params:
-        tmp_clade=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.tmp.json",
-        key=lambda w: config["builds"][w.a_or_b][w.reference]["clades"][
-            w.clade_system
-        ]["key"],
-        label_key=lambda w: config["builds"][w.a_or_b][w.reference]["clades"][
-            w.clade_system
-        ]["label_key"],
     shell:
         """
-        augur clades --tree {input.tree} \
-            --mutations {input.nuc_muts} {input.aa_muts} \
-            --clades {input.clades} \
-            --output-node-data {params.tmp_clade} \
-            > /dev/null
-            sed 's/clade_membership/{params.key}/' {params.tmp_clade} |
-            sed -e 's/clade_annotation/{params.label_key}/g' > {output.node_data}
+        python3 ../common_scripts/assign_clades.py --tree {input.tree} \
+            --metadata {input.clades} \
+            --clade-key clade --id-field strain \
+            --output {output.node_data}
         """
 
 
@@ -465,7 +456,7 @@ rule fix_clade_labels:
 
 rule final_strain_name:
     input:
-        auspice_json=rules.fix_clade_labels.output.auspice_json,
+        auspice_json=rules.export.output.auspice_json,
         metadata=rules.wrangle_metadata.output.metadata,
     output:
         auspice_json="auspice/{a_or_b}/{reference}/tree.json",
