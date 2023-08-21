@@ -25,6 +25,18 @@ A.3.1	HA1	279	K
 A.3.1.1	HA1	150	K
 A.3.1.1	HA1	220	M
 A.3.1.1	HA1	241	Q
+
+A.3.2	clade	A.3
+A.3.2	HA1	133	R
+A.3.2	nuc	153	C
+
+A.3.3	clade	A.3
+A.3.3	HA1	75	E
+A.3.3	HA1	128	K
+A.3.3	HA1	230	N
+A.3.3	nuc	153	C
+
+
 C	HA1	127	T
 C	HA1	144	L
 C	HA1	203	R

@@ -47,15 +47,6 @@ B.1.1	NA	73	V
 B.1.1	NA	221	N
 B.1.1	nuc	639	T
 
-B.3	clade	B
-B.3	nuc	679	A
-B.3	NA	329	N
-B.3	nuc	1011	C
-
-B.3.1	clade	B.3
-B.3.1	NA	469	T
-B.3.1	NA	329	S
-
 B.2	clade	B
 B.2	nuc	675	A
 B.2	NA	346	G
@@ -65,6 +56,14 @@ B.2.2	nuc	675	A
 B.2.2	NA	82	E
 B.2.2	NA	238	A
 
+B.3	clade	B
+B.3	nuc	675	A
+B.3	NA	329	N
+B.3	nuc	1011	C
+
+B.3.1	clade	B.3
+B.3.1	NA	469	T
+B.3.1	NA	329	S
 
 
 
