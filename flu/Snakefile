@@ -19,6 +19,51 @@ rule all:
             for reference in config["builds"][strain][segment]
         ],
 
+rule h3n2:
+    input:
+        [
+        f"test/h3n2/{segment}/{reference}/nextclade.aligned.fasta"
+        for segment in config["builds"]["h3n2"]
+        for reference in config["builds"]["h3n2"][segment]
+        ]
+
+rule h1n1pdm:
+    input:
+        [
+        f"test/h1n1pdm/{segment}/{reference}/nextclade.aligned.fasta"
+        for segment in config["builds"]["h1n1pdm"]
+        for reference in config["builds"]["h1n1pdm"][segment]
+        ]
+
+rule vic:
+    input:
+        [
+        f"test/vic/{segment}/{reference}/nextclade.aligned.fasta"
+        for segment in config["builds"]["vic"]
+        for reference in config["builds"]["vic"][segment]
+        ]
+
+rule inspect:
+    input:
+        [
+            f"auspice/{strain}/{segment}/{reference}/auspice.json"
+            for strain in config["builds"]
+            for segment in config["builds"][strain]
+            for reference in config["builds"][strain][segment]
+        ]
+    output:
+        [
+            f"inspect/{strain}_{segment}_{reference}.json"
+            for strain in config["builds"]
+            for segment in config["builds"][strain]
+            for reference in config["builds"][strain][segment]
+        ]
+    run:
+        import os
+        for fi, fo in zip(input, output):
+            os.system(f"cp {fi} {fo}")
+
+
 rule download_sequences:
     output:
         sequences="data/{strain}/raw_{segment}.fasta"
@@ -169,17 +214,16 @@ rule exclude_outliers:
         sequences=rules.remove_duplicates.output.sequences,
         enriched_metadata=rules.parse.output.metadata,
         exclude_specific=rules.download_excludes.output,
+        other_exclude = lambda w:config["builds"][w.strain][w.segment][w.reference].get("exclude_file")
     output:
         sampled_sequences="build/{strain}/{segment}/{reference}/subsample_ex_ref.fasta",
         sampled_strains="build/{strain}/{segment}/{reference}/subsample_ex_ref.txt",
-    params:
-        other_exclude = lambda w:config["builds"][w.strain][w.segment][w.reference].get("exclude_file","")
     shell:
         """
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.enriched_metadata} \
-            --exclude {input.exclude} {input.exclude_specific} {params.other_exclude} \
+            --exclude {input.exclude_specific} {input.other_exclude} \
             --min-date 2008 \
             --output {output.sampled_sequences} \
             --output-strains {output.sampled_strains}
@@ -475,6 +519,7 @@ def get_node_data(w):
 
     if w.segment == "ha":
         node_data.append("build/{strain}/{segment}/{reference}/clades.json".format(**w))
+
     node_data.append("build/{strain}/{segment}/{reference}/subclades.json".format(**w))
 
     if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference]:
