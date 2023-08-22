@@ -19,12 +19,59 @@ rule all:
             for reference in config["builds"][strain][segment]
         ],
 
-rule fetch_data:
+rule h3n2:
+    input:
+        [
+        f"test/h3n2/{segment}/{reference}/nextclade.aligned.fasta"
+        for segment in config["builds"]["h3n2"]
+        for reference in config["builds"]["h3n2"][segment]
+        ]
+
+rule h1n1pdm:
+    input:
+        [
+        f"test/h1n1pdm/{segment}/{reference}/nextclade.aligned.fasta"
+        for segment in config["builds"]["h1n1pdm"]
+        for reference in config["builds"]["h1n1pdm"][segment]
+        ]
+
+rule vic:
+    input:
+        [
+        f"test/vic/{segment}/{reference}/nextclade.aligned.fasta"
+        for segment in config["builds"]["vic"]
+        for reference in config["builds"]["vic"][segment]
+        ]
+
+rule inspect:
+    input:
+        [
+            f"auspice/{strain}/{segment}/{reference}/auspice.json"
+            for strain in config["builds"]
+            for segment in config["builds"][strain]
+            for reference in config["builds"][strain][segment]
+        ]
     output:
-        raw_sequences="data/{strain}/raw_{segment}.fasta"
+        [
+            f"inspect/{strain}_{segment}_{reference}.json"
+            for strain in config["builds"]
+            for segment in config["builds"][strain]
+            for reference in config["builds"][strain][segment]
+        ]
+    run:
+        import os
+        for fi, fo in zip(input, output):
+            os.system(f"cp {fi} {fo}")
+
+
+rule download_sequences:
+    output:
+        sequences="data/{strain}/raw_{segment}.fasta"
+    params:
+        s3_path="s3://nextstrain-data-private/files/workflows/seasonal-flu/{strain}/{segment}/raw_sequences.fasta.xz"
     shell:
         """
-        scp -r neher@transfer.scicore.unibas.ch:/scicore/home/neher/neher/nextstrain/seasonal-flu/data/{wildcards.strain}/raw_{wildcards.segment}.fasta {output.raw_sequences}
+        aws s3 cp {params.s3_path} - | xz -c -d > {output.sequences}
         """
 
 rule download_clades:
@@ -45,6 +92,24 @@ rule offset_clades:
         rules.download_clades.output,
     output:
         "data/clades_{strain}_{segment}_{reference}.tsv",
+    params:
+        offset=lambda w: config["builds"][w.strain][w.segment][w.reference][
+            "clade_offset"
+        ],
+    shell:
+        """
+        perl -F'\\t' -ne \
+            '$F[2]+={params.offset} if $F[1] =~ "nuc"; \
+            print join "\\t", @F' \
+            {input} \
+            >{output}
+        """
+
+rule offset_lineages:
+    input:
+        lambda w: config["builds"][w.strain][w.segment][w.reference]["lineages"],
+    output:
+        "data/lineages_{strain}_{segment}_{reference}.tsv",
     params:
         offset=lambda w: config["builds"][w.strain][w.segment][w.reference][
             "clade_offset"
@@ -148,8 +213,8 @@ rule exclude_outliers:
     input:
         sequences=rules.remove_duplicates.output.sequences,
         enriched_metadata=rules.parse.output.metadata,
-        exclude="profiles/exclude.txt",
         exclude_specific=rules.download_excludes.output,
+        other_exclude = lambda w:config["builds"][w.strain][w.segment][w.reference].get("exclude_file")
     output:
         sampled_sequences="build/{strain}/{segment}/{reference}/subsample_ex_ref.fasta",
         sampled_strains="build/{strain}/{segment}/{reference}/subsample_ex_ref.txt",
@@ -158,7 +223,7 @@ rule exclude_outliers:
         augur filter \
             --sequences {input.sequences} \
             --metadata {input.enriched_metadata} \
-            --exclude {input.exclude} {input.exclude_specific}\
+            --exclude {input.exclude_specific} {input.other_exclude} \
             --min-date 2008 \
             --output {output.sampled_sequences} \
             --output-strains {output.sampled_strains}
@@ -373,15 +438,43 @@ rule clades_short:
         clades = "data/clades-short_{strain}_{segment}_{reference}.tsv"
     output:
         node_data="build/{strain}/{segment}/{reference}/clades-short.json",
+    params:
+        membership_name = "short_clade",
+        label_name = "short_clade",
     shell:
         """
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
+            --membership-name {params.membership_name} \
+            --label-name {params.label_name} \
             --output-node-data {output.node_data} \
-            > /dev/null
-            sed -i 's/clade_membership/short_clade/' {output.node_data}
         """
+
+
+rule lineages:
+    message:
+        "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades = "data/lineages_{strain}_{segment}_{reference}.tsv"
+    output:
+        node_data="build/{strain}/{segment}/{reference}/subclades.json",
+    params:
+        membership_name = "subclade",
+        label_name = "Subclade",
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --membership-name {params.membership_name} \
+            --label-name {params.label_name} \
+            --output-node-data {output.node_data}
+        """
+
 
 # make sure all differences between the alignment reference and the root are attached as mutations to the root
 rule attach_root_mutations:
@@ -426,6 +519,8 @@ def get_node_data(w):
 
     if w.segment == "ha":
         node_data.append("build/{strain}/{segment}/{reference}/clades.json".format(**w))
+
+    node_data.append("build/{strain}/{segment}/{reference}/subclades.json".format(**w))
 
     if "clade_contractions" in config["builds"][w.strain][w.segment][w.reference]:
         node_data.append("build/{strain}/{segment}/{reference}/clades-short.json".format(**w))
