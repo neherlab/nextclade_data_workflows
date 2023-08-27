@@ -318,6 +318,31 @@ rule aa_muts_explicit:
             > /dev/null
         """
 
+rule old_clades:
+    "Adding internal clade labels"
+    input:
+        tree=rules.refine.output.tree,
+        aa_muts=rules.aa_muts_explicit.output.node_data,
+        nuc_muts=rules.ancestral.output.node_data,
+        clades="data/{a_or_b}/{reference}/clades_{clade_system}.tsv",
+    output:
+        node_data=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json",
+    params:
+        key=lambda w: config["builds"][w.a_or_b][w.reference]["clades"][
+            w.clade_system
+        ]["key"],
+        label_key=lambda w: config["builds"][w.a_or_b][w.reference]["clades"][
+            w.clade_system
+        ]["label_key"],
+    shell:
+        """
+        augur clades --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --output-node-data {output.node_data} \
+            --membership-name {params.key} \
+            --label-name {params.label_key}
+        """
 
 rule clades:
     "Adding internal clade labels"
@@ -325,14 +350,17 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="profiles/rsv-{a_or_b}_clade_designations_new.tsv",
+        clades="profiles/rsv-{a_or_b}_designations.tsv",
     output:
-        node_data=build_dir + "/{a_or_b}/{reference}/clades_{clade_system}.json",
+        node_data=build_dir + "/{a_or_b}/{reference}/clades_consortium.json",
+    params:
+        root = lambda w:config["builds"][w.a_or_b][w.reference]["clades"]["consortium"]["root"],
     shell:
         """
         python3 ../common_scripts/assign_clades.py --tree {input.tree} \
             --metadata {input.clades} \
             --clade-key clade --id-field strain \
+            --root-clade {params.root} \
             --output {output.node_data}
         """
 

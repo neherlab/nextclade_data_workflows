@@ -17,6 +17,15 @@ builds:
           def: profiles/rsv-a_clade_designations.tsv
           key: clade_membership
           label_key: clade_annotation
+          root: A-C
+        genome:
+          key: genome_clade
+          label_key: genome_clade
+          def: "references/a/EPI_ISL_412866/clades_genome.tsv"
+        G:
+          key: G_clade
+          label_key: G_clade
+          def: "references/a/EPI_ISL_412866/clades_G.tsv"
 
   b:
     EPI_ISL_1653999:
@@ -28,6 +37,15 @@ builds:
           def: profiles/rsv-a_clade_designations.tsv
           key: clade_membership
           label_key: clade_annotation
+          root: B-C
+        genome:
+          key: genome_clade
+          label_key: genome_clade
+          def: "references/b/EPI_ISL_1653999/clades_genome.tsv"
+        G:
+          key: G_clade
+          label_key: G_clade
+          def: "references/b/EPI_ISL_1653999/clades_G.tsv"
 
 unused_builds:
   a:

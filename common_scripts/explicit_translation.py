@@ -33,7 +33,7 @@ def annotation_json(features, reference):
                               'type':feat.type,
                               'start':int(feat.location.start)+1,
                               'end':int(feat.location.end),
-                              'strand': '+' if feat.location.strand else '-'}
+                              'strand': '-' if feat.location.strand=='-' else '+'}
     annotations['nuc'] = {'seqid':reference.id,
                             'type':'source',
                             'start': 1,
