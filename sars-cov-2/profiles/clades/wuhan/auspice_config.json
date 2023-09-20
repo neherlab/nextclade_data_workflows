@@ -38,6 +38,16 @@
           "description": "Combination of Nextstrain clade and Pango lineage",
           "hideInWeb": true
         }
+      ],
+      "placement_mask_ranges": [
+        {
+          "begin": 0,
+          "end": 50
+        },
+        {
+          "begin": 29850,
+          "end": 29902
+        }
       ]
     }
   },
