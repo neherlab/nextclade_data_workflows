@@ -108,8 +108,18 @@
       "type": "continuous"
     },
     {
-      "key": "totalFrameShifts",
-      "title": "Total frame shifts",
+      "key": "frameShifts",
+      "title": "All frame shifts",
+      "type": "categorical"
+    },
+    {
+      "key": "qc.frameShifts.frameShifts",
+      "title": "Unusual frame shifts",
+      "type": "categorical"
+    },
+    {
+      "key": "qc.frameShifts.totalFrameShifts",
+      "title": "Total unusual frame shifts",
       "type": "categorical"
     },
     {

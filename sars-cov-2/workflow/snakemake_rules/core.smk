@@ -64,7 +64,7 @@ rule add_nextclade_columns_to_meta:
         | tsv-join -H --filter-file {input.wuhan_tsv} \
             --key-fields seqName \
             --data-fields strain \
-            --append-fields qc.overallScore,totalFrameShifts,qc.stopCodons.totalStopCodons,totalAminoacidSubstitutions,totalAminoacidDeletions \
+            --append-fields frameShifts,qc.frameShifts.frameShifts,qc.overallScore,qc.frameShifts.totalFrameShifts,qc.stopCodons.totalStopCodons,totalAminoacidSubstitutions,totalAminoacidDeletions \
         > {output}
         """
 
