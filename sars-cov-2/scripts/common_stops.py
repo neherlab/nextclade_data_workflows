@@ -23,7 +23,7 @@ def format(number, input_file):
     # output.sort()
 
         # output.append(f'{{ "geneName": "{gene}", "codon": {position} }},')
-    click.echo("\n".join([f'{{ "geneName": "{gene}", "codon": {position} }},' for gene,position in sorted(output)]))
+    click.echo("\n".join([f'{{ "geneName": "{gene}", "codon": {position} }}' for gene,position in sorted(output)]))
 
 
 if __name__ == "__main__":
