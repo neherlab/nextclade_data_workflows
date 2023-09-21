@@ -6,8 +6,8 @@
     "mem": "32G"
   },
   "generate_priors": {
-    "time": "00:29:00",
-    "qos": "30min",
+    "time": "05:59:00",
+    "qos": "6hours",
     "n": 32,
     "mem": "32G"
   },

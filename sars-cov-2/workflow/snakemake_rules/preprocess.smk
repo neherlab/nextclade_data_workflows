@@ -5,17 +5,14 @@ Download and prepare workflow input data
 
 localrules:
     join_meta_nextclade,
-    download_clade_emergence_dates,
     download_pango_alias,
     download_sequences,
     download_metadata,
     download_nextclade_tsv,
-    download_clades_nextstrain,
-    download_clades_who,
+    download_clades,
     download_clade_display_names,
     download_designation_dates,
     preprocess,
-    download_color_ordering,
     download_designations,
 
 
@@ -36,8 +33,6 @@ rule preprocess:
 
 
 rule download_sequences:
-    message:
-        "Downloading sequences from {params.address} -> {output[0]}"
     params:
         address="s3://nextstrain-ncov-private/sequences.fasta.zst",
     output:
@@ -57,8 +52,6 @@ rule download_designation_dates:
 
 
 rule download_metadata:
-    message:
-        "Downloading metadata from {params.address} -> {output}"
     params:
         address="s3://nextstrain-ncov-private/metadata.tsv.zst",
     output:
@@ -71,18 +64,16 @@ rule download_clade_display_names:
     output:
         "builds/clade_display_names.yml",
     params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_display_names.yml",
+        source=f"https://raw.githubusercontent.com/nextstrain/ncov/{config['ncovbranch']}/defaults/clade_display_names.yml",
     shell:
         "curl {params.source} -o {output}"
 
 
-rule download_clades_nextstrain:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
+rule download_clades:
     output:
         "builds/clades_nextstrain.tsv",
     params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades.tsv",
+        source=f"https://raw.githubusercontent.com/nextstrain/ncov/{config['ncovbranch']}/defaults/clades.tsv",
     shell:
         "curl {params.source} -o {output}"
 
@@ -100,28 +91,6 @@ rule nextstrain_clades_to_legacy:
             --name-mapping {input.display_names} \
             --output-clades {output}
         """
-
-
-rule download_clades_who:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
-    output:
-        "builds/clades_who.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clades_who.tsv",
-    shell:
-        "curl {params.source} -o {output}"
-
-
-rule download_color_ordering:
-    message:
-        "Downloading clade definitions from {params.source} -> {output}"
-    output:
-        "builds/color_ordering.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/color_ordering.tsv",
-    shell:
-        "curl {params.source} -o {output}"
 
 
 rule download_designations:
@@ -142,18 +111,7 @@ rule download_pango_alias:
         "curl {params.source} -o {output}"
 
 
-rule download_clade_emergence_dates:
-    output:
-        "pre-processed/clade_emergence_dates.tsv",
-    params:
-        source="https://raw.githubusercontent.com/nextstrain/ncov/master/defaults/clade_emergence_dates.tsv",
-    shell:
-        "curl {params.source} -o {output}"
-
-
 rule nextclade_strainnames:
-    message:
-        "Extract strain names using tsv-select"
     input:
         "data/metadata_raw.tsv.zst",
     output:
@@ -167,8 +125,6 @@ rule nextclade_strainnames:
 
 
 rule pango_strain_rename:
-    message:
-        "Convert pango strain names to nextclade strain names"
     input:
         metadata_strainnames="pre-processed/metadata_strainnames.tsv.zst",
         pango="pre-processed/designations.csv",

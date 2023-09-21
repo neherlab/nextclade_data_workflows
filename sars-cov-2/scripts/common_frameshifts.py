@@ -20,10 +20,9 @@ def format(number, input_file):
             start = int(loc[0]) - 1
             end = int(loc[1])
         except:
-            start = "NA"
-            end = "NA"
+            pass
         click.echo(
-            f'{{ "geneName": "{gene}", "codonRange": {{"begin": {start}, "end": {end} }} }},'
+            f'{{ "geneName": "{gene}", "codonRange": {{"begin": {start}, "end": {end} }} }}'
         )
 
 

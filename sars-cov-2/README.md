@@ -10,8 +10,8 @@ snakemake -c10 --profile profiles/clades -F
 
 ```sh
 #!/bin/bash
-OLD="2023-05-10T12:00:00Z"
-NEW="2023-06-16T12:00:00Z"
+OLD="2023-08-17T12:00:00Z"
+NEW="2023-09-21T12:00:00Z"
 
 SC2="sars-cov-2/references/MN908947"
 SC221L="sars-cov-2-21L/references/BA.2"

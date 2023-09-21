@@ -1,31 +1,60 @@
 #%%
 import json
 from collections import defaultdict
+from os import rename
 
 import pandas as pd
+import requests
 from tqdm import tqdm
+from urllib3 import request
 
 #%%
 # Defines minimum proportions and counts for relevant mutations to keep
-MIN_PROPORTION = 0.3
-MIN_COUNT = 100000
+MIN_PROPORTION = 0.2
+# MIN_COUNT = 100000
 
 clades_with_high_proportion_threshold = [
-    # "21A",
-    # "21M",
+    "21A",
+    "21M",
+    "21H",
+    "21G",
+    "21F",
+    "21E",
+    "21C",
+    "21B",
+    # "20I",
+    "20H",
+    "20D",
+    "20C",
+    "20B",
+    # "20A",
+    "19B",
+    "19A",
 ]
 
-HIGH_THRESHOLD_PROPORTION = 0.8
+HIGH_THRESHOLD_PROPORTION = 0.7
 #%%
 # aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.gz .
 df = pd.read_csv(
     "metadata.tsv.zst",
     # "s3://nextstrain-ncov-private/metadata.tsv.gz",
     sep="\t",
-    usecols=["Nextstrain_clade", "substitutions"],
+    usecols=["clade_nextstrain", "Nextclade_pango", "substitutions"],
     parse_dates=False,
+    dtype={"clade_nextstrain": str, "Nextclade_pango": str, "substitutions": str},
 ).dropna()
-df
+df.rename(columns={"clade_nextstrain": "Nextstrain_clade"}, inplace=True)
+
+
+#%%
+# Make unaliased pango column
+from pango_aliasor.aliasor import Aliasor
+import json
+import requests
+aliasor = Aliasor()
+
+#%%
+df["unaliased"] = df["Nextclade_pango"].apply(aliasor.uncompress)
 # %%
 def accumulate_mutations(acc: defaultdict(int), row) -> defaultdict(int):
     try:
@@ -43,8 +72,14 @@ def aggregate_mutations(series) -> defaultdict(int):
         mutations = accumulate_mutations(mutations, row)
     return mutations
 
+#%%
 # Overwrite with new clade name when new clade not yet in data
-# df[df["Nextclade_pango"] == "BA.2.75"]["Nextstrain_clade"] = "22D (Omicron)"
+# Set to 23C if it starts with XBB.1.9
+df.loc[df["unaliased"].str.startswith("B.1.1.529.2.75.3.4.1.1.1.1"),"Nextstrain_clade"] = "23C"
+df.loc[df["unaliased"].str.startswith("XBB.1.9"),"Nextstrain_clade"] = "23D"
+df.loc[df["unaliased"].str.startswith("XBB.2.3"),"Nextstrain_clade"] = "23E"
+df.loc[df["unaliased"].str.startswith("XBB.1.9.2.5.1"),"Nextstrain_clade"] = "23F"
+
 #%%
 clade_muts = (
     df.groupby("Nextstrain_clade")
@@ -79,9 +114,13 @@ min_proportion = mutations["short_clade"].apply(lambda x: HIGH_THRESHOLD_PROPORT
 # %%
 # Choose which mutations to keep
 relevant = mutations[
-    (mutations["proportion"] > min_proportion) | (mutations["mut_count"] > MIN_COUNT)
+    (mutations["proportion"] > min_proportion)
 ]
 relevant
+
+# %% newly relevant
+newly_relevant = relevant[mutations["proportion"] < 0.7]
+print(newly_relevant[['Nextstrain_clade', 'mutation', 'proportion', 'mut_count']].to_csv())
 # %%
 mut_dict = {}
 for mutation, row in relevant.groupby("genotype"):
