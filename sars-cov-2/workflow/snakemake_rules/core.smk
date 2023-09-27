@@ -24,6 +24,10 @@ genes = [
 ]
 
 
+wildcard_constraints:
+    recombinant="(.*)",  # Snakemake wildcard default is ".+" which doesn't match empty strings
+
+
 rule generate_nextclade_ba2_tsv:
     input:
         sequences="builds/{build_name}/sequences.fasta",
@@ -147,23 +151,30 @@ rule prune_constraint_tree:
     Prune constraint tree to only include sequences in the alignment
     """
     input:
-        constraint_tree="defaults/constraint.nwk",
-        strains=rules.get_strains.output.strains,
+        strains="builds/{build_name}/strains.txt",
     output:
-        constraint_tree="builds/{build_name}/constraint.nwk",
+        constraint_tree="builds/{build_name}/pruned_constraint{recombinant}.nwk",
+    params:
+        input_constraint="defaults/constraint{recombinant}.nwk",
     shell:
         """
-        python3 scripts/prune_constraint_tree.py \
-            --constraint-tree {input.constraint_tree} \
-            --strains {input.strains} \
-            --output {output.constraint_tree}
+        if test -f "{params.input_constraint}"; then
+            echo "Pruning constraint tree {params.input_constraint} to only include sequences in the alignment";
+            python3 scripts/prune_constraint_tree.py \
+                --constraint-tree {params.input_constraint} \
+                --strains {input.strains} \
+                --output {output.constraint_tree}
+        else
+            echo "Using exmpty as constraint tree";
+            touch {output.constraint_tree};
+        fi
         """
 
 
 rule tree:
     input:
         alignment="builds/{build_name}/masked_without_recombinants.fasta",
-        constraint_tree="builds/{build_name}/constraint.nwk",
+        constraint_tree="builds/{build_name}/pruned_constraint.nwk",
         exclude_sites="defaults/exclude_sites.tsv",
     output:
         tree="builds/{build_name}/tree_raw.nwk",
@@ -184,14 +195,9 @@ rule tree:
 rule recombinant_tree:
     input:
         alignment="builds/{build_name}/masked_recombinant_{recombinant}.fasta",
+        constraint="builds/{build_name}/pruned_constraint_{recombinant}.nwk",
     output:
-        tree="builds/{build_name}/tree_raw_recombinant_{recombinant}.nwk",
-    params:
-        constraint=lambda w: (
-            f"-g profiles/clades/constraint_{w.recombinant}.nwk"
-            if os.path.exists(f"profiles/clades/constraint_{w.recombinant}.nwk")
-            else ""
-        ),
+        tree="builds/{build_name}/tree_raw_{recombinant}.nwk",
     shell:
         """
         # Check if there are 3 or more sequences in the alignment
@@ -200,9 +206,16 @@ rule recombinant_tree:
                 --alignment {input.alignment} \
                 --tree {output.tree};
         else 
+            # Create constraint string
+            # If constraint file is empty, don't use it
+            if test -s {input.constraint} ; then
+                constraint="-g {input.constraint}";
+            else
+                constraint="";
+            fi
             augur tree \
                 --alignment {input.alignment} \
-                --tree-builder-args "-czb -ninit 1 -n 1 {params.constraint}" \
+                --tree-builder-args "-czb -ninit 1 -n 1 $constraint" \
                 --nthreads 1 \
                 --output {output.tree};
         fi
@@ -217,7 +230,7 @@ rule add_recombinants_to_tree:
         tree=rules.tree.output.tree,
         recombinants="builds/{build_name}/recombinants.txt",
         recombinant_trees=expand(
-            "builds/{{build_name}}/tree_raw_recombinant_{recombinant}.nwk",
+            "builds/{{build_name}}/tree_raw_{recombinant}.nwk",
             recombinant=config["tree-recombinants"],
         ),
     output:
