@@ -145,10 +145,40 @@ rule filter:
             {params.filter_arguments}
         """
 
+rule process_additional_sequences:
+    input:
+        additional = "profiles/rsv-{a_or_b}_additional-sequences.fasta",
+        others = build_dir + "/{a_or_b}/{reference}/filtered.fasta",
+        clades="profiles/rsv-{a_or_b}_designations.tsv",
+    output:
+        filtered = build_dir + "/{a_or_b}/{reference}/filtered-plus.fasta",
+        clades= build_dir + "/{a_or_b}/{reference}/designations-plus.tsv",
+    run:
+        from Bio import SeqIO
+        import pandas as pd
+        clade = pd.read_csv(input.clades, sep='\t')
+        strains = set(clade.strain)
+
+        additional = {s.id.split('_')[1]: s for s in SeqIO.parse(input.additional, 'fasta')}
+        others = {s.id: s for s in SeqIO.parse(input.others, 'fasta')}
+        extra_designations = []
+        with open(output.filtered, 'w') as fh:
+            for k, s in others.items():
+                SeqIO.write(s, fh, 'fasta')
+            for k, s in additional.items():
+                if k not in strains:
+                    extra_designations.append({k:v for k,v in zip(['name', 'clade', 'strain', 'country', 'year'],[s.id] + s.id.split('_'))})
+                if k not in others:
+                    s.id = k
+                    s.name = k
+                    SeqIO.write(s, fh, 'fasta')
+
+        pd.concat([clade, pd.DataFrame(extra_designations)]).to_csv(output.clades, sep='\t', index=False)
+
 
 rule add_reference:
     input:
-        sample=rules.filter.output.sequences,
+        sample=build_dir + "/{a_or_b}/{reference}/filtered-plus.fasta",
         reference="references/{a_or_b}/{reference}/reference.fasta",
     output:
         sequences=build_dir + "/{a_or_b}/{reference}/filtered_ref.fasta",
@@ -350,7 +380,7 @@ rule clades:
         tree=rules.refine.output.tree,
         aa_muts=rules.aa_muts_explicit.output.node_data,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="profiles/rsv-{a_or_b}_designations.tsv",
+        clades=build_dir + "/{a_or_b}/{reference}/designations-plus.tsv",
     output:
         node_data=build_dir + "/{a_or_b}/{reference}/clades_consortium.json",
     params:
