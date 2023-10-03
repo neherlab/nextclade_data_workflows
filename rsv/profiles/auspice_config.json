@@ -27,6 +27,11 @@
       "type": "categorical"
     },
     {
+      "key": "genome_clade",
+      "title": "Genome Clades (Ramaekers et al)",
+      "type": "categorical"
+    },
+    {
       "key": "date",
       "title": "Sample Date",
       "type": "ordinal"

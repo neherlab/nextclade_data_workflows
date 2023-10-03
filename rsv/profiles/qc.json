@@ -2,21 +2,21 @@
   "schemaVersion": "1.2.0",
   "privateMutations": {
     "enabled": true,
-    "typical": 10,
-    "cutoff": 25,
+    "typical": 50,
+    "cutoff": 150,
     "weightLabeledSubstitutions": 2,
     "weightReversionSubstitutions": 1,
     "weightUnlabeledSubstitutions": 1
   },
   "missingData": {
     "enabled": false,
-    "missingDataThreshold": 1000,
-    "scoreBias": 100
+    "missingDataThreshold": 2000,
+    "scoreBias": 500
   },
   "snpClusters": {
     "enabled": false,
     "windowSize": 100,
-    "clusterCutOff": 5,
+    "clusterCutOff": 10,
     "scoreWeight": 50
   },
   "mixedSites": {
