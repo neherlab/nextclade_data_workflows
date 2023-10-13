@@ -1,0 +1,4 @@
+build:
+    snakemake -c10 --profile profiles/clades -F
+retry:
+    snakemake -c10 --profile profiles/clades --ri
