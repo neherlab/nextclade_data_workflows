@@ -523,7 +523,7 @@ rule generate_priors:
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.001 -w0 | \
+        seqkit sample -p 0.1 -w0 | \
         nextclade run \
             -D {input.dataset} \
             -a {input.tree} \
