@@ -236,7 +236,7 @@ rule select_relevant_nextclade_columns:
     shell:
         """
         zstdcat {input} | \
-        tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd,deletions,insertions,substitutions | \
+        tsv-select -H -f seqName,missing,alignmentStart,alignmentEnd,deletions,insertions,substitutions,nonACGTNs | \
         zstd -T4 -2 -o {output}
         """
 

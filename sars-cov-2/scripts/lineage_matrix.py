@@ -15,7 +15,7 @@ def main(
 
     reference = str(SeqIO.read(ref, "fasta").seq)
 
-    def append_tails(start, end, missing):
+    def append_tails(start, end, missing, ambiguous):
         if pd.isna(missing):
             missing = ""
         if start == 1:
@@ -26,17 +26,22 @@ def main(
         if end == len(reference) - 1:
             missing = missing + "," + str(len(reference))
         elif end < len(reference) - 1:
-            missing = (
-                missing + "," + str(int(end + 1)) + "-" + str(len(reference))
-            )
+            missing = missing + "," + str(int(end + 1)) + "-" + str(len(reference))
+
+        ambs = [] if type(ambiguous) != str else ambiguous.split(",")
+
+        for amb in ambs:
+            pos = amb.split(":")[1]
+            missing = missing + "," + pos
 
         missing = missing.strip(",").replace(",,", ",")
 
         return missing
 
+    # Add terminal Ns and ambiguous to missing
     df["missing"] = df.apply(
         lambda row: append_tails(
-            row.alignmentStart, row.alignmentEnd, row.missing
+            row.alignmentStart, row.alignmentEnd, row.missing, row.nonACGTNs
         ),
         axis=1,
     )
@@ -49,7 +54,6 @@ def main(
         elif char == "G":
             return 2
         return 3
-
 
     ref_vec = np.zeros(6 * len(reference), dtype=np.int32)
     for i, c in enumerate(reference):
