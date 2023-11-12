@@ -14,5 +14,6 @@ tree-recombinants:
   - "XBL"
   - "XCF"
   - "XCH"
+  - "XCT"
 
 ncovbranch: "master"
