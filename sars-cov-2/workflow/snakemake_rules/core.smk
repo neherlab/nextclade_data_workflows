@@ -319,11 +319,13 @@ rule preprocess_clades:
         clades="builds/{build_name}/clades{clade_type}.tsv",
     wildcard_constraints:
         clade_type=".*",  # Snakemake wildcard default is ".+" which doesn't match empty strings
+    params:
+        strain_set=lambda w: config["strainSet"][w.build_name],
     shell:
         """
         cp {input.clades} {output.clades};
         cat <(echo) {input.outgroup} >> {output.clades};
-        if [ {wildcards.build_name} = 21L ]; then
+        if [ {params.strain_set} = 21L ]; then
             for clade in 19A 19B 20A 20B 20C 20D 20E 20F 20G 20H 20I \
                 20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M \
                 Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu;
@@ -490,13 +492,15 @@ rule download_nextclade_dataset:
     """
     Download Nextclade dataset so Nextclade can run without internet connection
     """
+    input:
+        binary="bin/nextclade",
     output:
         dataset="builds/{build_name}/nextclade_dataset.zip",
     params:
         dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
     shell:
         """
-        nextclade dataset get \
+        {input.binary} dataset get \
             --name {params.dataset} \
             --output-zip {output.dataset}
         """
@@ -510,13 +514,14 @@ rule generate_priors:
         fasta=rules.download_sequences.output,
         tree=rules.export.output.auspice_json,
         dataset=rules.download_nextclade_dataset.output.dataset,
+        binary="bin/nextclade",
     output:
         ndjson="builds/{build_name}/nearest_nodes.ndjson",
     shell:
         """
         zstdcat -T2 {input.fasta} | \
         seqkit sample -p 0.001 -w0 | \
-        nextclade run \
+        {input.binary} run \
             -D {input.dataset} \
             -a {input.tree} \
             --include-nearest-node-info \
