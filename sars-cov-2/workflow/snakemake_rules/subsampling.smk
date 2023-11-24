@@ -18,13 +18,15 @@ rule synthetic_pick:
         excludes="profiles/clades/excludes.txt",
     output:
         strains="builds/{build_name}/chosen_synthetic_strains.txt",
+    params:
+        strain_set=lambda w: config["strainSet"][w.build_name],
     shell:
         """
         python scripts/synthetic_pick.py \
             --counts {input.counts} \
             --lineages {input.lineages} \
             --alias-file {input.alias_file} \
-            --build-name {wildcards.build_name} \
+            --build-name {params.strain_set} \
             --excluded-recombinants {input.excluded_recombinants} \
             --excludes {input.excludes} \
             --outfile {output.strains}

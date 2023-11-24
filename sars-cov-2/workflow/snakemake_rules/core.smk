@@ -8,46 +8,40 @@ localrules:
     download_nextclade_dataset,
 
 
-genes = [
-    "ORF1a",
-    "ORF1b",
-    "S",
-    "ORF3a",
-    "M",
-    "N",
-    "E",
-    "ORF6",
-    "ORF7a",
-    "ORF7b",
-    "ORF8",
-    "ORF9b",
-]
-
-
 wildcard_constraints:
     recombinant="(.*)",  # Snakemake wildcard default is ".+" which doesn't match empty strings
+
+
+rule get_v3_binary:
+    output:
+        "bin/nextclade",
+    shell:
+        """
+        cp ~/code/nextclade/target/release/nextclade {output}
+        """
 
 
 rule generate_nextclade_ba2_tsv:
     input:
         sequences="builds/{build_name}/sequences.fasta",
+        binary="bin/nextclade",
     output:
         tsv="builds/{build_name}/nextclade_ba2.tsv",
     shell:
         """
-        # nextclade run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
-        nextclade run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
+        {input.binary} run -d nextstrain/sars-cov-2/BA.2 {input.sequences} -t {output.tsv}
         """
 
 
 rule generate_nextclade_wuhan_tsv:
     input:
         sequences="builds/{build_name}/sequences.fasta",
+        binary="bin/nextclade",
     output:
         tsv="builds/{build_name}/nextclade_wuhan.tsv",
     shell:
         """
-        nextclade run -d sars-cov-2 {input.sequences} -t {output.tsv}
+        {input.binary} run -d nextstrain/sars-cov-2/MN908947 {input.sequences} -t {output.tsv}
         """
 
 
@@ -80,25 +74,23 @@ rule align:
     """
     input:
         sequences="builds/{build_name}/sequences.fasta",
-        genemap="defaults/annotation.gff",
+        annotation="profiles/clades/{build_name}/annotation.gff",
         reference="defaults/reference_seq.fasta",
+        binary="bin/nextclade",
     output:
         alignment="builds/{build_name}/aligned.fasta",
-        translations=expand(
-            "builds/{{build_name}}/translations/aligned.gene.{genes}.fasta",
-            genes=genes,
+        translations=directory(
+            "builds/{build_name}/translations",
         ),
     params:
-        outdir=lambda w: f"builds/{w.build_name}/translations/aligned.gene.{{gene}}.fasta",
-        genes=",".join(genes),
+        outdir=lambda w: f"builds/{w.build_name}/translations/aligned.gene.{{cds}}.fasta",
     threads: 4
     shell:
         """
-        nextalign run \
+        {input.binary} run \
             --jobs={threads} \
             --input-ref {input.reference} \
-            --input-gene-map {input.genemap} \
-            --genes {params.genes} \
+            --input-annotation {input.annotation} \
             {input.sequences} \
             --output-translations {params.outdir} \
             --output-fasta {output.alignment}
@@ -277,9 +269,9 @@ rule ancestral:
         tree=rules.refine.output.tree,
         alignment="builds/{build_name}/aligned.fasta",
         dataset_reference="profiles/clades/{build_name}/reference.fasta",
-        annotation="defaults/reference_seq.gb",
+        annotation="profiles/clades/{build_name}/reference_seq.gb",
     params:
-        genes=" ".join(genes),
+        genes=lambda w: " ".join(config["genes"][w.build_name]),
         translation_template="builds/{build_name}/translations/aligned.gene.%GENE.fasta",
     output:
         node_data="builds/{build_name}/muts.json",
@@ -523,7 +515,7 @@ rule generate_priors:
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.1 -w0 | \
+        seqkit sample -p 0.001 -w0 | \
         nextclade run \
             -D {input.dataset} \
             -a {input.tree} \
@@ -568,9 +560,9 @@ rule add_branch_labels:
 
 rule minify_json:
     input:
-        "auspice/{build_name}/{build_type}_max.json",
+        "auspice/{build_name}/auspice_max.json",
     output:
-        "auspice/{build_name}/{build_type}.json",
+        "auspice/{build_name}/auspice.json",
     shell:
         """
         jq -c . {input} > {output}

@@ -22,7 +22,7 @@ timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
 
 rule all:
     input:
-        expand("deploy/{build_name}/staging.log", build_name=["wuhan", "21L"]),
+        expand("deploy/{build_name}/staging.log", build_name=["wuhan", "21L", "nsp"]),
 
 
 rule deploy_wuhan:
@@ -46,12 +46,29 @@ rule deploy_wuhan:
 rule deploy_21L:
     input:
         tree="auspice/21L/auspice.json",
-        tree_no_recomb="auspice/21L/auspice_without_recombinants.json",
         root="auspice/21L/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/21L/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_21L.json"),
         root=temp("deploy/nextclade_sars-cov-2_21L_root-sequence.json"),
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        cp {input.root} {output.root}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root}
+        touch {output.touchfile}
+        """
+
+
+rule deploy_nsp:
+    input:
+        tree="auspice/nsp/auspice.json",
+        root="auspice/nsp/auspice_raw_root-sequence.json",
+    output:
+        touchfile="deploy/nsp/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2_nsp.json"),
+        root=temp("deploy/nextclade_sars-cov-2_nsp_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
