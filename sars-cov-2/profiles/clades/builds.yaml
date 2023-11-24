@@ -1,8 +1,14 @@
-title: "Nextclade Reference Tree for SARS-Cov-2"
+title: "Nextclade Reference Tree for SARS-CoV-2"
+
+strainSet:
+  wuhan: "wuhan"
+  21L: "21L"
+  nsp: "wuhan"
 
 root: 
   wuhan: B #"Wuhan/Hu-1/2019"
   21L: BA.2
+  nsp: B #"Wuhan/Hu-1/2019"
 
 tree-recombinants:
   - "XAY"
@@ -17,3 +23,59 @@ tree-recombinants:
   - "XCT"
 
 ncovbranch: "master"
+
+genes:
+  wuhan:
+    - "ORF1a"
+    - "ORF1b"
+    - "S"
+    - "ORF3a"
+    - "E"
+    - "M"
+    - "ORF6"
+    - "ORF7a"
+    - "ORF7b"
+    - "ORF8"
+    - "N"
+    - "ORF9b"
+  21L:
+    - "ORF1a"
+    - "ORF1b"
+    - "S"
+    - "ORF3a"
+    - "E"
+    - "M"
+    - "ORF6"
+    - "ORF7a"
+    - "ORF7b"
+    - "ORF8"
+    - "N"
+    - "ORF9b"
+  nsp:
+    - "S"
+    - "ORF3a"
+    - "E"
+    - "M"
+    - "ORF6"
+    - "ORF7a"
+    - "ORF7b"
+    - "ORF8"
+    - "N"
+    - "ORF9b"
+    - "ORF10"
+    - "nsp1"
+    - "nsp2"
+    - "nsp3"
+    - "nsp4"
+    - "nsp5"
+    - "nsp6"
+    - "nsp7"
+    - "nsp8"
+    - "nsp9"
+    - "nsp10"
+    - "nsp11"
+    - "nsp12"
+    - "nsp13"
+    - "nsp14"
+    - "nsp15"
+    - "nsp16"
