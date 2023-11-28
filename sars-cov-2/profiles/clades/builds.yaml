@@ -4,19 +4,22 @@ strainSet:
   wuhan: "wuhan"
   21L: "21L"
   XBB: "21L"
+  BA.2.86: "21L"
   nsp: "wuhan"
 
 root: 
   wuhan: B #"Wuhan/Hu-1/2019"
   21L: BA.2
   XBB: BA.2
+  BA.2.86: BA.2
   nsp: B #"Wuhan/Hu-1/2019"
 
 dataset:
   wuhan: "nextstrain/sars-cov-2/MN908947"
   21L: "nextstrain/sars-cov-2/BA.2"
-  nsp: "nextstrain/sars-cov-2/MN908947/mature"
-  XBB: "nextstrain/sars-cov-2/XBB"
+  nsp: "nextstrain/sars-cov-2/MN908947" # "nextstrain/sars-cov-2/MN908947/mature"
+  XBB: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/XBB"
+  BA.2.86: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/BA.2.86"
 
 tree-recombinants:
   - "XAY"
@@ -60,6 +63,19 @@ genes:
     - "N"
     - "ORF9b"
   XBB:
+    - "ORF1a"
+    - "ORF1b"
+    - "S"
+    - "ORF3a"
+    - "E"
+    - "M"
+    - "ORF6"
+    - "ORF7a"
+    - "ORF7b"
+    - "ORF8"
+    - "N"
+    - "ORF9b"
+  BA.2.86:
     - "ORF1a"
     - "ORF1b"
     - "S"
