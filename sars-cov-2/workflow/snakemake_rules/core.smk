@@ -497,7 +497,7 @@ rule download_nextclade_dataset:
     output:
         dataset="builds/{build_name}/nextclade_dataset.zip",
     params:
-        dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
+        dataset=lambda w: config["dataset"][w.build_name],
     shell:
         """
         {input.binary} dataset get \
@@ -514,6 +514,7 @@ rule generate_priors:
         fasta=rules.download_sequences.output,
         tree=rules.export.output.auspice_json,
         dataset=rules.download_nextclade_dataset.output.dataset,
+        ref="profiles/clades/{build_name}/reference.fasta",
         binary="bin/nextclade",
     output:
         ndjson="builds/{build_name}/nearest_nodes.ndjson",
@@ -524,6 +525,7 @@ rule generate_priors:
         {input.binary} run \
             -D {input.dataset} \
             -a {input.tree} \
+            --input-ref {input.ref} \
             --include-nearest-node-info \
             --output-ndjson /dev/stdout \
         | jq -c '{{seqName,nearestNodes}}' > {output.ndjson}
