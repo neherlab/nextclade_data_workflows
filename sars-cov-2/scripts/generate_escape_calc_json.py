@@ -1,5 +1,8 @@
 # %%
+from copy import deepcopy
 import json
+import babel
+
 """Calculate escape after some mutations to the SARS-CoV-2 RBD.
 
 This Python module, is available at
@@ -455,18 +458,19 @@ escape = (
     calc.data[["antibody", "site", "escape"]]
     # Make sure it's never inf by capping at 0.9999
     # *2 because of "mutation escape strength"
-    .assign(neg_log_escape=lambda x: -1 * 2 * np.log(1-np.minimum(x["escape"], 0.99)))
-    [["antibody", "site", "neg_log_escape"]]
-    .set_index(["antibody", "site"])
+    .assign(
+        neg_log_escape=lambda x: -1 * 2 * np.log(1 - np.minimum(x["escape"], 0.99))
+    )[["antibody", "site", "neg_log_escape"]].set_index(["antibody", "site"])
 )
 # escape.to_csv("escape.csv", float_format="%.5f")
 
-#%%
+# %%
 # Create JSON
 
 # Get Wuhan Spike
 
-ref = "".join("""
+wuhan = "".join(
+"""
 MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFR
 SSVLHSTQDLFLPFFSNVTWFHAIHVSGTNGTKRFDNPVLPFNDGVYFASTEKSNIIR
 GWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFLGVYYHKNNKSWMESEFRVY
@@ -490,29 +494,91 @@ FPREGVFVSNGTHWFVTQRNFYEPQIITTDNTFVSGNCDVVIGIVNNTVYDPLQPELD
 SFKEELDKYFKNHTSPDVDLGDISGINASVVNIQKEIDRLNEVAKNLNESLIDLQELG
 KYEQYIKWPWYIWLGFIAGLIAIVMVTIMLCCMTSCCSCLKGCCSCGSCCKFDEDDSE
 PVLKGVKLHYT
-""".split())
-#%%
+""".split()
+)
 
-#%%
-# 
+ba2 = "".join(
+"""
+MFVFLVLLPLVSSQCVNLITRTQ---SYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFS
+NVTWFHAIHVSGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIV
+NNATNVVIKVCEFQFCNDPFLDVYYHKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLE
+GKQGNFKNLREFVFKNIDGYFKIYSKHTPINLGRDLPQGFSALEPLVDLPIGINITRFQT
+LLALHRSYLTPGDSSSGWTAGAAAYYVGYLQPRTFLLKYNENGTITDAVDCALDPLSETK
+CTLKSFTVEKGIYQTSNFRVQPTESIVRFPNITNLCPFDEVFNATRFASVYAWNRKRISN
+CVADYSVLYNFAPFFAFKCYGVSPTKLNDLCFTNVYADSFVIRGNEVSQIAPGQTGNIAD
+YNYKLPDDFTGCVIAWNSNKLDSKVGGNYNYLYRLFRKSNLKPFERDISTEIYQAGNKPC
+NGVAGFNCYFPLRSYGFRPTYGVGHQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVN
+FNFNGLTGTGVLTESNKKFLPFQQFGRDIADTTDAVRDPQTLEILDITPCSFGGVSVITP
+GTNTSNQVAVLYQGVNCTEVPVAIHADQLTPTWRVYSTGSNVFQTRAGCLIGAEYVNNSY
+ECDIPIGAGICASYQTQTKSHRRARSVASQSIIAYTMSLGAENSVAYSNNSIAIPTNFTI
+SVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLKRALTGIAVEQDKNTQE
+VFAQVKQIYKTPPIKYFGGFNFSQILPDPSKPSKRSFIEDLLFNKVTLADAGFIKQYGDC
+LGDIAARDLICAQKFNGLTVLPPLLTDEMIAQYTSALLAGTITSGWTFGAGAALQIPFAM
+QMAYRFNGIGVTQNVLYENQKLIANQFNSAIGKIQDSLSSTASALGKLQDVVNHNAQALN
+TLVKQLSSKFGAISSVLNDILSRLDKVEAEVQIDRLITGRLQSLQTYVTQQLIRAAEIRA
+SANLAATKMSECVLGQSKRVDFCGKGYHLMSFPQSAPHGVVFLHVTYVPAQEKNFTTAPA
+ICHDGKAHFPREGVFVSNGTHWFVTQRNFYEPQIITTDNTFVSGNCDVVIGIVNNTVYDP
+LQPELDSFKEELDKYFKNHTSPDVDLGDISGINASVVNIQKEIDRLNEVAKNLNESLIDL
+QELGKYEQYIKWPWYIWLGFIAGLIAIVMVTIMLCCMTSCCSCLKGCCSCGSCCKFDEDD
+SEPVLKGVKLHYT*
+""".split()
+)
+
+xbb = "".join(
+"""
+MFVFLVLLPLVSSQCVNLITRTQ---SYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFS
+NVTWFHAIHVSGTNGTKRFDNPALPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIV
+NNATNVVIKVCEFQFCNDPFLDV-YQKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLE
+GKEGNFKNLREFVFKNIDGYFKIYSKHTPINLERDLPQGFSALEPLVDLPIGINITRFQT
+LLALHRSYLTPGDSSSGWTAGAAAYYVGYLQPRTFLLKYNENGTITDAVDCALDPLSETK
+CTLKSFTVEKGIYQTSNFRVQPTESIVRFPNITNLCPFHEVFNATTFASVYAWNRKRISN
+CVADYSVIYNFAPFFAFKCYGVSPTKLNDLCFTNVYADSFVIRGNEVSQIAPGQTGNIAD
+YNYKLPDDFTGCVIAWNSNKLDSKPSGNYNYLYRLFRKSKLKPFERDISTEIYQAGNKPC
+NGVAGSNCYSPLQSYGFRPTYGVGHQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVN
+FNFNGLTGTGVLTESNKKFLPFQQFGRDIADTTDAVRDPQTLEILDITPCSFGGVSVITP
+GTNTSNQVAVLYQGVNCTEVPVAIHADQLTPTWRVYSTGSNVFQTRAGCLIGAEYVNNSY
+ECDIPIGAGICASYQTQTKSHRRARSVASQSIIAYTMSLGAENSVAYSNNSIAIPTNFTI
+SVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLKRALTGIAVEQDKNTQE
+VFAQVKQIYKTPPIKYFGGFNFSQILPDPSKPSKRSFIEDLLFNKVTLADAGFIKQYGDC
+LGDIAARDLICAQKFNGLTVLPPLLTDEMIAQYTSALLAGTITSGWTFGAGAALQIPFAM
+QMAYRFNGIGVTQNVLYENQKLIANQFNSAIGKIQDSLSSTASALGKLQDVVNHNAQALN
+TLVKQLSSKFGAISSVLNDILSRLDKVEAEVQIDRLITGRLQSLQTYVTQQLIRAAEIRA
+SANLAATKMSECVLGQSKRVDFCGKGYHLMSFPQSAPHGVVFLHVTYVPAQEKNFTTAPA
+ICHDGKAHFPREGVFVSNGTHWFVTQRNFYEPQIITTDNTFVSGNCDVVIGIVNNTVYDP
+LQPELDSFKEELDKYFKNHTSPDVDLGDISGINASVVNIQKEIDRLNEVAKNLNESLIDL
+QELGKYEQYIKWPWYIWLGFIAGLIAIVMVTIMLCCMTSCCSCLKGCCSCGSCCKFDEDD
+SEPVLKGVKLHYT*
+""".split()
+)
+
+ba286 = "".join(
+"""
+MFVFLVLLPLVSSQCVNLITTTQ---SYTNSFTRGVYYPDKVFRSSVLHLTQDLFLPFFSNVTWFHAI--SGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVFIKVCEFQFCNDPFLDV-YHKNNKSWMESESGVYSSANNCTFEYVSQPFLMDLEGKQGNFKNLREFVFKNIDGYFKIYSKHTPI-IGRDFPQGFSALEPLVDLPIGINITRFQTLLALNRSYLTPGDSSSGWTAGAADYYVGYLQPRTFLLKYNENGTITDAVDCALDPLSETKCTLKSFTVEKGIYQTSNFRVQPTESIVRFPNVTNLCPFHEVFNATRFASVYAWNRTRISNCVADYSVLYNFAPFFAFKCYGVSPTKLNDLCFTNVYADSFVIKGNEVSQIAPGQTGNIADYNYKLPDDFTGCVIAWNSNKLDSKHSGNYDYWYRLFRKSKLKPFERDISTEIYQAGNKPCKG-KGPNCYFPLQSYGFRPTYGVGHQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVNFNFNGLTGTGVLTKSNKKFLPFQQFGRDIVDTTDAVRDPQTLEILDITPCSFGGVSVITPGTNTSNQVAVLYQGVNCTEVSVAIHADQLTPTWRVYSTGSNVFQTRAGCLIGAEYVNNSYECDIPIGAGICASYQTQTKSRRRARSVASQSIIAYTMSLGAENSVAYSNNSIAIPTNFTISVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLKRALTGIAVEQDKNTQEVFAQVKQIYKTPPIKYFGGFNFSQILPDPSKPSKRSFIEDLLFNKVTLADAGFIKQYGDCLGDIAARDLICAQKFNGLTVLPPLLTDEMIAQYTSALLAGTITSGWTFGAGAALQIPFAMQMAYRFNGIGVTQNVLYENQKLIANQFNSAIGKIQDSLFSTASALGKLQDVVNHNAQALNTLVKQLSSKFGAISSVLNDILSRLDKVEAEVQIDRLITGRLQSLQTYVTQQLIRAAEIRASANLAATKMSECVLGQSKRVDFCGKGYHLMSFPQSAPHGVVFLHVTYVPAQEKNFTTAPAICHDGKAHFPREGVFVSNGTHWFVTQRNFYEPQIITTDNTFVSGNCDVVIGIVNNTVYDPLQLELDSFKEELDKYFKNHTSPDVDLGDISGINASVVNIQKEIDRLNEVAKNLNESLIDLQELGKYEQYIKWPWYIWLGFIAGLIAIVMVTIMLCCMTSCCSCLKGCCSCGSCCKFDEDDSEPVLKGVKLHYT*
+""".split()
+)
+
+# %%
+
+# %%
+#
 EXCLUDE_REVERSIONS = False
 result = []
 for antibody in weights.index:
     ab = {"name": antibody, "weight": round(weights.loc[antibody]["weight"], 5)}
     for site in escape.loc[antibody].index:
-        escape_val = round(escape.loc[antibody, site]["neg_log_escape"],5)
+        escape_val = round(escape.loc[antibody, site]["neg_log_escape"], 5)
         dict_val = {
             "default": escape_val,
-            ref[site-1]: 0,
+            ref[site - 1]: 0,
         }
         if not EXCLUDE_REVERSIONS:
             dict_val = escape_val
-        ab.setdefault("locations", {})[str(site-1)] = dict_val
+        ab.setdefault("locations", {})[str(site - 1)] = dict_val
     result.append(ab)
 
 # json.dump(result, open("escape.json", "w"), indent=2)
 
-#%%
+# %%
 
 # Load pathogen.json
 # Replace .phenotypeData[0].data with escape.json
@@ -521,4 +587,108 @@ PATH = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/XBB
 pathogen = json.load(open(PATH))
 pathogen["phenotypeData"][0]["data"] = result
 json.dump(pathogen, open(PATH, "w"), indent=2)
+# %%
+
+# Load ACE2 data
+import pandas as pd
+from copy import deepcopy
+import json
+
+# %%
+df = pd.read_csv(
+    "https://raw.githubusercontent.com/jbloomlab/SARS2_RBD_binding_vs_neut_escape/main/2022_Cao_convergent/convergent_RBD_evolution/bind_expr/bind_expr_BA2.csv"
+)
+sites = df["site"].unique()
+mutations = df["mutation"].unique()
+df.set_index(["site", "mutation"], inplace=True)
+df
+# %%
+ref = deepcopy(ba286)
+result = {"name": "binding", "weight": 1.0, "locations": {}}
+for site in sites:
+    wt = ref[site - 1]
+    if wt == "-":
+        wt = wuhan[site - 1]
+    offset = df.loc[(site, wt), "bind_avg"]
+    result["locations"][str(site - 1)] = {}
+    for mutation in mutations:
+        value = df.loc[(site, mutation), "bind_avg"]
+        if pd.isna(value):
+            value = 0
+        else:
+            value = round(value - offset, 5)
+        result["locations"][str(site - 1)][mutation] = value
+
+result
+# %%
+FROM_PATH = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/BA.2/pathogen.json"
+TO_PATH = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/BA.2.86/pathogen.json"
+ace2json = json.load(open(FROM_PATH))["phenotypeData"][1]
+pathogen = json.load(open(TO_PATH))
+# Check if it contains any phenotypeData
+if "phenotypeData" not in pathogen:
+    # If not, add it
+    pathogen["phenotypeData"] = []
+# Check if it already contains phenotypeData item with name=="ace2_binding",
+if any([x["name"] == "ace2_binding" for x in pathogen["phenotypeData"]]):
+    # If so, replace it
+    # Determine index of item with name=="ace2_binding"
+    index = [x["name"] for x in pathogen["phenotypeData"]].index("ace2_binding")
+    pathogen["phenotypeData"][index]["data"] = [result]
+else:
+    # If not, append it
+    pathogen["phenotypeData"].append(ace2json)
+    pathogen["phenotypeData"][-1]["data"] = [result]
+
+json.dump(pathogen, open(TO_PATH, "w"), indent=2)
+
+# %%
+
+df = pd.read_csv(
+    "https://raw.githubusercontent.com/jbloomlab/SARS2-mut-fitness/main/results/aa_fitness/aa_fitness.csv"
+)
+df = df[df.gene == "S"]
+sites = df["aa_site"].unique()
+df
+# %%
+ref = deepcopy(ba2)
+result = {}
+for site in df.aa_site.unique():
+    result[str(site - 1)] = {
+        "default": -3.0,
+    }
+    for mutation in df[df.aa_site == site].aa.unique():
+        value = df[(df.aa_site == site) & (df.aa == mutation)].fitness.values[0]
+        result[str(site - 1)][mutation] = value
+
+result = {
+    "aaRange": {"begin": 0, "end": 1272},
+    "data": [{"name": "S", "weight": 1.0, "locations": result}],
+    "description": "Bloom-Neher fitness score",
+    "gene": "S",
+    "name": "fitness",
+    "nameFriendly": "fitness",
+}
+result
+# %%
+FROM_PATH = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/BA.2/pathogen.json"
+TO_PATH = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/BA.2/pathogen.json"
+pathogen = json.load(open(TO_PATH))
+# Check if it contains any phenotypeData
+if "phenotypeData" not in pathogen:
+    # If not, add it
+    pathogen["phenotypeData"] = []
+# Check if it already contains phenotypeData item with name=="ace2_binding",
+if any([x["name"] == "fitness" for x in pathogen["phenotypeData"]]):
+    # If so, replace it
+    # Determine index of item with name=="ace2_binding"
+    index = [x["name"] for x in pathogen["phenotypeData"]].index("fitness")
+    pathogen["phenotypeData"][index]["data"] = [result]
+else:
+    # If not, append it
+    pathogen["phenotypeData"].append(result)
+
+json.dump(pathogen, open(TO_PATH, "w"), indent=2)
+
+
 # %%
