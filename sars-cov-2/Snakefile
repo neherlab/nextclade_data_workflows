@@ -26,6 +26,10 @@ rule all:
             "deploy/{build_name}/staging.log",
             build_name=["wuhan", "21L", "nsp", "XBB", "BA.2.86"],
         ),
+        expand(
+            "datasets/{build_name}/tree.json",
+            build_name=["wuhan", "21L", "nsp", "XBB", "BA.2.86"],
+        ),
 
 
 rule deploy_wuhan:
