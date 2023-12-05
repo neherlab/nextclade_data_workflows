@@ -12,36 +12,25 @@ wildcard_constraints:
     recombinant="(.*)",  # Snakemake wildcard default is ".+" which doesn't match empty strings
 
 
-rule get_v3_binary:
-    output:
-        "bin/nextclade",
-    shell:
-        """
-        cp ~/code/nextclade/target/release/nextclade {output}
-        """
-
-
 rule generate_nextclade_ba2_tsv:
     input:
         sequences="builds/{build_name}/sequences.fasta",
-        binary="bin/nextclade",
     output:
         tsv="builds/{build_name}/nextclade_ba2.tsv",
     shell:
         """
-        {input.binary} run -d nextstrain/sars-cov-2/BA.2 {input.sequences} -t {output.tsv}
+        nextclade3 run -d nextstrain/sars-cov-2/BA.2 {input.sequences} -t {output.tsv}
         """
 
 
 rule generate_nextclade_wuhan_tsv:
     input:
         sequences="builds/{build_name}/sequences.fasta",
-        binary="bin/nextclade",
     output:
         tsv="builds/{build_name}/nextclade_wuhan.tsv",
     shell:
         """
-        {input.binary} run -d nextstrain/sars-cov-2/MN908947 {input.sequences} -t {output.tsv}
+        nextclade3 run -d nextstrain/sars-cov-2/MN908947 {input.sequences} -t {output.tsv}
         """
 
 
@@ -76,7 +65,6 @@ rule align:
         sequences="builds/{build_name}/sequences.fasta",
         annotation="profiles/clades/{build_name}/annotation.gff",
         reference="defaults/reference_seq.fasta",
-        binary="bin/nextclade",
     output:
         alignment="builds/{build_name}/aligned.fasta",
         translations=directory(
@@ -87,7 +75,7 @@ rule align:
     threads: 4
     shell:
         """
-        {input.binary} run \
+        nextclade3 run \
             --jobs={threads} \
             --input-ref {input.reference} \
             --input-annotation {input.annotation} \
@@ -492,15 +480,13 @@ rule download_nextclade_dataset:
     """
     Download Nextclade dataset so Nextclade can run without internet connection
     """
-    input:
-        binary="bin/nextclade",
     output:
         dataset="builds/{build_name}/nextclade_dataset.zip",
     params:
         dataset=lambda w: config["dataset"][w.build_name],
     shell:
         """
-        {input.binary} dataset get \
+        nextclade3 dataset get \
             --name {params.dataset} \
             --output-zip {output.dataset}
         """
@@ -515,14 +501,13 @@ rule generate_priors:
         tree=rules.export.output.auspice_json,
         dataset=rules.download_nextclade_dataset.output.dataset,
         ref="profiles/clades/{build_name}/reference.fasta",
-        binary="bin/nextclade",
     output:
         ndjson="builds/{build_name}/nearest_nodes.ndjson",
     shell:
         """
         zstdcat -T2 {input.fasta} | \
         seqkit sample -p 0.001 -w0 | \
-        {input.binary} run \
+        nextclade3 run \
             -D {input.dataset} \
             -a {input.tree} \
             --input-ref {input.ref} \
