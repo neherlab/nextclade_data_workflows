@@ -565,3 +565,55 @@ rule produce_trees:
     input:
         "auspice/wuhan/auspice.json",
         "auspice/21L/auspice.json",
+
+
+rule assemble_pathogen_json:
+    input:
+        base_json="defaults/pathogen_json_base.json",
+        labeled_muts="defaults/labeled_muts.json",
+        wuhan="defaults/reference_seq.fasta",
+        reference="profiles/clades/{build_name}/reference.fasta",
+        escape="profiles/clades/{build_name}/pathogen_json/escape.json",
+        ace2="profiles/clades/{build_name}/pathogen_json/ace2.json",
+    output:
+        pathogen_json="builds/{build_name}/pathogen.json",
+    shell:
+        """
+        python scripts/assemble_pathogen_json.py \
+            --base-json {input.base_json} \
+            --labeled-muts {input.labeled_muts} \
+            --wuhan {input.wuhan} \
+            --reference {input.reference} \
+            --escape {input.escape} \
+            --ace2 {input.ace2} \
+            --output {output.pathogen_json}
+        """
+
+
+rule assemble_dataset:
+    input:
+        tree="auspice/{build_name}/auspice.json",
+        pathogen="builds/{build_name}/pathogen.json",
+        reference="profiles/clades/{build_name}/reference.fasta",
+        annotation="profiles/clades/{build_name}/annotation.gff",
+        readme="defaults/README.md",
+        changelog="defaults/CHANGELOG.md",
+        sequences="defaults/sequences.fasta",
+    output:
+        tree="datasets/{build_name}/tree.json",
+        pathogen="datasets/{build_name}/pathogen.json",
+        reference="datasets/{build_name}/reference.fasta",
+        annotation="datasets/{build_name}/genome_annotation.gff3",
+        readme="datasets/{build_name}/README.md",
+        changelog="datasets/{build_name}/CHANGELOG.md",
+        sequences="datasets/{build_name}/sequences.fasta",
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        cp {input.pathogen} {output.pathogen}
+        cp {input.reference} {output.reference}
+        cp {input.annotation} {output.annotation}
+        cp {input.readme} {output.readme}
+        cp {input.changelog} {output.changelog}
+        cp {input.sequences} {output.sequences}
+        """

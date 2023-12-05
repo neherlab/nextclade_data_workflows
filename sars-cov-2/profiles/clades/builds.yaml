@@ -21,6 +21,7 @@ dataset:
   XBB: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/XBB"
   BA.2.86: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/BA.2.86"
 
+# Recombinants with sublineages need to be listed here
 tree-recombinants:
   - "XAY"
   - "XBB"
