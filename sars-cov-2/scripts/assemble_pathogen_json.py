@@ -32,6 +32,9 @@ def main(args):
     
     if ace2 != {}:
         result["phenotypeData"].append(ace2)
+    
+    attributes = json.load(open(args.attributes, "r"))
+    result["attributes"] = attributes["attributes"]
 
     with open(args.output, "w") as f_out:
         json.dump(result, f_out, indent=2)
@@ -45,6 +48,7 @@ if __name__ == "__main__":
     parser.add_argument('--reference', required=True, help='Path to reference fasta')
     parser.add_argument('--escape', required=True, help='Path to escape file')
     parser.add_argument('--ace2', required=True, help='Path to ACE2 file')
+    parser.add_argument('--attributes', required=True, help='Path to attributes file')
     parser.add_argument('--output', required=True, help='Path for output pathogen JSON file')
 
     args = parser.parse_args()

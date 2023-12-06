@@ -1,23 +1,32 @@
 title: "Nextclade Reference Tree for SARS-CoV-2"
 
+# Dataset path
+
+path-to-build:
+  wuhan/orfs: "wuhan"
+  wuhan/proteins: "proteins"
+  BA.2: "BA.2"
+  BA.2.86: "BA.2.86"
+  XBB: "XBB"
+
 strainSet:
   wuhan: "wuhan"
-  21L: "21L"
+  BA.2: "21L"
   XBB: "21L"
   BA.2.86: "21L"
-  nsp: "wuhan"
+  proteins: "wuhan"
 
 root: 
   wuhan: B #"Wuhan/Hu-1/2019"
-  21L: BA.2
+  BA.2: BA.2
   XBB: BA.2
   BA.2.86: BA.2
-  nsp: B #"Wuhan/Hu-1/2019"
+  proteins: B #"Wuhan/Hu-1/2019"
 
 dataset:
   wuhan: "nextstrain/sars-cov-2/MN908947"
-  21L: "nextstrain/sars-cov-2/BA.2"
-  nsp: "nextstrain/sars-cov-2/MN908947" # "nextstrain/sars-cov-2/MN908947/mature"
+  BA.2: "nextstrain/sars-cov-2/BA.2"
+  proteins: "nextstrain/sars-cov-2/MN908947" # "nextstrain/sars-cov-2/MN908947/mature"
   XBB: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/XBB"
   BA.2.86: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/BA.2.86"
 
@@ -50,7 +59,7 @@ genes:
     - "ORF8"
     - "N"
     - "ORF9b"
-  21L:
+  BA.2:
     - "ORF1a"
     - "ORF1b"
     - "S"
@@ -89,7 +98,7 @@ genes:
     - "ORF8"
     - "N"
     - "ORF9b"
-  nsp:
+  proteins:
     - "S"
     - "ORF3a"
     - "E"
