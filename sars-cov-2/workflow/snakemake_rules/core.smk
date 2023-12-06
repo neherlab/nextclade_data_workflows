@@ -564,7 +564,7 @@ rule minify_json:
 rule produce_trees:
     input:
         "auspice/wuhan/auspice.json",
-        "auspice/21L/auspice.json",
+        "auspice/BA.2/auspice.json",
 
 
 rule assemble_pathogen_json:
@@ -575,6 +575,7 @@ rule assemble_pathogen_json:
         reference="profiles/clades/{build_name}/reference.fasta",
         escape="profiles/clades/{build_name}/pathogen_json/escape.json",
         ace2="profiles/clades/{build_name}/pathogen_json/ace2.json",
+        attributes="profiles/clades/{build_name}/pathogen_json/attributes.json",
     output:
         pathogen_json="builds/{build_name}/pathogen.json",
     shell:
@@ -586,27 +587,28 @@ rule assemble_pathogen_json:
             --reference {input.reference} \
             --escape {input.escape} \
             --ace2 {input.ace2} \
+            --attributes {input.attributes} \
             --output {output.pathogen_json}
         """
 
 
 rule assemble_dataset:
     input:
-        tree="auspice/{build_name}/auspice.json",
-        pathogen="builds/{build_name}/pathogen.json",
-        reference="profiles/clades/{build_name}/reference.fasta",
-        annotation="profiles/clades/{build_name}/annotation.gff",
-        readme="defaults/README.md",
-        changelog="defaults/CHANGELOG.md",
-        sequences="defaults/sequences.fasta",
+        tree=lambda w: f"auspice/{config['path-to-build'][w.path]}/auspice.json",
+        pathogen=lambda w: f"builds/{config['path-to-build'][w.path]}/pathogen.json",
+        reference=lambda w: f"profiles/clades/{config['path-to-build'][w.path]}/reference.fasta",
+        annotation=lambda w: f"profiles/clades/{config['path-to-build'][w.path]}/annotation.gff",
+        readme=lambda w: f"profiles/clades/{config['path-to-build'][w.path]}/README.md",
+        changelog=lambda w: f"profiles/clades/{config['path-to-build'][w.path]}/CHANGELOG.md",
+        sequences=lambda w: f"defaults/sequences.fasta",
     output:
-        tree="datasets/{build_name}/tree.json",
-        pathogen="datasets/{build_name}/pathogen.json",
-        reference="datasets/{build_name}/reference.fasta",
-        annotation="datasets/{build_name}/genome_annotation.gff3",
-        readme="datasets/{build_name}/README.md",
-        changelog="datasets/{build_name}/CHANGELOG.md",
-        sequences="datasets/{build_name}/sequences.fasta",
+        tree="datasets/{path}/tree.json",
+        pathogen="datasets/{path}/pathogen.json",
+        reference="datasets/{path}/reference.fasta",
+        annotation="datasets/{path}/genome_annotation.gff3",
+        readme="datasets/{path}/README.md",
+        changelog="datasets/{path}/CHANGELOG.md",
+        sequences="datasets/{path}/sequences.fasta",
     shell:
         """
         cp {input.tree} {output.tree}
