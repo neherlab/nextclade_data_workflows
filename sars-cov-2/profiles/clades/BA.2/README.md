@@ -1,8 +1,8 @@
-# SARS-CoV-2 dataset with reference Wuhan-Hu-1 with BA.2 SNPs coordinates (21L)
+# SARS-CoV-2 dataset BA.2-like reference (except for indels)
 
-| Key          | Value                                                                          |
-| ------------ | ------------------------------------------------------------------------------ |
-| authors      | [Cornelius Roemer](https://neherlab.org), [Nextstrain](https://nextstrain.org) |
+| Key     | Value                                                                          |
+| ------- | ------------------------------------------------------------------------------ |
+| authors | [Cornelius Roemer](https://neherlab.org), [Nextstrain](https://nextstrain.org) |
 
 ## Scope of this dataset
 
@@ -25,6 +25,6 @@ This dataset supports:
 - Calculation of immune escape scores relative to BA.2 neutralizing antibodies as described in [Greaney et al. 2022](https://doi.org/10.1093/ve/veac021)
 - Calculation of ACE2 binding scores relative to BA.2 as described in [Starr et al. 2022](https://doi.org/10.1371/journal.ppat.1010951)
 
-## What is Nextclade dataset
+## What are Nextclade datasets
 
 Read more about Nextclade datasets in the Nextclade documentation: https://docs.nextstrain.org/projects/nextclade/en/stable/user/datasets.html

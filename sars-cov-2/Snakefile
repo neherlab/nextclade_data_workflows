@@ -20,16 +20,19 @@ include: "workflow/snakemake_rules/core.smk"
 date = datetime.date.today()
 timestamp = datetime.datetime.utcnow().isoformat()[:-7] + "Z"
 
+BUILDS = config["path-to-build"].values()
+PATHS = config["path-to-build"].keys()
+
 
 rule all:
     input:
         expand(
             "deploy/{build_name}/staging.log",
-            build_name=["wuhan", "BA.2", "proteins", "XBB", "BA.2.86"],
+            build_name=BUILDS,
         ),
         expand(
             "datasets/{path}/tree.json",
-            path=["wuhan/orfs", "BA.2", "wuhan/proteins", "XBB", "BA.2.86"],
+            path=PATHS,
         ),
 
 

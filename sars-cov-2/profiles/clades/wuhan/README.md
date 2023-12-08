@@ -1,8 +1,8 @@
 # SARS-CoV-2 dataset with reference Wuhan-Hu-1
 
-| Key          | Value                                                                          |
-| ------------ | ------------------------------------------------------------------------------ |
-| authors      | [Cornelius Roemer](https://neherlab.org), [Nextstrain](https://nextstrain.org) |
+| Key     | Value                                                                          |
+| ------- | ------------------------------------------------------------------------------ |
+| authors | [Cornelius Roemer](https://neherlab.org), [Nextstrain](https://nextstrain.org) |
 
 ## Scope of this dataset
 
@@ -21,6 +21,6 @@ This dataset supports:
 - Sequence QC
 - Phylogenetic placement
 
-## What is Nextclade dataset
+## What are Nextclade datasets
 
 Read more about Nextclade datasets in the Nextclade documentation: https://docs.nextstrain.org/projects/nextclade/en/stable/user/datasets.html
