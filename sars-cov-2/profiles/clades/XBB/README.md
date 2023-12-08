@@ -1,4 +1,4 @@
-# SARS-CoV-2 dataset for BA.2.86 descendants
+# SARS-CoV-2 dataset with BA.2.86-like reference
 
 | Key     | Value                                                                          |
 | ------- | ------------------------------------------------------------------------------ |
@@ -23,6 +23,6 @@ This dataset supports:
 - Calculation of immune escape scores relative to XBB neutralizing antibodies as described in [Greaney et al. 2022](https://doi.org/10.1093/ve/veac021)
 - Calculation of ACE2 binding scores relative to XBB as described in [Starr et al. 2022](https://doi.org/10.1371/journal.ppat.1010951)
 
-## What is Nextclade dataset
+## What are Nextclade datasets
 
 Read more about Nextclade datasets in the Nextclade documentation: https://docs.nextstrain.org/projects/nextclade/en/stable/user/datasets.html
