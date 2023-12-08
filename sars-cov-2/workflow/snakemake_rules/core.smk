@@ -261,6 +261,7 @@ rule ancestral:
     params:
         genes=lambda w: " ".join(config["genes"][w.build_name]),
         translation_template="builds/{build_name}/translations/aligned.gene.%GENE.fasta",
+        tmp="builds/{build_name}/muts.tmp",
     output:
         node_data="builds/{build_name}/muts.json",
     shell:
@@ -268,13 +269,17 @@ rule ancestral:
         augur ancestral \
             --tree {input.tree} \
             --alignment {input.alignment} \
-            --output-node-data {output.node_data} \
+            --output-node-data {params.tmp} \
             --inference joint \
             --root-sequence {input.dataset_reference} \
             --annotation {input.annotation} \
             --genes {params.genes} \
             --translations {params.translation_template} \
             --infer-ambiguous
+        # Patch annotation for nsp12 in mature protein builds
+        jq 'if .annotations | has("nsp12") then .annotations.nsp12 = {{"seqid": "profiles/clades/proteins/reference_seq.gb", "strand": "+", "type": "CDS", "segments": [{{"start":13442,"end":13468}}, {{"start":13468,"end":16236}}]}} else . end' \
+        {params.tmp} > {output.node_data}
+        rm {params.tmp}
         """
 
 
