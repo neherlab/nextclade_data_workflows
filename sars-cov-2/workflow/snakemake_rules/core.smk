@@ -391,7 +391,7 @@ rule clades_who:
     input:
         tree=rules.refine.output.tree,
         nuc_muts=rules.ancestral.output.node_data,
-        clades="builds/{build_name}/clades_who.tsv",
+        clades="profiles/clades/clades_who.tsv",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
