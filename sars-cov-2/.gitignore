@@ -2,3 +2,4 @@ other_data
 .vscode
 deploy/
 /datasets/
+profiles/clades/secrets.yaml

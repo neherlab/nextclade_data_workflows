@@ -1,6 +1,7 @@
 configfile:
   - profiles/clades/builds.yaml # Specific builds for this profile
   - profiles/clades/secrets.yaml # Secrets not committed to git
+  - profiles/cluster/config_dict.yaml # Cluster specific config
 
 # Always print the commands that will be run to the screen for debugging.
 printshellcmds: True
