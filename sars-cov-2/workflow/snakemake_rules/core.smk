@@ -508,10 +508,12 @@ rule generate_priors:
         ref="profiles/clades/{build_name}/reference.fasta",
     output:
         ndjson="builds/{build_name}/nearest_nodes.ndjson",
+    params:
+        sample_fraction=0.1 if "cluster" in config else 0.0001,
     shell:
         """
         zstdcat -T2 {input.fasta} | \
-        seqkit sample -p 0.001 -w0 | \
+        seqkit sample -p {params.sample_fraction} -w0 | \
         nextclade3 run \
             -D {input.dataset} \
             -a {input.tree} \
