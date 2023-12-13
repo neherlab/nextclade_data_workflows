@@ -1,11 +1,24 @@
+# Any rule that is trivial can be run locally
 localrules:
     add_branch_labels,
-    colors,
-    internal_pango,
+    add_nextclade_columns_to_meta,
+    add_priors,
     add_recombinants_to_tree,
+    assemble_dataset,
+    assemble_pathogen_json,
+    clades_display,
+    clades_who,
+    clades,
+    colors,
+    download_nextclade_dataset,
+    export,
     generate_nextclade_ba2_tsv,
     generate_nextclade_wuhan_tsv,
-    download_nextclade_dataset,
+    internal_pango,
+    minify_json,
+    preprocess_clades,
+    prune_constraint_tree,
+    separate_recombinants,
 
 
 wildcard_constraints:
