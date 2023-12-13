@@ -38,6 +38,7 @@ def main(args):
 
     with open(args.output, "w") as f_out:
         json.dump(result, f_out, indent=2)
+        f_out.write("\n")
 
 
 if __name__ == "__main__":

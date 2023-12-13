@@ -583,11 +583,12 @@ rule assemble_pathogen_json:
         escape="profiles/clades/{build_name}/pathogen_json/escape.json",
         ace2="profiles/clades/{build_name}/pathogen_json/ace2.json",
         attributes="profiles/clades/{build_name}/pathogen_json/attributes.json",
+        script="scripts/assemble_pathogen_json.py",
     output:
         pathogen_json="builds/{build_name}/pathogen.json",
     shell:
         """
-        python scripts/assemble_pathogen_json.py \
+        python {input.script} \
             --base-json {input.base_json} \
             --labeled-muts {input.labeled_muts} \
             --wuhan {input.wuhan} \
