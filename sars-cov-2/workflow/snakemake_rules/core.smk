@@ -595,7 +595,7 @@ rule assemble_pathogen_json:
         reference="profiles/clades/{build_name}/reference.fasta",
         escape="profiles/clades/{build_name}/pathogen_json/escape.json",
         ace2="profiles/clades/{build_name}/pathogen_json/ace2.json",
-        attributes="profiles/clades/{build_name}/pathogen_json/attributes.json",
+        extras="profiles/clades/{build_name}/pathogen_json/extras.json",
         script="scripts/assemble_pathogen_json.py",
     output:
         pathogen_json="builds/{build_name}/pathogen.json",
@@ -608,7 +608,7 @@ rule assemble_pathogen_json:
             --reference {input.reference} \
             --escape {input.escape} \
             --ace2 {input.ace2} \
-            --attributes {input.attributes} \
+            --extras {input.extras} \
             --output {output.pathogen_json}
         """
 
