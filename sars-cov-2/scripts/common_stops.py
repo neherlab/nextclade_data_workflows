@@ -16,14 +16,14 @@ def format(number, input_file):
         gene = stop[0]
         # beware: subtract 1 because in qc.json it's 0 indexed as opposed to nextclade output
         position = int(stop[1][1:-1]) - 1
-        # {"geneName": "ORF7a", "codon": 61},
+        # {"cdsName": "ORF7a", "codon": 61},
 
         output.append((gene,position))
     
     # output.sort()
 
-        # output.append(f'{{ "geneName": "{gene}", "codon": {position} }},')
-    click.echo("\n".join([f'{{ "geneName": "{gene}", "codon": {position} }}' for gene,position in sorted(output)]))
+        # output.append(f'{{ "cdsName": "{gene}", "codon": {position} }},')
+    click.echo("\n".join([f'{{ "cdsName": "{gene}", "codon": {position} }}' for gene,position in sorted(output)]))
 
 
 if __name__ == "__main__":

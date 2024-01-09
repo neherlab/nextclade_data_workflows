@@ -22,7 +22,7 @@ def format(number, input_file):
         except:
             pass
         click.echo(
-            f'{{ "geneName": "{gene}", "codonRange": {{"begin": {start}, "end": {end} }} }}'
+            f'{{ "cdsName": "{gene}", "codonRange": {{"begin": {start}, "end": {end} }} }}'
         )
 
 
