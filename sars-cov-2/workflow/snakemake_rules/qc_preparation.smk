@@ -136,7 +136,7 @@ rule new_stops:
             new_stops = set(line.strip() for line in f2)
             diff = new_stops - old_stops
             diff_dict = [json.loads(stop) for stop in diff]
-            sorted_stops = sorted(diff_dict, key=itemgetter("geneName", "codon"))
+            sorted_stops = sorted(diff_dict, key=itemgetter("cdsName", "codon"))
             for stop in sorted_stops:
                 f_out.write(json.dumps(stop) + "\n")
 
@@ -155,7 +155,7 @@ rule new_frameshifts:
 
 
         def sorting_key(stop):
-            gene_name = stop["geneName"]
+            gene_name = stop["cdsName"]
             begin_codon = stop["codonRange"]["begin"]
             end_codon = stop["codonRange"]["end"]
             return (gene_name, begin_codon, end_codon)
