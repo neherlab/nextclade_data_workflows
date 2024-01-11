@@ -568,9 +568,9 @@ rule add_branch_labels:
 
 rule minify_json:
     input:
-        "auspice/{build_name}/{build_type}_max.json",
+        "auspice/{build_name}/auspice_max.json",
     output:
-        "auspice/{build_name}/{build_type}.json",
+        "auspice/{build_name}/auspice.json",
     shell:
         """
         jq -c . {input} > {output}
