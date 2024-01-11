@@ -46,7 +46,6 @@ rule deploy_wuhan:
 rule deploy_21L:
     input:
         tree="auspice/21L/auspice.json",
-        tree_no_recomb="auspice/21L/auspice_without_recombinants.json",
         root="auspice/21L/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/21L/staging.log",
