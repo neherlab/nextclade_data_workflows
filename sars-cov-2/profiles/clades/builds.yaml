@@ -15,7 +15,5 @@ tree-recombinants:
   - "XCF"
   - "XCH"
   - "XCT"
-  - "XDA"
-  - "XDD"
 
 ncovbranch: "master"

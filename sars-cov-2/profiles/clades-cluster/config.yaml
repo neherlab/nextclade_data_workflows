@@ -5,6 +5,8 @@ configfile:
 # Always print the commands that will be run to the screen for debugging.
 printshellcmds: True
 keep-going: True
+reason: True
+stats: stats.json
 
 # Print log files of failed jobs
 show-failed-logs: True

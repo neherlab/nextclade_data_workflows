@@ -35,8 +35,8 @@ rule generate_nextclade_ba2_tsv:
         tsv="builds/{build_name}/nextclade_ba2.tsv",
     shell:
         """
-        # nextclade2 run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
-        nextclade2 run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
+        # nextclade run -d sars-cov-2-21L -a auspice/21L/auspice.json {input.sequences} -t {output.tsv}
+        nextclade run -d sars-cov-2-21L {input.sequences} -t {output.tsv}
         """
 
 
@@ -47,7 +47,7 @@ rule generate_nextclade_wuhan_tsv:
         tsv="builds/{build_name}/nextclade_wuhan.tsv",
     shell:
         """
-        nextclade2 run -d sars-cov-2 {input.sequences} -t {output.tsv}
+        nextclade run -d sars-cov-2 {input.sequences} -t {output.tsv}
         """
 
 
@@ -504,7 +504,7 @@ rule download_nextclade_dataset:
         dataset=lambda w: "sars-cov-2" if w.build_name == "wuhan" else "sars-cov-2-21L",
     shell:
         """
-        nextclade2 dataset get \
+        nextclade dataset get \
             --name {params.dataset} \
             --output-zip {output.dataset}
         """
@@ -524,7 +524,7 @@ rule generate_priors:
         """
         zstdcat -T2 {input.fasta} | \
         seqkit sample -p 0.1 -w0 | \
-        nextclade2 run \
+        nextclade run \
             -D {input.dataset} \
             -a {input.tree} \
             --include-nearest-node-info \
@@ -568,9 +568,9 @@ rule add_branch_labels:
 
 rule minify_json:
     input:
-        "auspice/{build_name}/auspice_max.json",
+        "auspice/{build_name}/{build_type}_max.json",
     output:
-        "auspice/{build_name}/auspice.json",
+        "auspice/{build_name}/{build_type}.json",
     shell:
         """
         jq -c . {input} > {output}
