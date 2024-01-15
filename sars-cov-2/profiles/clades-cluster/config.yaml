@@ -13,7 +13,9 @@ show-failed-logs: True
 
 cluster-config: profiles/cluster/cluster.json
 
-cluster: "sbatch --time={cluster.time} --mem={cluster.mem} --cpus-per-task={cluster.n} --qos={cluster.qos}"
+cluster: "sbatch --time={cluster.time} --mem={cluster.mem} --cpus-per-task={cluster.n} --qos={cluster.qos} --parsable"
+
+cluster-cancel: "scancel"
 
 jobs: 512
 
