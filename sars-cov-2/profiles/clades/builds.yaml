@@ -23,13 +23,12 @@ root:
   BA.2.86: BA.2
   proteins: B #"Wuhan/Hu-1/2019"
 
-# TODO: Edit these once new paths are on data master
 dataset:
-  wuhan: "nextstrain/sars-cov-2/MN908947"
+  wuhan: "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
   BA.2: "nextstrain/sars-cov-2/BA.2"
-  proteins: "nextstrain/sars-cov-2/MN908947" # "nextstrain/sars-cov-2/MN908947/mature"
-  XBB: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/XBB"
-  BA.2.86: "nextstrain/sars-cov-2/BA.2" # "nextstrain/sars-cov-2/BA.2.86"
+  proteins: "nextstrain/sars-cov-2/wuhan-hu-1/proteins"
+  XBB: "nextstrain/sars-cov-2/XBB"
+  BA.2.86: "nextstrain/sars-cov-2/BA.2.86"
 
 # Recombinants with sublineages need to be listed here
 tree-recombinants:
