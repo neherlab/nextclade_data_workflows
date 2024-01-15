@@ -43,7 +43,7 @@ rule generate_nextclade_wuhan_tsv:
         tsv="builds/{build_name}/nextclade_wuhan.tsv",
     shell:
         """
-        nextclade3 run -d nextstrain/sars-cov-2/MN908947 {input.sequences} -t {output.tsv}
+        nextclade3 run -d nextstrain/sars-cov-2/wuhan-hu-1/orfs {input.sequences} -t {output.tsv}
         """
 
 
