@@ -9,6 +9,8 @@ localrules:
     deploy_wuhan,
     deploy_BA2,
     deploy_proteins,
+    deploy_XBB,
+    deploy_BA286,
 
 
 include: "workflow/snakemake_rules/preprocess.smk"
@@ -80,6 +82,42 @@ rule deploy_proteins:
         touchfile="deploy/proteins/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_proteins.json"),
         root=temp("deploy/nextclade_sars-cov-2_proteins_root-sequence.json"),
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        cp {input.root} {output.root}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root}
+        touch {output.touchfile}
+        """
+
+
+rule deploy_XBB:
+    input:
+        tree="auspice/XBB/auspice.json",
+        root="auspice/XBB/auspice_raw_root-sequence.json",
+    output:
+        touchfile="deploy/XBB/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2_XBB.json"),
+        root=temp("deploy/nextclade_sars-cov-2_XBB_root-sequence.json"),
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        cp {input.root} {output.root}
+        nextstrain deploy s3://nextstrain-staging \
+            {output.tree} {output.root}
+        touch {output.touchfile}
+        """
+
+
+rule deploy_BA286:
+    input:
+        tree="auspice/BA.2.86/auspice.json",
+        root="auspice/BA.2.86/auspice_raw_root-sequence.json",
+    output:
+        touchfile="deploy/BA.2.86/staging.log",
+        tree=temp("deploy/nextclade_sars-cov-2_BA.2.86.json"),
+        root=temp("deploy/nextclade_sars-cov-2_BA.2.86_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
