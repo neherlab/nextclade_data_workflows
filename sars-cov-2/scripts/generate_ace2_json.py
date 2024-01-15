@@ -35,7 +35,7 @@ def main(args):
         "end": 531
       },
       "description": "This column displays the predicted impact of RBD mutations on ACE2 binding, relative to a BA.2 baseline.\nA score is in log10 space. Hence a score of +1 should be interpreted as 10x higher affinity.\nThe score assumes that mutations do not interact. The underlying data looked at the impact of each mutation independently.\nThe score is calculated using the same data and logic as Bloom lab's ACE2 binding calculator (see https://doi.org/10.1101/2022.09.20.508745).",
-      "gene": "S",
+      "cds": "S",
       "ignore": {
         "clades": [
           "outgroup"
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 #     "aaRange": {"begin": 0, "end": 1272},
 #     "data": [{"name": "S", "weight": 1.0, "locations": result}],
 #     "description": "Bloom-Neher fitness score",
-#     "gene": "S",
+#     "cds": "S",
 #     "name": "fitness",
 #     "nameFriendly": "fitness",
 # }
