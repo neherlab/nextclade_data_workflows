@@ -41,17 +41,14 @@ rule all:
 rule deploy_wuhan:
     input:
         tree="auspice/wuhan/auspice.json",
-        root="auspice/wuhan/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/wuhan/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2.json"),
-        root=temp("deploy/nextclade_sars-cov-2_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
-        cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root}
+            {output.tree}
         touch {output.touchfile}
         """
 
@@ -59,17 +56,14 @@ rule deploy_wuhan:
 rule deploy_BA2:
     input:
         tree="auspice/BA.2/auspice.json",
-        root="auspice/BA.2/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/BA.2/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_BA.2.json"),
-        root=temp("deploy/nextclade_sars-cov-2_BA.2_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
-        cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root}
+            {output.tree}
         touch {output.touchfile}
         """
 
@@ -77,17 +71,14 @@ rule deploy_BA2:
 rule deploy_proteins:
     input:
         tree="auspice/proteins/auspice.json",
-        root="auspice/proteins/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/proteins/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_proteins.json"),
-        root=temp("deploy/nextclade_sars-cov-2_proteins_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
-        cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root}
+            {output.tree}
         touch {output.touchfile}
         """
 
@@ -95,17 +86,14 @@ rule deploy_proteins:
 rule deploy_XBB:
     input:
         tree="auspice/XBB/auspice.json",
-        root="auspice/XBB/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/XBB/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_XBB.json"),
-        root=temp("deploy/nextclade_sars-cov-2_XBB_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
-        cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root}
+            {output.tree}
         touch {output.touchfile}
         """
 
@@ -113,17 +101,14 @@ rule deploy_XBB:
 rule deploy_BA286:
     input:
         tree="auspice/BA.2.86/auspice.json",
-        root="auspice/BA.2.86/auspice_raw_root-sequence.json",
     output:
         touchfile="deploy/BA.2.86/staging.log",
         tree=temp("deploy/nextclade_sars-cov-2_BA.2.86.json"),
-        root=temp("deploy/nextclade_sars-cov-2_BA.2.86_root-sequence.json"),
     shell:
         """
         cp {input.tree} {output.tree}
-        cp {input.root} {output.root}
         nextstrain deploy s3://nextstrain-staging \
-            {output.tree} {output.root}
+            {output.tree}
         touch {output.touchfile}
         """
 

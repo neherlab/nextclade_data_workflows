@@ -475,7 +475,6 @@ rule export:
         description="profiles/clades/description.md",
     output:
         auspice_json="auspice/{build_name}/auspice_raw.json",
-        root_json="auspice/{build_name}/auspice_raw_root-sequence.json",
     params:
         title="SARS-CoV-2 phylogeny",
     shell:
@@ -488,7 +487,7 @@ rule export:
             --auspice-config {input.auspice_config} \
             --title {params.title:q} \
             --description {input.description} \
-            --include-root-sequence \
+            --include-root-sequence-inline \
             --minify-json \
             --output {output.auspice_json}
         """
