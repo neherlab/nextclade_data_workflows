@@ -30,7 +30,7 @@ rule all:
     input:
         expand(
             "deploy/{build_name}/staging.log",
-            build_name=[build for build in BUILDS if build not in ["XBB", "BA.2.86"]],
+            build_name=[build for build in BUILDS],
         ),
         expand(
             "datasets/{path}/tree.json",
