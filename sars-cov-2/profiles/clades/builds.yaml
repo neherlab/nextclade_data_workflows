@@ -45,6 +45,7 @@ tree-recombinants:
   - "XDA"
   - "XDD"
   - "XDK"
+  - "XDP"
   - "XDQ"
 
 ncovbranch: "master"
