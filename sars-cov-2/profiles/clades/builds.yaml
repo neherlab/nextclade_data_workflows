@@ -47,6 +47,7 @@ tree-recombinants:
   - "XDK"
   - "XDP"
   - "XDQ"
+  - "XDV"
 
 ncovbranch: "master"
 
