@@ -1,0 +1,30 @@
+# Nuc coordinates valid for NC_009942.1
+clade	gene	site	alt
+
+1B	nuc	1231	T
+1B	nuc	8199	T
+1B	nuc	8334	A
+
+1A	nuc	10077	G
+1A	nuc	6345	C
+1A	nuc	900	T
+
+5	nuc	2331	G
+5	nuc	3808	G
+5	nuc	10047	A
+
+2	nuc	1773	G
+2	nuc	6441	C
+2	nuc	9180	G
+
+3	nuc	1416	T
+3	nuc	6678	G
+
+4	nuc	2013	G
+4	nuc	7227	G
+
+7	nuc	1684	C
+7	nuc	8223	T
+
+8	nuc	2134	A
+8	nuc	8164	T

@@ -1,0 +1,585 @@
+PREALIGN_REFERENCE = "resources/reference.fasta"
+PREMASK_BED = "resources/mask.bed"
+TAXON_ID = 11082  # West Nile virus taxon ID
+ACCESSION_COLUMN = "Accession"
+
+MIN_LENGTH = 8000
+MIN_DATE = "--min-date 1900"
+EXCLUDE_WHERE = ""
+SUBSAMPLING = "--subsample-max-sequences 50"
+# ROOT = "NC_009942.1"
+# ROOT = "best"
+
+
+genes = [line.strip() for line in open("resources/genes.txt")]
+
+dataset_files = [
+    "pathogen.json",
+    "sequences.fasta",
+    "genome_annotation.gff3",
+    "README.md",
+    "CHANGELOG.md",
+]
+
+
+rule all:
+    input:
+        datasets=expand("datasets/{file}", file=dataset_files),
+        tests=expand("test_output/"),
+
+
+rule deploy_to_nextstrain_staging:
+    input:
+        rules.all.input,
+    shell:
+        """
+        nextstrain deploy s3://nextstrain-staging {input}
+        """
+
+
+rule fetch_ncbi_dataset_package:
+    output:
+        dataset_package="data/ncbi_dataset.zip",
+    retries: 5
+    shell:
+        """
+        datasets download virus genome taxon {TAXON_ID} \
+            --no-progressbar \
+            --filename {output.dataset_package}
+        """
+
+
+rule extract_ncbi_dataset_sequences:
+    input:
+        dataset_package="data/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_sequences="data/sequences.fasta",
+    shell:
+        """
+        unzip -jp {input.dataset_package} \
+            ncbi_dataset/data/genomic.fna \
+        | seqkit seq -i -w0 \
+        > {output.ncbi_dataset_sequences}
+        """
+
+
+rule format_ncbi_dataset_report:
+    input:
+        dataset_package="data/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_tsv="data/metadata_raw.tsv",
+    shell:
+        """
+        dataformat tsv virus-genome \
+            --package {input.dataset_package} \
+        | sed 's/Isolate Collection date/date/g' \
+        > {output.ncbi_dataset_tsv}
+        """
+
+
+rule patch_metadata:
+    input:
+        metadata="data/metadata_raw.tsv",
+    output:
+        metadata="data/metadata.tsv",
+    params:
+        accession_column=ACCESSION_COLUMN,
+    run:
+        import pandas as pd
+
+        df = pd.read_csv(
+            input.metadata,
+            sep="\t",
+            dtype=str,
+            index_col=params.accession_column,
+        )
+        patches = [
+            ("AY765264.1", "date", "1997"),
+            ("AY765264.1", "Geographic Location", "Czechia: Lanzhot"),
+            ("MW142225.1", "date", "2020-08-XX"),
+            ("JF719069.1", "date", "2010-08-XX"),
+            ("GQ379161.1", "date", "2006-02-XX"),
+        ]
+
+        for index, column, value in patches:
+            if index in df.index:
+                df.at[index, column] = value
+            else:
+                print(f"Index {index} not found in the DataFrame.")
+
+        df.to_csv(output.metadata, sep="\t")
+
+
+rule remove_known_duplicates:
+    input:
+        known_duplicates="resources/known_duplicates.txt",
+        sequences="data/sequences.fasta",
+    output:
+        sequences_without_known_duplicates="results/sequences_without_known_duplicates.fasta",
+    shell:
+        """
+        seqkit grep -w0 -v -f {input.known_duplicates} {input.sequences} > {output.sequences_without_known_duplicates}
+        """
+
+
+rule index:
+    "Indexing sequences"
+    input:
+        sequences="results/sequences_without_known_duplicates.fasta",
+    output:
+        index="results/index.tsv",
+    shell:
+        """
+        augur index \
+            --sequences {input.sequences} \
+            --output {output.index}
+        """
+
+
+rule prealign:
+    input:
+        sequences="results/sequences_without_known_duplicates.fasta",
+        reference=PREALIGN_REFERENCE,
+        annotation="resources/genome_annotation.gff3",
+    output:
+        alignment="results/prealigned.fasta",
+    shell:
+        """
+        nextclade3 run \
+            {input.sequences} \
+            --retry-reverse-complement \
+            --min-seed-cover 0.01 \
+            --input-ref {input.reference} \
+            --gap-alignment-side left \
+            --input-annotation {input.annotation} \
+            --output-fasta /dev/stdout \
+            --include-reference \
+        | sed 's/ |(reverse complement)$//' > {output.alignment}
+        """
+
+
+rule exclude_bad:
+    # Removing strains that do not satisfy certain requirements.
+    input:
+        sequences="results/sequences_without_known_duplicates.fasta",
+        metadata="data/metadata.tsv",
+        index="results/index.tsv",
+    output:
+        sequences="results/decent_sequences.fasta",
+        metadata="results/decent_metadata.tsv",
+        log="results/decent_filter.log",
+    params:
+        min_length=MIN_LENGTH,
+        accession_column=ACCESSION_COLUMN,
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --sequence-index {input.index} \
+            --metadata-id-columns {params.accession_column} \
+            --metadata {input.metadata} \
+            --output-sequences {output.sequences} \
+            --output-metadata {output.metadata} \
+            --min-length {params.min_length} \
+            --output-log {output.log}
+        """
+
+
+rule premask:
+    input:
+        sequences="results/prealigned.fasta",
+        mask=PREMASK_BED,
+    output:
+        "results/premasked.fasta",
+    shell:
+        """
+        cp {input.sequences} {output}
+        # augur mask \
+        #     --sequences {input.sequences} \
+        #     --mask {input.mask} \
+        #     --output {output}
+        """
+
+
+rule deduplicate:
+    """
+    Remove identical sequences (even if they have differing Ns)
+    Keep those sequences with fewer Ns
+    Focus for Nextclade is on diversity, not on representativeness
+    """
+    input:
+        sequences="results/premasked.fasta",
+    output:
+        "results/duplicates.txt",
+    shell:
+        """
+        python3 scripts/deduplicate.py {input.sequences} {output}
+        """
+
+
+rule subsample:
+    input:
+        sequences="results/decent_sequences.fasta",
+        metadata="results/decent_metadata.tsv",
+        exclude="resources/exclude_accessions.txt",
+        specific_exclude="resources/exclude_accessions.txt",
+        deduplicate_exclude="results/duplicates.txt",
+        include="resources/include_accessions.txt",
+        index="results/index.tsv",
+    output:
+        sequences="results/filtered_raw.fasta",
+        metadata="results/filtered_raw_metadata.tsv",
+        log="results/filtered_raw.log",
+    params:
+        min_date=MIN_DATE,
+        min_length=MIN_LENGTH,
+        exclude_where=EXCLUDE_WHERE,
+        subsampling=SUBSAMPLING,
+        accession_column=ACCESSION_COLUMN,
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --sequence-index {input.index} \
+            --metadata-id-columns {params.accession_column} \
+            --exclude {input.exclude} {input.specific_exclude} {input.deduplicate_exclude} \
+            {params.exclude_where} \
+            {params.min_date} \
+            {params.subsampling} \
+            --include {input.include} \
+            --probabilistic-sampling \
+            --output {output.sequences} \
+            --output-metadata {output.metadata} \
+            --min-length {params.min_length} \
+            --output-log {output.log}
+        """
+
+
+rule postsample_exclude:
+    input:
+        sequences="results/filtered_raw.fasta",
+        metadata="results/filtered_raw_metadata.tsv",
+        exclude="resources/post_filter_exclude.txt",
+        index="results/index.tsv",
+    output:
+        sequences="results/filtered.fasta",
+        metadata="results/metadata.tsv",
+        log="results/filtered.log",
+    params:
+        accession_column=ACCESSION_COLUMN,
+    shell:
+        """
+        augur filter \
+            --sequences {input.sequences} \
+            --metadata {input.metadata} \
+            --sequence-index {input.index} \
+            --metadata-id-columns {params.accession_column} \
+            --exclude {input.exclude} \
+            --output {output.sequences} \
+            --output-metadata {output.metadata} \
+            --output-log {output.log}
+        """
+
+
+rule align:
+    input:
+        sequences="results/filtered.fasta",
+        reference="resources/reference.fasta",
+        root="resources/root.fasta",
+        annotation="resources/genome_annotation.gff3",
+    output:
+        alignment="results/aligned.fasta",
+        translations=directory("results/translations"),
+    params:
+        translation_template=lambda w: f"results/translations/{{cds}}.fasta",
+        genes=",".join(genes),
+    shell:
+        """
+        cat {input.root} {input.reference} {input.sequences} \
+        | seqkit seq -w0 -i \
+        | seqkit rmdup -n \
+        | nextclade3 run \
+            --retry-reverse-complement \
+            --input-ref {input.reference} \
+            --input-annotation {input.annotation} \
+            --gap-alignment-side left \
+            --output-fasta /dev/stdout \
+            --output-translations {params.translation_template} \
+        | seqkit seq -w0 -i > {output.alignment}
+        """
+
+
+rule mask:
+    input:
+        sequences="results/aligned.fasta",
+        mask="resources/mask.bed",
+    output:
+        "results/masked.fasta",
+    shell:
+        """
+        cp {input.sequences} {output}
+        # augur mask \
+        #     --sequences {input.sequences} \
+        #     --mask {input.mask} \
+        #     --output {output}
+        """
+
+
+rule tree:
+    input:
+        alignment="results/masked.fasta",
+    output:
+        tree="results/tree_raw.nwk",
+    shell:
+        """
+        augur tree \
+            --alignment {input.alignment} \
+            --output {output.tree} \
+            --nthreads 3 \
+            --tree-builder-args '-czb -redo'
+        """
+
+
+rule fix_tree:
+    input:
+        tree="results/tree_raw.nwk",
+        alignment="results/masked.fasta",
+    output:
+        tree="results/tree_fixed.nwk",
+    params:
+        # root=ROOT,
+        root="",
+    shell:
+        """
+        cp {input.tree} {output.tree}
+        # python3 scripts/fix_tree.py \
+        #     --alignment {input.alignment} \
+        #     --input-tree {input.tree} \
+        #     --root {params.root} \
+        #     --output {output.tree}
+        """
+
+
+rule refine:
+    input:
+        tree="results/tree_fixed.nwk",
+        alignment="results/masked.fasta",
+        metadata="results/metadata.tsv",
+    output:
+        tree="results/tree.nwk",
+        node_data="results/branch_lengths.json",
+    params:
+        root="best",
+        # root="JF719069.1 KY703855.1",
+        accession_column=ACCESSION_COLUMN,
+    shell:
+        """
+        augur refine \
+            --tree {input.tree} \
+            --alignment {input.alignment} \
+            --metadata {input.metadata} \
+            --output-tree {output.tree} \
+            --divergence-unit mutations \
+            --metadata-id-columns {params.accession_column} \
+            --root {params.root} \
+            --timetree \
+            --date-confidence \
+            --keep-polytomies \
+            --use-fft \
+            --output-node-data {output.node_data}
+        """
+
+
+rule ancestral:
+    # "Reconstructing ancestral sequences and mutations"
+    input:
+        tree="results/tree.nwk",
+        alignment="results/aligned.fasta",
+        annotation="resources/genome_annotation_ancestral.gff3",
+        genes="resources/genes.txt",
+        translations="results/translations",
+        reference="resources/reference.fasta",
+    output:
+        node_data="results/nt_muts.json",
+    params:
+        inference="joint",
+        translation_template="results/translations/%GENE.fasta",
+        genes=" ".join(genes),
+    shell:
+        """
+        augur ancestral \
+            --tree {input.tree} \
+            --annotation {input.annotation} \
+            --alignment {input.alignment} \
+            --root-sequence {input.reference} \
+            --infer-ambiguous \
+            --translations {params.translation_template} \
+            --genes {params.genes} \
+            --output-node-data {output.node_data} \
+            --inference joint
+        """
+
+
+rule clades:
+    # "Adding internal clade labels"
+    input:
+        tree="results/tree.nwk",
+        nuc_muts="results/nt_muts.json",
+        clades="resources/clades.tsv",
+    output:
+        node_data="results/clades.json",
+    shell:
+        """
+        augur clades \
+            --tree {input.tree} \
+            --mutations {input.nuc_muts} \
+            --clades {input.clades} \
+            --output-node-data {output.node_data} 2>&1 | tee {log}
+        """
+
+
+rule colors:
+    input:
+        ordering="resources/color_ordering.tsv",
+        color_schemes="resources/color_schemes.tsv",
+        metadata="results/metadata.tsv",
+    output:
+        colors="results/colors.tsv",
+    shell:
+        """
+        python3 scripts/assign-colors.py \
+            --ordering {input.ordering} \
+            --color-schemes {input.color_schemes} \
+            --output {output.colors} \
+            --metadata {input.metadata} 2>&1
+        """
+
+
+rule nice_strain_names:
+    input:
+        metadata="results/metadata.tsv",
+    output:
+        metadata="results/metadata_display.tsv",
+    params:
+        accession_column=ACCESSION_COLUMN,
+    shell:
+        """
+        python3 scripts/make_nice_strain_names.py \
+            --metadata {input.metadata} \
+            --input-columns "Geographic Location" {params.accession_column} "date" \
+            --separator '/' \
+            --output-column strain_display \
+            --output {output.metadata}
+        """
+
+
+rule export:
+    # "Exporting data files for for auspice"
+    input:
+        colors="results/colors.tsv",
+        tree="results/tree.nwk",
+        metadata="results/metadata_display.tsv",
+        branch_lengths="results/branch_lengths.json",
+        clades="results/clades.json",
+        nt_muts="results/nt_muts.json",
+        auspice_config="resources/auspice_config.json",
+    output:
+        auspice_json="auspice/nextclade_wnv_pretty.json",
+        root_sequence="auspice/nextclade_wnv_pretty_root-sequence.json",
+    params:
+        accession_column=ACCESSION_COLUMN,
+    shell:
+        """
+        augur export v2 \
+            --tree {input.tree} \
+            --metadata {input.metadata} \
+            --node-data {input.branch_lengths} {input.nt_muts} {input.clades} \
+            --colors {input.colors} \
+            --auspice-config {input.auspice_config} \
+            --include-root-sequence \
+            --metadata-id-columns {params.accession_column} \
+            --output {output.auspice_json}
+        """
+
+
+rule minify_tree:
+    input:
+        auspice="auspice/nextclade_wnv_pretty.json",
+    output:
+        auspice="auspice/nextclade_wnv.json",
+    shell:
+        """
+        jq -c '.' {input.auspice} > {output.auspice}
+        """
+
+
+rule assemble_dataset:
+    input:
+        reference="resources/reference.fasta",
+        tree="auspice/nextclade_wnv.json",
+        pathogen_json="resources/pathogen.json",
+        examples="resources/examples.fasta",
+        annotation="resources/genome_annotation.gff3",
+        readme="resources/README.md",
+        changelog="resources/CHANGELOG.md",
+    output:
+        reference="datasets/reference.fasta",
+        tree="datasets/tree.json",
+        pathogen_json="datasets/pathogen.json",
+        examples="datasets/examples.fasta",
+        annotation="datasets/genome_annotation.gff3",
+        readme="datasets/README.md",
+        changelog="datasets/CHANGELOG.md",
+    shell:
+        """
+        cp {input.reference} {output.reference}
+        cp {input.tree} {output.tree}
+        cp {input.pathogen_json} {output.pathogen_json}
+        cp {input.examples} {output.examples}
+        cp {input.annotation} {output.annotation}
+        cp {input.readme} {output.readme}
+        cp {input.changelog} {output.changelog}
+        """
+
+
+rule test_dataset:
+    input:
+        tree="datasets/tree.json",
+        pathogen_json="datasets/pathogen.json",
+        sequences="datasets/sequences.fasta",
+        annotation="datasets/genome_annotation.gff3",
+        readme="datasets/README.md",
+        changelog="datasets/CHANGELOG.md",
+    output:
+        outdir=directory("test_output"),
+    params:
+        dataset_dir="datasets",
+    shell:
+        """
+        nextclade3 run \
+            {input.sequences} \
+            --input-dataset {params.dataset_dir} \
+            --output-all {output.outdir}
+        """
+
+
+rule clean:
+    # Removing directories: {params}"
+    params:
+        "results",
+        "auspice",
+    shell:
+        "rm -rfv {params}"
+
+
+rule cleanall:
+    # Removing directories: {params}"
+    params:
+        "results",
+        "auspice",
+        "data",
+        "logs",
+        "bin",
+    shell:
+        "rm -rfv {params}"
