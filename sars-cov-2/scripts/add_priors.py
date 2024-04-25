@@ -8,6 +8,11 @@ python3 scripts/add_priors.py \
     --tsv {input.tsv} \
     --output {output.tree}
 """
+import importlib.metadata as metadata
+import json
+
+import packaging.version as version
+import polars as pl
 import typer
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -22,13 +27,9 @@ def main(
     """
     Add placement priors from nextclade.ndjson.zst to auspice.json tree
     """
-    import json
-    import polars as pl
-    import pkg_resources
-    from packaging import version
 
     
-    polars_version = version.parse((pkg_resources.get_distribution("polars").version))
+    polars_version = version.parse(metadata.version("polars"))
 
     if polars_version < version.parse("0.18.0"):
         # rename `arr` to `list` for compatibility with polars < 0.18.0
@@ -40,14 +41,15 @@ def main(
             [
                 pl.col("nearestNodes"),
                 pl.col("nearestNodes")
-                .list.lengths()
-                .pow(-1)
+                .list.len().cast(pl.Float32)
+                .pow(-1).inspect()
                 .alias("1/nearestNodesListLength"),
             ]
         )
-        .filter(pl.col("nearestNodes").list.lengths() > 0)
+        .inspect()
+        .filter(pl.col("nearestNodes").list.len() > 0)
         .explode("nearestNodes")
-        .groupby("nearestNodes")
+        .group_by("nearestNodes")
         .sum()
         .sort("1/nearestNodesListLength", descending=True)
         .with_columns(
