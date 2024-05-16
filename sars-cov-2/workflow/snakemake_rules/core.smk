@@ -145,16 +145,15 @@ rule prune_constraint_tree:
     """
     input:
         strains="builds/{build_name}/strains.txt",
+        input_constraint="defaults/constraint{recombinant}.nwk",
     output:
         constraint_tree="builds/{build_name}/pruned_constraint{recombinant}.nwk",
-    params:
-        input_constraint="defaults/constraint{recombinant}.nwk",
     shell:
         """
-        if test -f "{params.input_constraint}"; then
-            echo "Pruning constraint tree {params.input_constraint} to only include sequences in the alignment";
+        if test -f "{input.input_constraint}"; then
+            echo "Pruning constraint tree {input.input_constraint} to only include sequences in the alignment";
             python3 scripts/prune_constraint_tree.py \
-                --constraint-tree {params.input_constraint} \
+                --constraint-tree {input.input_constraint} \
                 --strains {input.strains} \
                 --output {output.constraint_tree}
         else
