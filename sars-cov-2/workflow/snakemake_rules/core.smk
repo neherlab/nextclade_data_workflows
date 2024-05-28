@@ -157,7 +157,7 @@ rule prune_constraint_tree:
                 --strains {input.strains} \
                 --output {output.constraint_tree}
         else
-            echo "Using exmpty as constraint tree";
+            echo "Using empty as constraint tree";
             touch {output.constraint_tree};
         fi
         """
