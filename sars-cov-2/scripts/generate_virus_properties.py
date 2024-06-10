@@ -1,12 +1,10 @@
 #%%
 import json
 from collections import defaultdict
-from os import rename
 
 import pandas as pd
-import requests
+from pango_aliasor.aliasor import Aliasor
 from tqdm import tqdm
-from urllib3 import request
 
 #%%
 # Defines minimum proportions and counts for relevant mutations to keep
@@ -48,9 +46,7 @@ df.rename(columns={"clade_nextstrain": "Nextstrain_clade"}, inplace=True)
 
 #%%
 # Make unaliased pango column
-from pango_aliasor.aliasor import Aliasor
-import json
-import requests
+
 aliasor = Aliasor()
 
 #%%
@@ -75,10 +71,10 @@ def aggregate_mutations(series) -> defaultdict(int):
 #%%
 # Overwrite with new clade name when new clade not yet in data
 # Set to 23C if it starts with XBB.1.9
-df.loc[df["unaliased"].str.startswith("B.1.1.529.2.75.3.4.1.1.1.1"),"Nextstrain_clade"] = "23C"
-df.loc[df["unaliased"].str.startswith("XBB.1.9"),"Nextstrain_clade"] = "23D"
-df.loc[df["unaliased"].str.startswith("XBB.2.3"),"Nextstrain_clade"] = "23E"
-df.loc[df["unaliased"].str.startswith("XBB.1.9.2.5.1"),"Nextstrain_clade"] = "23F"
+# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.75.3.4.1.1.1.1"),"Nextstrain_clade"] = "23C"
+# df.loc[df["unaliased"].str.startswith("XBB.1.9"),"Nextstrain_clade"] = "23D"
+# df.loc[df["unaliased"].str.startswith("XBB.2.3"),"Nextstrain_clade"] = "23E"
+# df.loc[df["unaliased"].str.startswith("XBB.1.9.2.5.1"),"Nextstrain_clade"] = "23F"
 
 #%%
 clade_muts = (
