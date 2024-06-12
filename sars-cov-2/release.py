@@ -45,5 +45,5 @@ for path_part, url_part in path_to_url.items():
     # os.system(f"aws s3 cp {full_from_url(url_part)} {full_to_url(url_part)}")
 
 # Publish new tree
-os.system(f"aws s3 cp {full_from_url('')} {full_to_url('')}")
+#os.system(f"aws s3 cp {full_from_url('')} {full_to_url('')}")
 

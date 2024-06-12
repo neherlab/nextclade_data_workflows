@@ -71,13 +71,15 @@ rule add_nextclade_columns_to_meta:
 
 rule align:
     """
-    Only used for translations
-    As `sequences.fasta` is already aligned
+    Ensures consistent alignment with currently used alignment parameter
+    - Excess bandwidth
+    - Gap alignment side
     """
     input:
         sequences="builds/{build_name}/sequences.fasta",
         annotation="profiles/clades/{build_name}/annotation.gff",
-        reference="defaults/reference_seq.fasta",
+        reference="profiles/clades/{build_name}/reference.fasta",
+        pathogen_json="defaults/pathogen_json_base.json",
     output:
         alignment="builds/{build_name}/aligned.fasta",
         translations=directory(
@@ -90,6 +92,7 @@ rule align:
         """
         nextclade3 run \
             --jobs={threads} \
+            --input-pathogen-json {input.pathogen_json} \
             --input-ref {input.reference} \
             --input-annotation {input.annotation} \
             {input.sequences} \
@@ -100,7 +103,7 @@ rule align:
 
 rule mask:
     input:
-        alignment="builds/{build_name}/sequences.fasta",
+        alignment="builds/{build_name}/aligned.fasta",
     output:
         alignment="builds/{build_name}/masked.fasta",
     shell:
@@ -244,7 +247,7 @@ rule add_recombinants_to_tree:
 rule refine:
     input:
         tree=rules.add_recombinants_to_tree.output.tree,
-        alignment="builds/{build_name}/sequences.fasta",
+        alignment="builds/{build_name}/aligned.fasta",
         metadata="builds/{build_name}/metadata.tsv",
     output:
         tree="builds/{build_name}/tree.nwk",
