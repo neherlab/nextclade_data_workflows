@@ -49,7 +49,6 @@ tree-recombinants:
   - "XDQ"
   - "XDR"
   - "XDV"
-  - "XDY"
 
 ncovbranch: "master"
 
