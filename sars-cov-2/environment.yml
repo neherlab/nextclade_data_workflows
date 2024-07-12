@@ -3,10 +3,12 @@ channels:
 - conda-forge
 - bioconda
 dependencies:
-- augur
+- augur >=25.1
 - pango_aliasor
+- polars
+- python
 - seqkit
-- snakemake
+- snakemake >=7
 - typer
 - tsv-utils
 - tqdm
