@@ -1,0 +1,12 @@
+name: nextclade-sc2
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- augur
+- pango_aliasor
+- seqkit
+- snakemake
+- typer
+- tsv-utils
+- tqdm

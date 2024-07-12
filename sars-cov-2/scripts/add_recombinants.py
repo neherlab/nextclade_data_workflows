@@ -6,7 +6,6 @@
 # --output {output.tree} 2>&1 | tee {log}
 
 import typer
-import ipdb
 from pango_aliasor.aliasor import Aliasor
 
 
@@ -63,7 +62,7 @@ def main(
         if aliasor.parent(tip) is None:
             rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=tip, branch_length=10.0))
         else:
-            # ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             # check if internal parent node exists
             # if exists, attach there
             # if doesn't exist, create
