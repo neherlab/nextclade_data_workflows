@@ -523,7 +523,7 @@ rule generate_priors:
     output:
         ndjson="builds/{build_name}/nearest_nodes.ndjson",
     params:
-        sample_fraction=0.1 if "cluster" in config else 0.0001,
+        sample_fraction=0.1 if "cluster" in config else 0.0003,
     shell:
         """
         zstdcat -T2 {input.fasta} | \
