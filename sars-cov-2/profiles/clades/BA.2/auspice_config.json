@@ -12,33 +12,91 @@
           "name": "Nextclade_pango",
           "displayName": "Pango lineage (Nextclade)",
           "description": "Pango lineage as inferred by Nextclade from the nearest neighbour in the reference tree. 98% accurate for recent sequences, for higher accuracy use dedicated pangolin software in UShER or pangoLEARN mode. Recombinants may get (wrongly) assigned to a designated recombinant lineage if they have similar breakpoints.",
+          "skipAsReference": true,
           "hideInWeb": false
         },
         {
           "name": "partiallyAliased",
           "displayName": "Unaliased",
           "description": "Partially aliased reconstructed Pango lineage",
-          "hideInWeb": false
+          "skipAsReference": true,
+          "hideInWeb": true
         },
         {
           "name": "clade_nextstrain",
           "displayName": "Nextstrain Clade",
           "description": "Nextstrain Clade",
+          "skipAsReference": true,
           "hideInWeb": true
         },
         {
           "name": "clade_who",
           "displayName": "WHO name",
           "description": "Greek letter WHO name",
-          "hideInWeb": true
+          "skipAsReference": true,
+          "hideInWeb": false
         },
         {
           "name": "clade_display",
           "displayName": "Clade display name",
           "description": "Combination of Nextstrain clade and Pango lineage",
+          "skipAsReference": true,
           "hideInWeb": true
         }
       ],
+      "ref_nodes": {
+        "default": "__root__",
+        "search": [
+          {
+            "name": "JN.1",
+            "displayName": "JN.1 (24A)",
+            "description": "One of the variants recommended for the 2024/2025 COVID-19 vaccine",
+            "criteria": [
+              {
+                "qry": [
+                  {
+                    "clade": ["23I", "24A", "24B", "24C", "recombinant"]
+                  }
+                ],
+                "node": [
+                  {
+                    "name": ["JN.1"]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "XBB.1.5",
+            "displayName": "XBB.1.5 (23A)",
+            "description": "Variant recommended for the 2023/2024 COVID-19 vaccine",
+            "criteria": [
+              {
+                "qry": [
+                  {
+                    "clade": [
+                      "22F",
+                      "23A",
+                      "23B",
+                      "23C",
+                      "23D",
+                      "23E",
+                      "23F",
+                      "23G",
+                      "recombinant"
+                    ]
+                  }
+                ],
+                "node": [
+                  {
+                    "name": ["XBB.1.5"]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
       "placement_mask_ranges": [
         {
           "begin": 0,
