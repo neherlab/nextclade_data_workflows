@@ -20,7 +20,7 @@
           "displayName": "Unaliased",
           "description": "Partially aliased reconstructed Pango lineage",
           "skipAsReference": true,
-          "hideInWeb": true
+          "hideInWeb": false
         },
         {
           "name": "clade_nextstrain",
@@ -34,7 +34,7 @@
           "displayName": "WHO name",
           "description": "Greek letter WHO name",
           "skipAsReference": true,
-          "hideInWeb": false
+          "hideInWeb": true
         },
         {
           "name": "clade_display",
