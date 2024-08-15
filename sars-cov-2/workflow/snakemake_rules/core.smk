@@ -166,6 +166,21 @@ rule prune_constraint_tree:
         """
 
 
+rule create_dummy_pruned_constraint_tree:
+    """
+    Create a dummy pruned constraint tree when no constraint tree is provided
+    """
+    output:
+        constraint_tree="builds/{build_name}/pruned_constraint_{recombinant}.nwk",
+    shell:
+        """
+        touch {output.constraint_tree}
+        """
+
+
+ruleorder: prune_constraint_tree > create_dummy_pruned_constraint_tree
+
+
 rule tree:
     input:
         alignment="builds/{build_name}/masked_without_recombinants.fasta",
