@@ -190,7 +190,7 @@ rule tree:
         tree="builds/{build_name}/tree_raw.nwk",
     params:
         args=lambda w, input: f"-czb -g {input.constraint_tree} -ninit 1 -n 1",
-    threads: 4
+    threads: 2
     shell:
         """
         augur tree \
