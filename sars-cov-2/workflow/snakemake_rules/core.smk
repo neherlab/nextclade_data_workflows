@@ -153,16 +153,11 @@ rule prune_constraint_tree:
         constraint_tree="builds/{build_name}/pruned_constraint{recombinant}.nwk",
     shell:
         """
-        if test -f "{input.input_constraint}"; then
-            echo "Pruning constraint tree {input.input_constraint} to only include sequences in the alignment";
-            python3 scripts/prune_constraint_tree.py \
-                --constraint-tree {input.input_constraint} \
-                --strains {input.strains} \
-                --output {output.constraint_tree}
-        else
-            echo "Using empty as constraint tree";
-            touch {output.constraint_tree};
-        fi
+        echo "Pruning constraint tree {input.input_constraint} to only include sequences in the alignment";
+        python3 scripts/prune_constraint_tree.py \
+            --constraint-tree {input.input_constraint} \
+            --strains {input.strains} \
+            --output {output.constraint_tree}
         """
 
 
@@ -190,7 +185,6 @@ rule tree:
         tree="builds/{build_name}/tree_raw.nwk",
     params:
         args=lambda w, input: f"-czb -g {input.constraint_tree} -ninit 1 -n 1",
-    threads: 2
     shell:
         """
         augur tree \
@@ -198,7 +192,7 @@ rule tree:
             --exclude-sites {input.exclude_sites} \
             --tree-builder-args {params.args:q} \
             --output {output.tree} \
-            --nthreads {threads} 2>&1
+            --nthreads 1 2>&1
         """
 
 

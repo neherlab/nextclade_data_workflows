@@ -10,6 +10,7 @@ python3 scripts/prune_constraint_tree.py \
 import typer
 from Bio import Phylo
 
+
 def main(
     constraint_tree: str = typer.Option(..., help="Constraint tree"),
     strains: str = typer.Option(..., help="List of strains"),
@@ -22,6 +23,10 @@ def main(
         if clade.name not in strains:
             tree.prune(clade)
     Phylo.write(tree, output, "newick")
+    # If tree has fewer than 4 tips, output empty file
+    if len(tree.get_terminals()) < 4:
+        open(output, "w").close()
+        print("Pruned tree has fewer than 4 tips. Outputting empty file.")
 
 if __name__ == "__main__":
     typer.run(main)
