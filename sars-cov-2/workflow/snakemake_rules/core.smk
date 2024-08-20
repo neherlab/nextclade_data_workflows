@@ -347,7 +347,7 @@ rule preprocess_clades:
                 20J 21A 21B 21C 21D 21E 21F 21G 21H 21I 21J 21K 21M \
                 Alpha Beta Gamma Delta Epsilon Eta Theta Iota Kappa Lambda Mu;
             do
-                sed -i "/$clade/d" {output.clades};
+                sed -i'' "/$clade/d" {output.clades};
             done
         fi
         """
