@@ -1,5 +1,6 @@
 import typer
 
+
 # python scripts/overwrite_recombinant_clades.py \
 # --clades {input.clades_json} \
 # --output {output.clades_json}
@@ -11,6 +12,7 @@ def main(
     output: str = "",
 ):
     import json
+
     from pango_aliasor.aliasor import Aliasor
 
     # Load clades.json
@@ -33,7 +35,10 @@ def main(
         if uncompressed.startswith("X") or internal_pango["nodes"].get(node,{}).get("Nextclade_pango","").startswith(
             "X"
         ):
-            if uncompressed not in ["XBB"]:
+            # List all recombinants that define clade here
+            # Needs to be updated if new recombinants become clades
+            # XBB, XDV.1 are the only ones so far
+            if uncompressed not in ["XBB", "XDV.1"]:
                 value["clade_membership"] = "recombinant"
                 value.pop("clade_annotation", None)
             elif clade_type == "clade_who":
