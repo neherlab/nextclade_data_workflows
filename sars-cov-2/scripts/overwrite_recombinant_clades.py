@@ -38,7 +38,7 @@ def main(
             # List all recombinants that define clade here
             # Needs to be updated if new recombinants become clades
             # XBB, XDV.1 are the only ones so far
-            if uncompressed not in ["XBB", "XDV.1"]:
+            if uncompressed not in ["XBB", "XDV.1"] or uncompressed.startswith("XDV.1"):
                 value["clade_membership"] = "recombinant"
                 value.pop("clade_annotation", None)
             elif clade_type == "clade_who":
