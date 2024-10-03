@@ -1,5 +1,6 @@
 import typer
 
+
 # python scripts/overwrite_recombinant_clades.py \
 # --clades {input.clades_json} \
 # --output {output.clades_json}
@@ -11,6 +12,7 @@ def main(
     output: str = "",
 ):
     import json
+
     from pango_aliasor.aliasor import Aliasor
 
     # Load clades.json
@@ -24,20 +26,25 @@ def main(
 
     # Overwrite values with `recombinant` where `key` starts with X
     # May want to set up explicit mapping for each Pango recombinant -> clade, WHO name etc
-    for node, value in clades["nodes"].items():
-        try:
-            uncompressed = aliasor.uncompress(internal_pango["nodes"].get(node,{}).get("Nextclade_pango","")).split(".")[0]
-        except:
-            uncompressed = ""
 
-        if uncompressed.startswith("X") or internal_pango["nodes"].get(node,{}).get("Nextclade_pango","").startswith(
-            "X"
-        ):
-            if uncompressed not in ["XBB"]:
+    def startswith_in_list(string, startswith_list):
+        for startswith in startswith_list:
+            if string.startswith(startswith):
+                return True
+    for node, value in clades["nodes"].items():
+        pango_lineage = internal_pango["nodes"].get(node,{}).get("Nextclade_pango","")
+        try:
+            unaliased = aliasor.uncompress(pango_lineage)
+        except:
+            unaliased = ""
+
+        if unaliased.startswith("X"):
+            # List all recombinants that define clade here
+            # Needs to be updated if new recombinants become clades
+            # XBB, XDV.1 are the only ones so far
+            if not startswith_in_list(unaliased, ["XBB", "XDV.1"]):
                 value["clade_membership"] = "recombinant"
                 value.pop("clade_annotation", None)
-            elif clade_type == "clade_who":
-                value["clade_membership"] = "Omicron"
         
         if clade_type != "clade_nextstrain": # use clade_nextstrain for branch labels
             value.pop("clade_annotation", None)
