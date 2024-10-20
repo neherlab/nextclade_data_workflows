@@ -30,12 +30,12 @@ clades_with_high_proportion_threshold = [
     "19A",
 ]
 
-HIGH_THRESHOLD_PROPORTION = 0.7
+HIGH_THRESHOLD_PROPORTION = 0.5
 #%%
-# aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.gz .
+# aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.zst .
 df = pd.read_csv(
     "metadata.tsv.zst",
-    # "s3://nextstrain-ncov-private/metadata.tsv.gz",
+    # "s3://nextstrain-ncov-private/metadata.tsv.zst",
     sep="\t",
     usecols=["clade_nextstrain", "Nextclade_pango", "substitutions"],
     parse_dates=False,
@@ -48,8 +48,6 @@ df.rename(columns={"clade_nextstrain": "Nextstrain_clade"}, inplace=True)
 # Make unaliased pango column
 
 aliasor = Aliasor()
-
-#%%
 df["unaliased"] = df["Nextclade_pango"].apply(aliasor.uncompress)
 # %%
 def accumulate_mutations(acc: defaultdict(int), row) -> defaultdict(int):
@@ -127,6 +125,14 @@ for mutation, row in relevant.groupby("genotype"):
     )
 mut_dict = dict(sorted(mut_dict.items(), key=lambda item: int(item[0][:-1])))
 mut_dict
+
+#%%
+# Drop into /Users/corneliusromer/code/nextclade_data_workflows/sars-cov-2/defaults/labeled_muts.json
+MUTS_TO_DROP = ["21T", "44T"]
+for mut in MUTS_TO_DROP:
+    mut_dict.pop(mut, None)
+with open("defaults/labeled_muts.json", "w") as f_out:
+    json.dump({"nucMutLabelMap": mut_dict}, f_out, indent=2)
 #%%
 def reverse_a_dict(dict_of_lists):
     result = {}

@@ -15,7 +15,7 @@ rule recent_sequences:
     shell:
         """
         zstdcat {input} | \
-        tsv-filter -H --str-in-fld date:2023 | \
+        tsv-filter -H --str-in-fld date:2024 | \
         tsv-select -H -f strain,aaSubstitutions,frame_shifts > {output}
         """
 
@@ -73,7 +73,7 @@ rule rank_stops:
         tsv-select -H -f stops {input} \
         | tsv-summarize -H -w --group-by stops --count \
         | tsv-filter -H --not-regex stops:'^(ORF1a|ORF1b|N|M|S|E):.*' \
-        | tsv-filter -H --ge count:100 \
+        | tsv-filter -H --ge count:50 \
         | keep-header -- sort -k2 -rn -t$'\\t' \
         > {output} 
         """
@@ -105,14 +105,14 @@ rule format_frameshifts:
 
 rule old:
     input:
-        qc_json="../../nextclade_data/data/datasets/sars-cov-2-21L/references/BA.2/versions/2023-09-21T12:00:00Z/files/qc.json",
+        qc_json="../../nextclade_data/data/nextstrain/sars-cov-2/wuhan-hu-1/orfs/pathogen.json",
     output:
         stops="pre-processed/old_stops.ndjson",
         frameshifts="pre-processed/old_frameshifts.ndjson",
     shell:
         """
-        jq -c '.stopCodons.ignoredStopCodons[]' {input.qc_json} > {output.stops}
-        jq -c '.frameShifts.ignoredFrameShifts[]' {input.qc_json} > {output.frameshifts}
+        jq -c '.qc.stopCodons.ignoredStopCodons[]' {input.qc_json} > {output.stops}
+        jq -c '.qc.frameShifts.ignoredFrameShifts[]' {input.qc_json} > {output.frameshifts}
         """
 
 

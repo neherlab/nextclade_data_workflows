@@ -2618,6 +2618,10 @@
           "cdsName": "ORF8"
         },
         {
+          "codon": 60,
+          "cdsName": "ORF8"
+        },
+        {
           "codon": 63,
           "cdsName": "ORF8"
         },

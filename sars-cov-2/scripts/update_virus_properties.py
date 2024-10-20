@@ -19,7 +19,6 @@ def update_pathogen_json(path_old, path_new):
     old_full = json.load(open(path_old, "r"))
     old = old_full["mutLabels"]
     new = json.load(open(path_new, "r"))
-    old_copy = copy.deepcopy(old)
 
     # Need to keep the extra data
     # Pull in "rev" data
