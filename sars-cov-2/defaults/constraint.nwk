@@ -525,7 +525,11 @@
                                 (
                                   (
                                     KP.1.1.1,
-                                    MG.1
+                                    (
+                                      MG.1,
+                                      MG.2,
+                                      MG.3
+                                    )internal_8445159c
                                   )internal_ca64dc99,
                                   (
                                     KP.1.1.6,
