@@ -184,7 +184,7 @@ rule tree:
     output:
         tree="builds/{build_name}/tree_raw.nwk",
     params:
-        args=lambda w, input: f"-czb -g {input.constraint_tree} -ninit 1 -n 1",
+        args=lambda w, input: f"--polytomy -g {input.constraint_tree} -ninit 1 -n 1 -T 1",
     shell:
         """
         augur tree \
@@ -219,7 +219,7 @@ rule recombinant_tree:
             fi
             augur tree \
                 --alignment {input.alignment} \
-                --tree-builder-args "-czb -ninit 1 -n 1 $constraint" \
+                --tree-builder-args "--polytomy -ninit 1 -n 1 $constraint" \
                 --nthreads 1 \
                 --output {output.tree};
         fi
