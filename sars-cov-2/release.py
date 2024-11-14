@@ -23,6 +23,14 @@ path_to_url = {
     "BA.2": "_BA.2"
 }
 
+path_to_build = {
+    "wuhan-hu-1/orfs": "wuhan",
+    "wuhan-hu-1/proteins": "proteins",
+    "XBB": "XBB",
+    "BA.2.86": "BA.2.86",
+    "BA.2": "BA.2"
+}
+
 def full_path(path_part, filename="tree.json"):
     return f"~/code/nextclade_data/data/nextstrain/sars-cov-2/{path_part}/{filename}"
 
@@ -41,6 +49,8 @@ for path_part, url_part in path_to_url.items():
     os.system(f"echo '' >> {changelog_path}_temp")
     os.system(f"cat {changelog_path} >> {changelog_path}_temp")
     os.system(f"mv {changelog_path}_temp {changelog_path}")
+    # Copy new pathogen.json to nextclade_data
+    os.system(f"cp builds/{path_to_build[path_part]}/pathogen.json {full_path(path_part, 'pathogen.json')}")
     # Publish new tree
     # os.system(f"aws s3 cp {full_from_url(url_part)} {full_to_url(url_part)}")
 
