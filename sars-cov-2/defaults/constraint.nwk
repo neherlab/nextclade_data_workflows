@@ -405,13 +405,9 @@
                           (
                             JN.1.16.3,
                             (
-                              (
-                                NS.1,
-                                (
-                                  NS.1.1,
-                                  NS.1.2
-                                )internal_cd5b51c3
-                              )internal_7f8272ee,
+                              NS.1,
+                              NS.1.1,
+                              NS.1.2,
                               NS.2,
                               NS.3
                             )internal_be04e34d
