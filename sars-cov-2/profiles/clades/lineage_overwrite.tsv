@@ -1,5 +1,9 @@
 lineage	pos	char
 
+BA.2.86	44	T
+
+XEJ	44	T
+
 MC.1	13297	C
 
 MG.3	21651	-
@@ -45,6 +49,7 @@ XEK	23010	-
 XEK	23011	-
 XEK	23012	A
 XEK	23013	A
+XEK	26610	G
 
 XEJ	21618	T
 XEJ	21622	T
