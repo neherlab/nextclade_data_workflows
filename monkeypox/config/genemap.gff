@@ -1,3 +1,4 @@
+##gff-version 3
 ##sequence-region NC_063383.1 1 197209
 ##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=10244
 ##NC_063383.1	RefSeq	region	1	197209	.	+	.	ID=NC_063383.1:1..197209;Dbxref=taxon:10244;collection-date=2018-08;country=Nigeria: Rivers State;gbkey=Src;genome=genomic;genotype=West African clade;isolate=MPXV-M5312_HM12_Rivers;mol_type=genomic DNA;nat-host=Homo sapiens
