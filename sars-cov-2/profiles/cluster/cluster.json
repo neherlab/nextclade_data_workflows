@@ -8,7 +8,7 @@
   "generate_priors": {
     "time": "05:59:00",
     "qos": "6hours",
-    "n": 32,
+    "n": 50,
     "mem": "64G"
   },
   "fix_pango_lineages": {
