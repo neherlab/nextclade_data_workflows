@@ -4,8 +4,8 @@
 #SBATCH --error=log/%j.err                  # where to store error messages
 
 # activate conda environment
-conda activate py310simple
 . /scicore/home/neher/roemer0001/miniconda3/etc/profile.d/conda.sh
+conda activate py310simple
 export AUGUR_MINIFY_JSON=1
 export AUGUR_RECURSION_LIMIT=10000
 
