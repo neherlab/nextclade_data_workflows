@@ -8,9 +8,9 @@ Hence this script loads both old and new virus_properties.json and makes the nec
 import copy
 import json
 
-path_old = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/wuhan-hu-1/orfs/pathogen.json"
+path_old = "/Users/cr/code/nextclade_data/data/nextstrain/sars-cov-2/wuhan-hu-1/orfs/pathogen.json"
 # path_old = "/Users/corneliusromer/code/nextclade_data/data/datasets/sars-cov-2/references/MN908947/versions/2023-08-09T12:00:00Z/files/virus_properties.json"
-path_new = "/Users/corneliusromer/code/nextclade_data_workflows/sars-cov-2/virus_properties.json"
+path_new = "/Users/cr/code/nextclade_data_workflows/sars-cov-2/virus_properties.json"
 
 def update_pathogen_json(path_old, path_new):
     # path_out = "virus_properties_updated.json"
@@ -57,12 +57,12 @@ def update_pathogen_json(path_old, path_new):
         json.dump(old_full, f_out, indent=2, sort_keys=False)
 
 #%%    
-path_old = "/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/wuhan-hu-1/orfs/pathogen.json"
-path_new = "/Users/corneliusromer/code/nextclade_data_workflows/sars-cov-2/virus_properties.json"
+path_old = "/Users/cr/code/nextclade_data/data/nextstrain/sars-cov-2/wuhan-hu-1/orfs/pathogen.json"
+path_new = "/Users/cr/code/nextclade_data_workflows/sars-cov-2/virus_properties.json"
 update_pathogen_json(path_old, path_new)
 
 #
-paths = [f"/Users/corneliusromer/code/nextclade_data/data/nextstrain/sars-cov-2/{d}/pathogen.json" for d in ["wuhan-hu-1/orfs", "wuhan-hu-1/proteins", "BA.2", "BA.2.86", "XBB"]]
+paths = [f"/Users/cr/code/nextclade_data/data/nextstrain/sars-cov-2/{d}/pathogen.json" for d in ["wuhan-hu-1/orfs", "wuhan-hu-1/proteins", "BA.2", "BA.2.86", "XBB"]]
 for path in paths:
     update_pathogen_json(path, path_new)
 
