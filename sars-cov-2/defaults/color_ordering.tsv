@@ -24,6 +24,7 @@ clade_membership	24G
 clade_membership	24H
 clade_membership	24I
 clade_membership	25A
+clade_membership	25B
 
 clade	21L
 clade	22A
@@ -51,6 +52,7 @@ clade	24G
 clade	24H
 clade	24I
 clade	25A
+clade	25B
 
 clade_legacy	21L (Omicron)
 clade_legacy	22A (Omicron)
@@ -78,6 +80,7 @@ clade_legacy	24G (Omicron)
 clade_legacy	24H (Omicron)
 clade_legacy	24I (Omicron)
 clade_legacy	25A (Omicron)
+clade_legacy	25B (Omicron)
 
 clade_nextstrain	21L
 clade_nextstrain	22A
@@ -105,6 +108,7 @@ clade_nextstrain	24G
 clade_nextstrain	24H
 clade_nextstrain	24I
 clade_nextstrain	25A
+clade_nextstrain	25B
 
 clade_who	Alpha
 clade_who	Beta
