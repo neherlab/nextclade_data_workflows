@@ -51,10 +51,12 @@ tree-recombinants:
   - "XDV"
   - "XDY"
   - "XEC"
+  - "XEF"
   - "XEJ"
   - "XEK"
   - "XEL"
   - "XEN"
+  - "XFG"
 
 ncovbranch: "master"
 
