@@ -56,8 +56,11 @@ tree-recombinants:
   - "XEK"
   - "XEL"
   - "XEN"
+  - "XEP"
   - "XFB"
+  - "XFC"
   - "XFG"
+  - "XFH"
   - "XFJ"
 
 ncovbranch: "master"
