@@ -56,3 +56,14 @@ python scripts/generate_ace2_json.py \
   --reference-spike profiles/clades/XBB/spike_translation.fasta  \
   --output profiles/clades/XBB/pathogen_json/ace2.json
 ```
+
+## Updating virus properties
+
+```sh
+#!/bin/bash
+cd ~/code
+for d in BA.2.86 wuhan-hu-1/{orfs,proteins}; do
+  F=./nextclade_data/data/nextstrain/sars-cov-2/$d/pathogen.json
+  jq --slurpfile v ./nextclade_data_workflows/sars-cov-2/virus_properties.json '.mutLabels.nucMutLabelMap=$v[0].nucMutLabelMap' $F | sponge $F
+done
+```

@@ -18,17 +18,13 @@ import os
 path_to_url = {
     "wuhan-hu-1/orfs": "",
     "wuhan-hu-1/proteins": "_proteins",
-    "XBB": "_XBB",
     "BA.2.86": "_BA.2.86",
-    "BA.2": "_BA.2"
 }
 
 path_to_build = {
     "wuhan-hu-1/orfs": "wuhan",
     "wuhan-hu-1/proteins": "proteins",
-    "XBB": "XBB",
     "BA.2.86": "BA.2.86",
-    "BA.2": "BA.2"
 }
 
 def full_path(path_part, filename="tree.json"):
