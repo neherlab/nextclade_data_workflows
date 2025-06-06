@@ -42,7 +42,8 @@ def main(
             # List all recombinants that define clade here
             # Needs to be updated if new recombinants become clades
             # XBB, XDV.1 are the only ones so far
-            if not startswith_in_list(unaliased, ["XBB", "XDV.1", "XEC"]):
+            # 22F, 24F, 25B, 25C, ...
+            if not startswith_in_list(unaliased, ["XBB", "XDV.1", "XEC", "XFG"]):
                 value["clade_membership"] = "recombinant"
                 value.pop("clade_annotation", None)
         
