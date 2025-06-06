@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Add newly designated Nextstrain clade 25C (XFG)
+- Add labeled mutations for clades 25B (NB.1.8.1) and 25C (XFG) to help identify recombinants
 - Add all 187 Pango lineages newly designated between 2025-05-05 and 2025-06-06. Unfold below to see a list of all newly included lineages with their designation dates:
 
 <details>
