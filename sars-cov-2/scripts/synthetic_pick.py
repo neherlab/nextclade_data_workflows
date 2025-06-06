@@ -1,6 +1,5 @@
-import typer
-
 import pandas as pd
+import typer
 from pango_aliasor.aliasor import Aliasor
 
 
@@ -42,7 +41,7 @@ def main(
                 # Exclude BA.1 and BA.3s
                 if aliasor.uncompress(lineage).startswith(
                     "B.1.1.529.1"
-                ) or aliasor.uncompress(lineage).startswith("B.1.1.529.3"):
+                ):
                     continue
                 # Exclude non-BA.2 recombinants
                 if top_parent(lineage) in excluded_recombinants:

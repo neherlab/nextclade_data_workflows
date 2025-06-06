@@ -73,6 +73,10 @@ def aggregate_mutations(series) -> defaultdict(int):
 # df.loc[df["unaliased"].str.startswith("XBB.1.9"),"Nextstrain_clade"] = "23D"
 # df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.16.1.7"),"Nextstrain_clade"] = "24H"
 # df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.49.1.1.1.1.1"),"Nextstrain_clade"] = "24I"
+# XDV.1.5.1.1.8.1 is 24B
+# XFG is 24C
+df.loc[df["unaliased"].str.startswith("XDV.1.5.1.1.8.1"),"Nextstrain_clade"] = "25B"
+df.loc[df["unaliased"].str.startswith("XFG"),"Nextstrain_clade"] = "25C"
 
 #%%
 clade_muts = (
