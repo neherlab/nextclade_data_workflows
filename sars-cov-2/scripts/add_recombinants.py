@@ -17,7 +17,7 @@ def main(
     alias_file: str = "pre-processed/alias.json",
     output: str = "builds/nextclade/tree_with_recombinants.nwk",
 ):
-    from Bio import Phylo 
+    from Bio import Phylo
 
     aliasor = Aliasor(alias_file)
 
@@ -88,6 +88,10 @@ def main(
         rec_name = top_parent(rec_name)
         added.add(rec_name)
         print(rec_name)
+        # Special case: single tip
+        if len(recombinant_tree.get_terminals()) == 1:
+            rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=rec_name, branch_length=10.0))
+            continue
         recombinant_tree.root_with_outgroup(rec_name)
         recombinant_tree.root.name = f"internal_{rec_name}"
         recombinant_tree.root.branch_length=10.0
