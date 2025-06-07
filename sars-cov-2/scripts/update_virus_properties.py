@@ -62,7 +62,7 @@ path_new = "/Users/cr/code/nextclade_data_workflows/sars-cov-2/virus_properties.
 update_pathogen_json(path_old, path_new)
 
 #
-paths = [f"/Users/cr/code/nextclade_data/data/nextstrain/sars-cov-2/{d}/pathogen.json" for d in ["wuhan-hu-1/orfs", "wuhan-hu-1/proteins", "BA.2", "BA.2.86", "XBB"]]
+paths = [f"/Users/cr/code/nextclade_data/data/nextstrain/sars-cov-2/{d}/pathogen.json" for d in ["wuhan-hu-1/orfs", "wuhan-hu-1/proteins", "BA.2.86"]]
 for path in paths:
     update_pathogen_json(path, path_new)
 
