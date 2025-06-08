@@ -41,7 +41,25 @@ rule download_sequences:
         "aws s3 cp {params.address} {output}"
 
 
+rule trigger_designation_date_workflow:
+    output:
+        "builds/designation_dates_triggered.txt",
+    shell:
+        """
+        gh workflow run \
+            ci.yaml \
+            --repo corneliusroemer/pango-designation-dates \
+        || true # optional step, don't fail if secrets missing
+        sleep 180
+        touch {output}
+        """
+
+
 rule download_designation_dates:
+    input:
+        # make dependent on synthetic sequences just to delay until action is done
+        delay_sentinel="pre-processed/synthetic.fasta",
+        trigger_sentinel="builds/designation_dates_triggered.txt",
     output:
         designation_dates="builds/designation_dates.tsv",
     shell:
