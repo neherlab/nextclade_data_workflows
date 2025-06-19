@@ -63,6 +63,7 @@ tree-recombinants:
   - "XFG"
   - "XFH"
   - "XFJ"
+  - "XFP"
 
 ncovbranch: "master"
 
