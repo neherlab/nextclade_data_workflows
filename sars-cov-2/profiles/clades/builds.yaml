@@ -4,7 +4,7 @@ title: "Nextclade Reference Tree for SARS-CoV-2"
 
 path-to-build:
   wuhan-hu-1/orfs: "wuhan"
-  #wuhan-hu-1/proteins: "proteins"
+  wuhan-hu-1/proteins: "proteins"
   #BA.2: "BA.2"
   BA.2.86: "BA.2.86"
   #XBB: "XBB"
