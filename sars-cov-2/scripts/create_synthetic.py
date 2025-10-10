@@ -128,7 +128,11 @@ def main(
             lineage_muts = set(muts[parent_lineage])
 
         for mut, (present, total) in reversion_check(lineage, lineage_muts).items():
-            if total > 3 and present / total < 0.2:
+            # Position 44 has artefactual flipping, require stricter thresholds
+            if mut[0] == 44:
+                if total > 15 and present / total < 0.1:
+                    lineage_muts.remove(mut)
+            elif total > 3 and present / total < 0.2:
                 lineage_muts.remove(mut)
 
         try:
