@@ -69,6 +69,7 @@ tree-recombinants:
   - "XFT"
   - "XFV"
   - "XFW"
+  - "XFZ"
 
 ncovbranch: "master"
 
