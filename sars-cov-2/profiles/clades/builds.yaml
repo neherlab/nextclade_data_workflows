@@ -71,6 +71,7 @@ tree-recombinants:
   - "XFW"
   - "XFY"
   - "XFZ"
+  - "XGA"
 
 ncovbranch: "master"
 
