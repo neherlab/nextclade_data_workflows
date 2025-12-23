@@ -16,13 +16,14 @@ rule synthetic_pick:
         alias_file="pre-processed/alias.json",
         excluded_recombinants="profiles/clades/{build_name}/excluded_recombinants.txt",
         excludes="profiles/clades/excludes.txt",
+        script="scripts/synthetic_pick.py",
     output:
         strains="builds/{build_name}/chosen_synthetic_strains.txt",
     params:
         strain_set=lambda w: config["strainSet"][w.build_name],
     shell:
         """
-        python scripts/synthetic_pick.py \
+        python {input.script} \
             --counts {input.counts} \
             --lineages {input.lineages} \
             --alias-file {input.alias_file} \
@@ -48,11 +49,12 @@ rule synthetic_select:
 rule add_synthetic_metadata:
     input:
         synthetic=rules.synthetic_pick.output.strains,
+        script="scripts/add_synthetic_metadata.py",
     output:
         metadata="builds/{build_name}/metadata.tsv",
     shell:
         """
-        python3 scripts/add_synthetic_metadata.py \
+        python3 {input.script} \
             --synthetic {input.synthetic} \
             --outfile {output.metadata}
         """
@@ -61,11 +63,12 @@ rule add_synthetic_metadata:
 rule add_designation_recency:
     input:
         designation_dates=rules.download_designation_dates.output.designation_dates,
+        script="scripts/add_designation_recency.py",
     output:
         metadata="builds/{build_name}/designation_dates.tsv",
     shell:
         """
-        python3 scripts/add_designation_recency.py \
+        python3 {input.script} \
             {input.designation_dates} \
             {output}
         """

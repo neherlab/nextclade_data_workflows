@@ -121,6 +121,7 @@ rule separate_recombinants:
     input:
         alignment=rules.mask.output.alignment,
         alias_json=rules.download_pango_alias.output,
+        script="scripts/separate_recombinants.py",
     output:
         without_recombinants="builds/{build_name}/masked_without_recombinants.fasta",
         recombinant_alignments=expand(
@@ -132,7 +133,7 @@ rule separate_recombinants:
         tree_recombinants=",".join(config["tree-recombinants"]),
     shell:
         """
-        python3 scripts/separate_recombinants.py \
+        python3 {input.script} \
             --alignment {input.alignment} \
             --output-without-recombinants {output.without_recombinants} \
             --output-recombinant "builds/{wildcards.build_name}" \
@@ -149,12 +150,13 @@ rule prune_constraint_tree:
     input:
         strains="builds/{build_name}/strains.txt",
         input_constraint="defaults/constraint{recombinant}.nwk",
+        script="scripts/prune_constraint_tree.py",
     output:
         constraint_tree="builds/{build_name}/pruned_constraint{recombinant}.nwk",
     shell:
         """
         echo "Pruning constraint tree {input.input_constraint} to only include sequences in the alignment";
-        python3 scripts/prune_constraint_tree.py \
+        python3 {input.script} \
             --constraint-tree {input.input_constraint} \
             --strains {input.strains} \
             --output {output.constraint_tree}
@@ -200,13 +202,14 @@ rule recombinant_tree:
     input:
         alignment="builds/{build_name}/masked_recombinant_{recombinant}.fasta",
         constraint="builds/{build_name}/pruned_constraint_{recombinant}.nwk",
+        simple_tree_script="scripts/simple_tree.py",
     output:
         tree="builds/{build_name}/tree_raw_{recombinant}.nwk",
     shell:
         """
         # Check if there are 3 or more sequences in the alignment
         if [ $(grep -c ">" {input.alignment}) -lt 3 ]; then
-            python scripts/simple_tree.py \
+            python {input.simple_tree_script} \
                 --alignment {input.alignment} \
                 --tree {output.tree};
         else 
@@ -237,6 +240,7 @@ rule add_recombinants_to_tree:
             "builds/{{build_name}}/tree_raw_{recombinant}.nwk",
             recombinant=config["tree-recombinants"],
         ),
+        script="scripts/add_recombinants.py",
     output:
         tree="builds/{build_name}/tree_with_recombinants.nwk",
     params:
@@ -244,7 +248,7 @@ rule add_recombinants_to_tree:
         joined_trees=lambda w, input: ",".join(input.recombinant_trees),
     shell:
         """
-        python scripts/add_recombinants.py \
+        python {input.script} \
             --tree {input.tree} \
             --recombinants {input.recombinants} \
             --recombinant-trees {params.joined_trees} \
@@ -313,11 +317,12 @@ rule internal_pango:
         alias=rules.download_pango_alias.output,
         synthetic=rules.synthetic_pick.output,
         designations=rules.pango_strain_rename.output.pango_designations,
+        script="scripts/internal_pango.py",
     output:
         node_data="builds/{build_name}/internal_pango.json",
     shell:
         """
-        python scripts/internal_pango.py \
+        python {input.script} \
             --tree {input.tree} \
             --synthetic {input.synthetic} \
             --alias {input.alias} \
@@ -358,6 +363,7 @@ rule clades_display:
         tree=rules.refine.output.tree,
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/{build_name}/clades_display.tsv",
+        overwrite_recombinant_clades="scripts/overwrite_recombinant_clades.py",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
@@ -370,7 +376,7 @@ rule clades_display:
             --mutations {input.nuc_muts} \
             --clades {input.clades} \
             --output-node-data {params.tmp}
-        python scripts/overwrite_recombinant_clades.py \
+        python {input.overwrite_recombinant_clades} \
             --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
@@ -386,6 +392,7 @@ rule clades:
         tree=rules.refine.output.tree,
         nuc_muts=rules.ancestral.output.node_data,
         clades="builds/{build_name}/clades_nextstrain.tsv",
+        overwrite_recombinant_clades="scripts/overwrite_recombinant_clades.py",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
@@ -399,7 +406,7 @@ rule clades:
             --mutations {input.nuc_muts} \
             --clades {input.clades} \
             --output-node-data {params.tmp}
-        python scripts/overwrite_recombinant_clades.py \
+        python {input.overwrite_recombinant_clades} \
             --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
@@ -416,6 +423,7 @@ rule clades_who:
         tree=rules.refine.output.tree,
         nuc_muts=rules.ancestral.output.node_data,
         clades="profiles/clades/clades_who.tsv",
+        overwrite_recombinant_clades="scripts/overwrite_recombinant_clades.py",
         internal_pango=rules.internal_pango.output.node_data,
         alias=rules.download_pango_alias.output,
     output:
@@ -428,7 +436,7 @@ rule clades_who:
             --mutations {input.nuc_muts} \
             --clades {input.clades} \
             --output-node-data {params.tmp}
-        python scripts/overwrite_recombinant_clades.py \
+        python {input.overwrite_recombinant_clades} \
             --clades {params.tmp} \
             --internal-pango {input.internal_pango} \
             --alias {input.alias} \
@@ -445,11 +453,12 @@ rule colors:
         ordering="defaults/color_ordering.tsv",
         color_schemes="defaults/color_schemes.tsv",
         metadata="builds/{build_name}/metadata.tsv",
+        script="scripts/assign-colors.py",
     output:
         colors="builds/{build_name}/colors.tsv",
     shell:
         """
-        python3 scripts/assign-colors.py \
+        python3 {input.script} \
             --ordering {input.ordering} \
             --color-schemes {input.color_schemes} \
             --output {output.colors} \
@@ -554,11 +563,12 @@ rule add_priors:
     input:
         auspice_json=rules.export.output.auspice_json,
         ndjson="builds/{build_name}/nearest_nodes.ndjson",
+        script="scripts/add_priors.py",
     output:
         auspice_json="builds/{build_name}/auspice_priors.json",
     shell:
         """
-        python3 scripts/add_priors.py \
+        python3 {input.script} \
             --tree {input.auspice_json} \
             --ndjson {input.ndjson} \
             --output {output.auspice_json}
@@ -569,11 +579,12 @@ rule add_branch_labels:
     input:
         auspice_json=rules.add_priors.output.auspice_json,
         mutations=rules.ancestral.output.node_data,
+        script="scripts/add_branch_labels.py",
     output:
         auspice_json="auspice/{build_name}/auspice_max.json",
     shell:
         """
-        python3 scripts/add_branch_labels.py \
+        python3 {input.script} \
             --input {input.auspice_json} \
             --mutations {input.mutations} \
             --output {output.auspice_json}
