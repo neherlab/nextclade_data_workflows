@@ -54,11 +54,12 @@ rule filter_stops:
     input:
         aa="pre-processed/aa_substitutions.tsv",
         exclude="defaults/stops_exclude.txt",
+        script="scripts/filter_stops.py",
     output:
         "pre-processed/stops_long.tsv",
     shell:
         """
-        python scripts/filter_stops.py --input-file {input.aa} --output-file /dev/stdout | \
+        python {input.script} --input-file {input.aa} --output-file /dev/stdout | \
         grep -v -f {input.exclude} > {output}
         """
 
@@ -81,24 +82,26 @@ rule rank_stops:
 
 rule format_stops:
     input:
-        "pre-processed/stops.tsv",
+        stops="pre-processed/stops.tsv",
+        script="scripts/common_stops.py",
     output:
         "pre-processed/common_stops.ndjson",
     shell:
         """
-        python scripts/common_stops.py --number 100 --input-file {input} \
+        python {input.script} --number 100 --input-file {input.stops} \
         | jq -c '.' >{output}
         """
 
 
 rule format_frameshifts:
     input:
-        "pre-processed/frameshifts.tsv",
+        frameshifts="pre-processed/frameshifts.tsv",
+        script="scripts/common_frameshifts.py",
     output:
         "pre-processed/common_frameshifts.ndjson",
     shell:
         """
-        python scripts/common_frameshifts.py --number 500 --input-file {input} \
+        python {input.script} --number 500 --input-file {input.frameshifts} \
         | jq -c '.' >{output}
         """
 

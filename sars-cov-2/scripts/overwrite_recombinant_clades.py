@@ -43,7 +43,7 @@ def main(
             # Needs to be updated if new recombinants become clades
             # XBB, XDV.1 are the only ones so far
             # 22F, 24F, 25B, 25C, ...
-            if not startswith_in_list(unaliased, ["XBB", "XDV.1", "XEC", "XFG"]):
+            if not startswith_in_list(unaliased, ["XBB", "XDV.1", "XEC", "XFG", "XFC", "XFJ"]):
                 value["clade_membership"] = "recombinant"
                 value.pop("clade_annotation", None)
         

@@ -100,11 +100,12 @@ rule nextstrain_clades_to_legacy:
     input:
         clade_file="builds/clades_nextstrain.tsv",
         display_names="builds/clade_display_names.yml",
+        script="scripts/rename_clades.py",
     output:
         "builds/clades_display.tsv",
     shell:
         """
-        python3 scripts/rename_clades.py \
+        python3 {input.script} \
             --input-clade-files {input.clade_file} \
             --name-mapping {input.display_names} \
             --output-clades {output}
@@ -146,12 +147,13 @@ rule pango_strain_rename:
     input:
         metadata_strainnames="pre-processed/metadata_strainnames.tsv.zst",
         pango="pre-processed/designations.csv",
+        script="scripts/pango_strain_rename.py",
     output:
         pango_designations="pre-processed/pango_designations_nextstrain_names.csv",
         pango_designated_strains="pre-processed/pango_designated_strains_nextstrain_names.txt",
     shell:
         """
-        python3 scripts/pango_strain_rename.py \
+        python3 {input.script} \
         --metadata-strainnames {input.metadata_strainnames} \
         --pango-in {input.pango} \
         --pango-designations {output.pango_designations} \
@@ -212,12 +214,13 @@ rule fix_pango_lineages:
     input:
         pango_designations="pre-processed/pango_designations_nextstrain_names.csv",
         metadata="data/metadata.tsv.zst",
+        script="scripts/fix_open_pango_lineages.py",
     output:
         metadata="pre-processed/open_pango_metadata.tsv.zst",
     shell:
         """
         zstdcat {input.metadata} | \
-        python3 scripts/fix_open_pango_lineages.py \
+        python3 {input.script} \
         --metadata /dev/stdin \
         --designations {input.pango_designations} \
         --output /dev/stdout | \
@@ -289,12 +292,13 @@ rule lineage_stats:
     input:
         reference="references/MN908947/reference.fasta",
         meta=rules.join_meta_nextclade.output,
+        script="scripts/lineage_matrix.py",
     output:
         outfile="pre-processed/pango_matrix.npz",
     shell:
         """
         zstdcat {input.meta} | \
-        python3 scripts/lineage_matrix.py \
+        python3 {input.script} \
             --ref {input.reference} \
             --meta /dev/stdin \
             --out {output.outfile}
@@ -307,11 +311,12 @@ rule make_synthetic_pangos:
         matrix=rules.lineage_stats.output.outfile,
         alias=rules.download_pango_alias.output,
         overwrites="profiles/clades/lineage_overwrite.tsv",
+        script="scripts/create_synthetic.py",
     output:
         outfile="pre-processed/synthetic.fasta",
     shell:
         """
-        python3 scripts/create_synthetic.py \
+        python3 {input.script} \
             --ref {input.reference} \
             --matrix {input.matrix} \
             --alias {input.alias} \

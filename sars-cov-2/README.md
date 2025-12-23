@@ -6,6 +6,14 @@
 snakemake -c10 --profile profiles/clades -F
 ```
 
+## Maintainer checklist: adding new clades
+
+- Update clade definitions from `nextstrain/ncov` (clades.tsv + clade display names) and re-run the preprocess rules that generate `builds/clades_nextstrain.tsv` and `builds/clades_display.tsv`.
+- If the clade is recombinant, add its unaliased prefix (e.g. `XFC`, `XFJ`) to the allow-list in `scripts/overwrite_recombinant_clades.py` so it is not overwritten to `recombinant`.
+- Ensure `defaults/color_ordering.tsv` and the `profiles/clades/*/auspice_config.json` clade lists include the new clade so colors + filters are rendered in Auspice.
+- Regenerate `virus_properties.json` / `defaults/labeled_muts.json` if new clades should appear in labeled mutations and Nextclade annotations.
+- After the build, verify the clade shows up in `builds/*/clades_nextstrain.json`, `builds/*/colors.tsv`, and `auspice/*/auspice.json` (and that it is not collapsed to `recombinant`).
+
 ## TODO
 
 - Produce entire datasets in workflow, not just tree

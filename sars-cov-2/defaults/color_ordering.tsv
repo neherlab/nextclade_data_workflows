@@ -1,18 +1,3 @@
-clade_membership	21L
-clade_membership	22A
-clade_membership	22B
-clade_membership	22C
-clade_membership	22D
-clade_membership	22E
-clade_membership	22F
-clade_membership	23A
-clade_membership	23B
-clade_membership	23C
-clade_membership	23D
-clade_membership	23E
-clade_membership	23F
-clade_membership	23G
-clade_membership	23H
 clade_membership	23I
 clade_membership	24A
 clade_membership	24B
@@ -26,22 +11,13 @@ clade_membership	24I
 clade_membership	25A
 clade_membership	25B
 clade_membership	25C
+clade_membership	25D
+clade_membership	25E
+clade_membership	25F
+clade_membership	25G
+clade_membership	25H
+clade_membership	25I
 
-clade	21L
-clade	22A
-clade	22B
-clade	22C
-clade	22D
-clade	22E
-clade	22F
-clade	23A
-clade	23B
-clade	23C
-clade	23D
-clade	23E
-clade	23F
-clade	23G
-clade	23H
 clade	23I
 clade	24A
 clade	24B
@@ -55,22 +31,13 @@ clade	24I
 clade	25A
 clade	25B
 clade	25C
+clade	25D
+clade	25E
+clade	25F
+clade	25G
+clade	25H
+clade	25I
 
-clade_legacy	21L (Omicron)
-clade_legacy	22A (Omicron)
-clade_legacy	22B (Omicron)
-clade_legacy	22C (Omicron)
-clade_legacy	22D (Omicron)
-clade_legacy	22E (Omicron)
-clade_legacy	22F (Omicron)
-clade_legacy	23A (Omicron)
-clade_legacy	23B (Omicron)
-clade_legacy	23C (Omicron)
-clade_legacy	23D (Omicron)
-clade_legacy	23E (Omicron)
-clade_legacy	23F (Omicron)
-clade_legacy	23G (Omicron)
-clade_legacy	23H (Omicron)
 clade_legacy	23I (Omicron)
 clade_legacy	24A (Omicron)
 clade_legacy	24B (Omicron)
@@ -84,22 +51,13 @@ clade_legacy	24I (Omicron)
 clade_legacy	25A (Omicron)
 clade_legacy	25B (Omicron)
 clade_legacy	25C (Omicron)
+clade_legacy	25D (Omicron)
+clade_legacy	25E (Omicron)
+clade_legacy	25F (Omicron)
+clade_legacy	25G (Omicron)
+clade_legacy	25H (Omicron)
+clade_legacy	25I (Omicron)
 
-clade_nextstrain	21L
-clade_nextstrain	22A
-clade_nextstrain	22B
-clade_nextstrain	22C
-clade_nextstrain	22D
-clade_nextstrain	22E
-clade_nextstrain	22F
-clade_nextstrain	23A
-clade_nextstrain	23B
-clade_nextstrain	23C
-clade_nextstrain	23D
-clade_nextstrain	23E
-clade_nextstrain	23F
-clade_nextstrain	23G
-clade_nextstrain	23H
 clade_nextstrain	23I
 clade_nextstrain	24A
 clade_nextstrain	24B
@@ -113,6 +71,12 @@ clade_nextstrain	24I
 clade_nextstrain	25A
 clade_nextstrain	25B
 clade_nextstrain	25C
+clade_nextstrain	25D
+clade_nextstrain	25E
+clade_nextstrain	25F
+clade_nextstrain	25G
+clade_nextstrain	25H
+clade_nextstrain	25I
 
 clade_who	Alpha
 clade_who	Beta
@@ -1921,4 +1885,3 @@ designation_date	2025-12-28
 designation_date	2025-12-29
 designation_date	2025-12-30
 designation_date	2025-12-31
-
