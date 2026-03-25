@@ -4,7 +4,7 @@ import itertools
 # import sys
 # sys.path.insert(1, '/Users/cr/code/treetime')
 # import treetime
-import augur.utils
+import augur.io
 import Bio.Align
 import click
 import pandas as pd
@@ -187,7 +187,7 @@ def main(designations, tree, alias, build_name, synthetic, output, field_name):
 
     export_df = meta[[field_name, "partiallyAliased"]]
     #%%
-    augur.utils.write_json(
+    augur.io.write_json(
         {
             "nodes": export_df
             # .to_frame()  # Necessary to prevent slash escape
