@@ -173,10 +173,18 @@ def main(
             template[pos - 1] = char
         return "".join(template)
 
+    def parse_positions(pos_str):
+        pos_str = str(pos_str)
+        if "-" in pos_str:
+            parts = pos_str.split("-", 1)
+            if parts[0].isdigit() and parts[1].isdigit():
+                return range(int(parts[0]), int(parts[1]) + 1)
+        return [int(pos_str)]
+
     if overwrites != "":
         import pandas as pd
 
-        overwrite_file = pd.read_csv(overwrites, sep="\t")
+        overwrite_file = pd.read_csv(overwrites, sep="\t", dtype={"pos": str})
 
         wildcard_rows = []
         exact_rows = []
@@ -197,7 +205,7 @@ def main(
         for row in wildcard_rows:
             base_lineage = row["lineage"].rstrip("*")
             base_uncompressed = aliasor.uncompress(base_lineage)
-            pos = int(row["pos"])
+            positions = parse_positions(row["pos"])
             char = row["char"]
             for lin in npzfile.files:
                 try:
@@ -207,22 +215,24 @@ def main(
                 if lin_uncompressed == base_uncompressed or lin_uncompressed.startswith(base_uncompressed + "."):
                     if lin not in overwrite_dict:
                         overwrite_dict[lin] = set()
-                    overwrite_dict[lin] = set(
-                        mut for mut in overwrite_dict[lin] if mut[0] != pos
-                    )
-                    overwrite_dict[lin].add((pos, char))
+                    for pos in positions:
+                        overwrite_dict[lin] = set(
+                            mut for mut in overwrite_dict[lin] if mut[0] != pos
+                        )
+                        overwrite_dict[lin].add((pos, char))
 
         # Apply exact entries last (highest priority)
         for row in exact_rows:
             lineage = row["lineage"]
-            pos = int(row["pos"])
+            positions = parse_positions(row["pos"])
             char = row["char"]
             if lineage not in overwrite_dict:
                 overwrite_dict[lineage] = set()
-            overwrite_dict[lineage] = set(
-                mut for mut in overwrite_dict[lineage] if mut[0] != pos
-            )
-            overwrite_dict[lineage].add((pos, char))
+            for pos in positions:
+                overwrite_dict[lineage] = set(
+                    mut for mut in overwrite_dict[lineage] if mut[0] != pos
+                )
+                overwrite_dict[lineage].add((pos, char))
 
     with open(out, "w") as f:
         muts = {}
