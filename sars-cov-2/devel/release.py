@@ -48,8 +48,8 @@ for path_part, url_part in path_to_url.items():
     # Copy new pathogen.json to nextclade_data
     os.system(f"cp builds/{path_to_build[path_part]}/pathogen.json {full_path(path_part, 'pathogen.json')}")
     # Publish new tree
-    # os.system(f"aws s3 cp {full_from_url(url_part)} {full_to_url(url_part)}")
+    os.system(f"aws s3 cp {full_from_url(url_part)} {full_to_url(url_part)}")
 
 # Publish new tree
-#os.system(f"aws s3 cp {full_from_url('')} {full_to_url('')}")
+os.system(f"aws s3 cp {full_from_url('')} {full_to_url('')}")
 
