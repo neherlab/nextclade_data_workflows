@@ -13,6 +13,7 @@ path_old = "/Users/cr/code/nextclade_data/data/nextstrain/sars-cov-2/wuhan-hu-1/
 path_new = "/Users/cr/code/nextclade_data_workflows/sars-cov-2/virus_properties.json"
 
 def update_pathogen_json(path_old, path_new):
+    print(f"Updating {path_old} with new mutations from {path_new}")
     # path_out = "virus_properties_updated.json"
     path_out = path_old
     # Load old virus_properties.json
@@ -28,7 +29,7 @@ def update_pathogen_json(path_old, path_new):
     # Leave reversions in place - just add new mutations
     for k,v in new["nucMutLabelMap"].items():
         old["nucMutLabelMap"][k] = copy.deepcopy(v) #list(filter(lambda x: x != "rec", v))
-        print(k)
+        # print(k)
 
     
     # Sort old["nucMutLabelMap"]
@@ -51,6 +52,7 @@ def update_pathogen_json(path_old, path_new):
     # No longer needed
     # old["nucMutLabelMapReverse"] = dict(sorted(reverse_a_dict(old["nucMutLabelMap"]).items()))
 
+    # Sort by numeric position
     old_full["mutLabels"] = old
 
     with open(path_out, "w") as f_out:

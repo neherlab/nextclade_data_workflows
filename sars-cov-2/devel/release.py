@@ -39,7 +39,7 @@ def full_to_url(url_part):
 for path_part, url_part in path_to_url.items():
     # Copy to nextclade_data
     os.system(f"aws s3 cp {full_from_url(url_part)} - | gzcat > {full_path(path_part)}")
-    # Update README.md, prepend "defaults/README.md" at the path
+    # Update CHANGELOG.md, prepend "defaults/CHANGELOG.md" at the path
     changelog_path = full_path(path_part, "CHANGELOG.md")
     os.system(f"cp defaults/CHANGELOG.md {changelog_path}_temp")
     os.system(f"echo '' >> {changelog_path}_temp")

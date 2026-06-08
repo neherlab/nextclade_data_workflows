@@ -68,19 +68,13 @@ def aggregate_mutations(series) -> defaultdict(int):
 
 #%%
 # Overwrite with new clade name when new clade not yet in data
-# Set to 23C if it starts with XBB.1.9
-# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.75.3.4.1.1.1.1"),"Nextstrain_clade"] = "23C"
-# df.loc[df["unaliased"].str.startswith("XBB.1.9"),"Nextstrain_clade"] = "23D"
-# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.16.1.7"),"Nextstrain_clade"] = "24H"
-# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.49.1.1.1.1.1"),"Nextstrain_clade"] = "24I"
-# New clades 25D-25I (25B and 25C are now in ingest data)
 # Use unaliased versions
-df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.11.1.3.1.1.10.2.1"),"Nextstrain_clade"] = "25D"  # MC.10.2.1
-df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.16.1.7.9.1.1"),"Nextstrain_clade"] = "25E"  # PY.1
-df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.11.1.1.1.3.8.1.2.1.2"),"Nextstrain_clade"] = "25F"  # NW.1.2
-df.loc[df["unaliased"].str.startswith("XFC"),"Nextstrain_clade"] = "25G"  # XFC (recombinant)
-df.loc[df["unaliased"].str.startswith("XFJ"),"Nextstrain_clade"] = "25H"  # XFJ (recombinant)
-df.loc[df["unaliased"].str.startswith("B.1.1.529.3.2"),"Nextstrain_clade"] = "25I"  # BA.3.2
+# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.11.1.3.1.1.10.2.1"),"Nextstrain_clade"] = "25D"  # MC.10.2.1
+# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.16.1.7.9.1.1"),"Nextstrain_clade"] = "25E"  # PY.1
+# df.loc[df["unaliased"].str.startswith("B.1.1.529.2.86.1.1.11.1.1.1.3.8.1.2.1.2"),"Nextstrain_clade"] = "25F"  # NW.1.2
+# df.loc[df["unaliased"].str.startswith("XFC"),"Nextstrain_clade"] = "25G"  # XFC (recombinant)
+# df.loc[df["unaliased"].str.startswith("XFJ"),"Nextstrain_clade"] = "25H"  # XFJ (recombinant)
+# df.loc[df["unaliased"].str.startswith("B.1.1.529.3.2"),"Nextstrain_clade"] = "25I"  # BA.3.2
 
 #%%
 clade_muts = (
