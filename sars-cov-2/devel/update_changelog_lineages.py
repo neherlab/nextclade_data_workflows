@@ -18,7 +18,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 CSV_PATH = Path("/Users/cr/code/pango-designation-dates/data/lineage_designation_date.csv")
-CHANGELOG_PATH = Path(__file__).parent / "defaults" / "CHANGELOG.md"
+CHANGELOG_PATH = Path(__file__).parent.parent / "defaults" / "CHANGELOG.md"
 
 
 def parse_date(s: str) -> date:
