@@ -3,3 +3,4 @@ other_data
 deploy/
 /datasets/
 profiles/clades/secrets.yaml
+__pycache__/

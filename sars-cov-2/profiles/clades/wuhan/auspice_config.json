@@ -47,16 +47,39 @@
         "default": "__root__",
         "search": [
           {
-            "name": "JN.1",
-            "displayName": "JN.1 (24A)",
-            "description": "One of the variants recommended for the 2024/2025 COVID-19 vaccine",
+            "name": "XFG",
+            "displayName": "XFG (25C)",
+            "description": "Variant recommended for the 2026/2027 COVID-19 vaccine",
             "criteria": [
               {
-                "qry": [
+                "node": [
                   {
-                    "clade": ["23I", "24A", "24B", "24C", "24D", "24E", "24F", "24G", "24H", "24I", "25A", "25B", "25C", "25D", "25E", "25F", "25G", "25H", "26A", "26B", "recombinant"]
+                    "name": ["XFG"]
                   }
-                ],
+                ]
+              }
+            ]
+          },
+          {
+            "name": "LP.8.1",
+            "displayName": "LP.8.1 (25A)",
+            "description": "Variant recommended for the 2025/2026 COVID-19 vaccine",
+            "criteria": [
+              {
+                "node": [
+                  {
+                    "name": ["LP.8.1"]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "JN.1",
+            "displayName": "JN.1 (24A)",
+            "description": "Variant recommended for the 2024/2025 COVID-19 vaccine",
+            "criteria": [
+              {
                 "node": [
                   {
                     "name": ["JN.1"]
@@ -71,21 +94,6 @@
             "description": "Variant recommended for the 2023/2024 COVID-19 vaccine",
             "criteria": [
               {
-                "qry": [
-                  {
-                    "clade": [
-                      "22F",
-                      "23A",
-                      "23B",
-                      "23C",
-                      "23D",
-                      "23E",
-                      "23F",
-                      "23G",
-                      "recombinant"
-                    ]
-                  }
-                ],
                 "node": [
                   {
                     "name": ["XBB.1.5"]
