@@ -73,7 +73,7 @@ tree-recombinants:
   - "XFZ"
   - "XGA"
 
-ncovbranch: "master"
+ncovbranch: "26F-PJ.2.1"  # nextstrain/ncov branch with unmerged 26F (PJ.2.1); set back to "master" once merged
 
 genes:
   wuhan:
