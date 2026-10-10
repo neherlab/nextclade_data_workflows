@@ -153,16 +153,6 @@
       "type": "categorical"
     },
     {
-      "key": "immune_escape",
-      "title": "RBD immune escape score",
-      "type": "continuous"
-    },
-    {
-      "key": "ace2_binding",
-      "title": "ACE2 affinity score",
-      "type": "continuous"
-    },
-    {
       "key": "placement_priors",
       "title": "Prior (log10)",
       "type": "continuous"
