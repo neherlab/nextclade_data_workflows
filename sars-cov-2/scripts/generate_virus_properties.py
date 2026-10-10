@@ -1,5 +1,6 @@
 #%%
 import json
+import os
 from collections import defaultdict
 
 import pandas as pd
@@ -34,7 +35,7 @@ HIGH_THRESHOLD_PROPORTION = 0.5
 #%%
 # aws s3 cp s3://nextstrain-ncov-private/metadata.tsv.zst .
 df = pd.read_csv(
-    "metadata.tsv.zst",
+    os.environ.get("METADATA", "metadata.tsv.zst"),
     # "s3://nextstrain-ncov-private/metadata.tsv.zst",
     sep="\t",
     usecols=["clade_nextstrain", "Nextclade_pango", "substitutions"],
@@ -75,6 +76,17 @@ def aggregate_mutations(series) -> defaultdict(int):
 # df.loc[df["unaliased"].str.startswith("XFC"),"Nextstrain_clade"] = "25G"  # XFC (recombinant)
 # df.loc[df["unaliased"].str.startswith("XFJ"),"Nextstrain_clade"] = "25H"  # XFJ (recombinant)
 # df.loc[df["unaliased"].str.startswith("B.1.1.529.3.2"),"Nextstrain_clade"] = "25I"  # BA.3.2
+
+def is_lineage_or_sublineage(series, lineage):
+    """Exact match or true sublineage; avoids XFG.1.1 also matching XFG.1.10."""
+    return (series == lineage) | series.str.startswith(lineage + ".")
+
+df.loc[is_lineage_or_sublineage(df["unaliased"], "XFG.1.1"), "Nextstrain_clade"] = "26A"  # XFG.1.1 (recombinant)
+df.loc[is_lineage_or_sublineage(df["unaliased"], "XFG.3.4.1"), "Nextstrain_clade"] = "26B"  # XFG.3.4.1 (recombinant)
+df.loc[is_lineage_or_sublineage(df["unaliased"], "XDV.1.5.1.1.8.1.16.1.1"), "Nextstrain_clade"] = "26C"  # PQ.16.1.1
+df.loc[is_lineage_or_sublineage(df["unaliased"], "B.1.1.529.2.86.1.1.16.1.7.9.1.1.1.1.5"), "Nextstrain_clade"] = "26D"  # RF.5
+df.loc[is_lineage_or_sublineage(df["unaliased"], "XDV.1.5.1.1.8.1.17.7.2.1"), "Nextstrain_clade"] = "26E"  # RK.1
+df.loc[is_lineage_or_sublineage(df["unaliased"], "B.1.1.529.2.86.1.1.11.1.3.1.1.10.1.7.2.1"), "Nextstrain_clade"] = "26F"  # PJ.2.1
 
 #%%
 clade_muts = (
