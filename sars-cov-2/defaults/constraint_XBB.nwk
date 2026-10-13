@@ -751,6 +751,22 @@
             )internal_5005,
             XBB.1.5.43,
             (
+              XBB.1.5.86,
+              HA.1,
+              HA.2
+            )internal_16ec9b32,
+            (
+              XBB.1.5.53,
+              (
+                JB.1,
+                JB.1.1
+              )internal_d84ce74a,
+              (
+                JB.2,
+                JB.2.1
+              )internal_d518b0fa
+            )internal_5625aa20,
+            (
               XBB.1.5.45,
               XBB.1.5.57
             )internal_1f558352,
@@ -1299,7 +1315,10 @@
     XBB.3,
     XBB.4,
     XBB.5,
-    XBB.6,
+    (
+      XBB.6,
+      XBB.6.1
+    )internal_be96341a,
     XBB.7
   )internal_ORF1a_G82D
 )internal_4eec
