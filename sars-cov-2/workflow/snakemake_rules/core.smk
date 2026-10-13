@@ -286,6 +286,7 @@ rule ancestral:
         alignment="builds/{build_name}/aligned.fasta",
         dataset_reference="profiles/clades/{build_name}/reference.fasta",
         annotation="profiles/clades/{build_name}/reference_seq.gb",
+        fix_rec_parent="scripts/fix_rec_parent.py",
     params:
         genes=lambda w: " ".join(config["genes"][w.build_name]),
         translation_template="builds/{build_name}/translations/aligned.gene.%GENE.fasta",
@@ -306,8 +307,10 @@ rule ancestral:
             --infer-ambiguous
         # Patch annotation for nsp12 in mature protein builds
         jq 'if .annotations | has("nsp12") then .annotations.nsp12 = {{"seqid": "profiles/clades/proteins/reference_seq.gb", "strand": "+", "type": "CDS", "segments": [{{"start":13442,"end":13468}}, {{"start":13468,"end":16236}}]}} else . end' \
-        {params.tmp} > {output.node_data}
-        rm {params.tmp}
+        {params.tmp} > {params.tmp}.jq
+        # rec_parent is a dummy node: give it the root genotype, push its mutations onto its children
+        python {input.fix_rec_parent} --tree {input.tree} --node-data {params.tmp}.jq --output {output.node_data}
+        rm {params.tmp} {params.tmp}.jq
         """
 
 

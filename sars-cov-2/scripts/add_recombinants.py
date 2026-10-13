@@ -33,9 +33,12 @@ def main(
     
     # Add common ancestor for all recombinants to prevent massive polytomy
     clade_cls = type(tree.root)
-    rec_parent = clade_cls(name="rec_parent", branch_length=0.1)
-    # Maybe also need to attach another reference here with 0 branch length
-    # To prevent flip flopping
+    # rec_parent is a dummy node: its children hang off it on saturated 10.0 branches, so the
+    # data cannot pin its state. Any non-negligible branch length lets augur ancestral pick
+    # non-root states for it (e.g. S:T19I, ORF1a:H13Y), which every recombinant then "reverts".
+    # Keep it effectively zero; workflow rule `ancestral` additionally moves any remaining
+    # rec_parent mutations onto its children (scripts/fix_rec_parent.py).
+    rec_parent = clade_cls(name="rec_parent", branch_length=1e-6)
 
     def lookup_by_names(tree):
         names = {}
@@ -112,9 +115,6 @@ def main(
         if clade.name in ["XBB.1.22","internal_XBB_1_22"]:
             clade.branch_length = 1 / 30000 * 100
     
-    # # Add root directly on rec_parent to ensure no mutations reconstructed on it
-    # rec_parent.root.clades.append(Phylo.BaseTree.Clade(name=f"{root}_COPY", branch_length=0))
-
     # Phylo.draw_ascii(rec_parent)
         
     tree.root.clades.append(rec_parent)
