@@ -2,3 +2,7 @@ build:
     snakemake -c10 --profile profiles/clades -F
 retry:
     snakemake -c10 --profile profiles/clades --ri
+# Rebuild from new pango designations: re-download lineages.csv, alias key and designation dates
+# (snakemake can't see that the upstream URLs changed), then rerun everything downstream
+pango:
+    snakemake -c10 --profile profiles/clades -R download_designations download_pango_alias trigger_designation_date_workflow download_designation_dates
